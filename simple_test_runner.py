@@ -13,7 +13,7 @@ def run_test(test_path):
     print(f"Running: {test_path}")
     print(f"{'='*60}")
     
-    result = subprocess.run([str(test_path)], cwd=Path.cwd())
+    result = subprocess.run([str(test_path)], cwd=Path.cwd(), input="")
     
     if result.returncode == 0:
         print(f"✅ PASSED: {test_path}")

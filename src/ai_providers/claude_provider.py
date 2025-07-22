@@ -41,6 +41,13 @@ class ClaudeProvider:
             self.cache_dir = Path.home() / ".cache" / "ai_project_mgmt" / "claude"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         
+        # Verify cache directory permissions
+        if not os.access(self.cache_dir, os.W_OK):
+            self.logger.warning(f"Cache directory not writable: {self.cache_dir}")
+            self.cache_enabled = False
+        else:
+            self.cache_enabled = True
+        
         # Initialize logging
         self.logger = logging.getLogger(__name__)
         
@@ -110,8 +117,17 @@ class ClaudeProvider:
         Returns:
             Response dictionary
         """
+        # Validate prompt length
+        MAX_PROMPT_LENGTH = 10000
+        if len(prompt) > MAX_PROMPT_LENGTH:
+            self.logger.warning(f"Prompt length ({len(prompt)}) exceeds maximum ({MAX_PROMPT_LENGTH})")
+            return {
+                "type": "error",
+                "error": f"Prompt too long: {len(prompt)} characters (max {MAX_PROMPT_LENGTH})",
+                "message": "Please reduce the prompt length"
+            }
         # Check cache first
-        if use_cache:
+        if use_cache and self.cache_enabled:
             cached_response = self._check_cache(prompt, context, model)
             if cached_response:
                 self.logger.info("Returning cached response")
@@ -157,7 +173,7 @@ class ClaudeProvider:
             })
             
             # Cache response
-            if use_cache:
+            if use_cache and self.cache_enabled:
                 self._cache_response(prompt, context, model, response)
             
             return response
@@ -249,8 +265,12 @@ class ClaudeProvider:
     def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]], 
                            model: str) -> str:
         """Generate cache key from request parameters"""
+        # Limit prompt length to prevent resource exhaustion
+        MAX_PROMPT_LENGTH = 10000
+        truncated_prompt = prompt[:MAX_PROMPT_LENGTH] if len(prompt) > MAX_PROMPT_LENGTH else prompt
+        
         cache_data = {
-            "prompt": prompt,
+            "prompt": truncated_prompt,
             "context": context,
             "model": model
         }

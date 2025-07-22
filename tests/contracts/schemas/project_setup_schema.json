@@ -15,7 +15,7 @@
             "minItems": 1,
             "items": {
                 "type": "string",
-                "pattern": "^[a-zA-Z0-9\\s\\-_./\"']+$",
+                "pattern": "^[a-zA-Z0-9\\s\\-_./:]+$",
                 "description": "Shell command to execute"
             },
             "description": "List of shell commands to set up the project"

@@ -12,7 +12,7 @@ import os
 import time
 import uuid
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 class BasicLogger:
     """Simple but comprehensive logging for automation debugging"""
@@ -56,7 +56,7 @@ class BasicLogger:
             
         # Build structured log entry
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": level,
             "category": category,
             "correlation_id": self.correlation_id,
@@ -177,7 +177,7 @@ class LoggedSecureShell:
             'full_command': command_str,
             'args_count': len(command_parts) - 1,
             'cwd': self.workdir,
-            'start_time': datetime.utcnow().isoformat()
+            'start_time': datetime.now(timezone.utc).isoformat()
         })
         
         try:
@@ -187,7 +187,8 @@ class LoggedSecureShell:
                 cwd=self.workdir,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
+                input=""  # Prevent hanging on interactive prompts
             )
             
             duration_ms = (time.time() - start_time) * 1000

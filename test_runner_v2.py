@@ -17,6 +17,22 @@ from typing import Dict, List, Any, Optional
 import importlib.util
 import inspect
 
+# Add src to path for config import
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+try:
+    from config import (
+        DEFAULT_TEST_TIMEOUT, DEFAULT_TEST_PATTERNS, DEFAULT_TEST_RESULTS_DIR,
+        DEFAULT_PLUGIN_DIR, DEFAULT_CONFIG_FILE, UNIT_TEST_TIMEOUT, 
+        INTEGRATION_TEST_TIMEOUT, CONTRACT_TEST_TIMEOUT, CHAOS_TEST_TIMEOUT
+    )
+except ImportError:
+    # Fallback to hardcoded values if config not available
+    DEFAULT_TEST_TIMEOUT = 300
+    DEFAULT_TEST_PATTERNS = {"shell": ["**/*.sh"]}
+    DEFAULT_TEST_RESULTS_DIR = "test_results"
+    DEFAULT_PLUGIN_DIR = "test_layers"
+    DEFAULT_CONFIG_FILE = "test_config.yaml"
+
 
 @dataclass
 class TestResult:
@@ -88,12 +104,36 @@ class ShellTestLayer(TestLayer):
         
         return sorted(discovered_tests)
     
+    def _validate_path(self, path: Path, base_path: Path) -> Path:
+        """Validate that path is within base_path to prevent traversal attacks"""
+        try:
+            # Resolve to absolute paths
+            resolved_path = path.resolve()
+            resolved_base = base_path.resolve()
+            
+            # Check if the resolved path is within the base path
+            resolved_path.relative_to(resolved_base)
+            return resolved_path
+        except (ValueError, RuntimeError):
+            raise ValueError(f"Path '{path}' is outside project root")
+    
     def run_test(self, test_path: str, context: TestContext) -> TestResult:
         """Run shell test with all fixes from code review"""
         script_path = Path(test_path)
         
         if not script_path.is_absolute():
             script_path = context.project_root / script_path
+        
+        # Validate path to prevent traversal attacks
+        try:
+            script_path = self._validate_path(script_path, context.project_root)
+        except ValueError as e:
+            return TestResult(
+                name=test_path,
+                success=False,
+                duration="0.00s",
+                error=str(e)
+            )
             
         if not script_path.exists():
             return TestResult(
@@ -248,8 +288,8 @@ class TestRunner:
     """Main test orchestrator using plugin architecture"""
     
     def __init__(self, project_root: str = ".", config_path: Optional[str] = None):
-        self.project_root = Path(project_root)
-        self.results_dir = self.project_root / "test_results"
+        self.project_root = Path(project_root).resolve()
+        self.results_dir = self.project_root / DEFAULT_TEST_RESULTS_DIR
         self.results_dir.mkdir(parents=True, exist_ok=True)
         self.registry = TestLayerRegistry()
         self.config = self._load_config(config_path)
@@ -258,9 +298,13 @@ class TestRunner:
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """Load configuration from file or use defaults"""
         if config_path:
-            config_file = Path(config_path)
+            config_file = Path(config_path).resolve()
+            # Validate config path is accessible
+            if not config_file.exists():
+                print(f"Warning: Config file not found: {config_file}")
+                return self._get_default_config()
         else:
-            config_file = self.project_root / "test_config.yaml"
+            config_file = self.project_root / DEFAULT_CONFIG_FILE
             
         if config_file.exists():
             with open(config_file, 'r') as f:
@@ -271,13 +315,13 @@ class TestRunner:
             "test_layers": {
                 "shell": {
                     "enabled": True,
-                    "timeout": 300,
-                    "patterns": ["**/*.sh"]
+                    "timeout": DEFAULT_TEST_TIMEOUT,
+                    "patterns": DEFAULT_TEST_PATTERNS.get("shell", ["**/*.sh"])
                 },
                 "unit": {
                     "enabled": True,
-                    "timeout": 300,
-                    "patterns": ["**/test_*.py", "**/*_test.py"]
+                    "timeout": UNIT_TEST_TIMEOUT,
+                    "patterns": DEFAULT_TEST_PATTERNS.get("unit", ["**/test_*.py", "**/*_test.py"])
                 },
                 "integration": {
                     "enabled": False  # Layer 2
@@ -297,8 +341,11 @@ class TestRunner:
         self.registry.register("shell", ShellTestLayer())
         
         # Load plugins from test_layers directory
-        plugin_dir = self.project_root / "test_layers"
-        self.registry.load_plugins(plugin_dir)
+        plugin_dir = self.project_root / DEFAULT_PLUGIN_DIR
+        if plugin_dir.exists() and plugin_dir.is_dir():
+            self.registry.load_plugins(plugin_dir)
+        else:
+            print(f"Warning: Plugin directory not found: {plugin_dir}")
     
     def _run_layer(self, layer_name: str, layer: TestLayer) -> List[TestResult]:
         """Run all tests for a specific layer"""

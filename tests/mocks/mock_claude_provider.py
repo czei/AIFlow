@@ -67,6 +67,14 @@ class MockClaudeProvider:
         Returns:
             Mock response dictionary
         """
+        # Validate prompt length
+        MAX_PROMPT_LENGTH = 10000
+        if len(prompt) > MAX_PROMPT_LENGTH:
+            return {
+                "type": "error",
+                "error": f"Prompt too long: {len(prompt)} characters (max {MAX_PROMPT_LENGTH})",
+                "message": "Please reduce the prompt length"
+            }
         # Record the call
         call_record = {
             "timestamp": time.time(),

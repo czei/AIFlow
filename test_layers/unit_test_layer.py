@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List
 import json
 import sys
+import re
 
 # Import from parent module
 try:
@@ -70,7 +71,8 @@ class UnitTestLayer(TestLayer):
                 capture_output=True,
                 text=True,
                 timeout=context.timeout,
-                cwd=str(context.project_root)
+                cwd=str(context.project_root),
+                input=""  # Prevent hanging on interactive prompts
             )
             
             duration = time.time() - start_time
@@ -92,7 +94,6 @@ class UnitTestLayer(TestLayer):
                         test_count = int(parts[1])
                 elif "FAILED" in line:
                     # "FAILED (failures=X, errors=Y)"
-                    import re
                     failures_match = re.search(r'failures=(\d+)', line)
                     errors_match = re.search(r'errors=(\d+)', line)
                     if failures_match:

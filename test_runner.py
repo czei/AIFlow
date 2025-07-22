@@ -69,7 +69,8 @@ class TestRunner:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                cwd=str(Path.cwd())
+                cwd=str(Path.cwd()),
+                input=""  # Prevent hanging on interactive prompts
             )
             
             duration = time.time() - start_time
