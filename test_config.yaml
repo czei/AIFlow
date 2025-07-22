@@ -10,9 +10,12 @@ test_layers:
     description: "Shell script tests for existing functionality"
   
   unit:
-    enabled: false
+    enabled: true
     description: "Layer 1: Unit tests for deterministic components"
-    # Will be enabled when pytest integration is complete
+    timeout: 300
+    patterns:
+      - "**/test_*.py"
+      - "**/*_test.py"
   
   integration:
     enabled: false

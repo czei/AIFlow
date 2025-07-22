@@ -13,43 +13,53 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
+import importlib.util
+import inspect
 
 
+@dataclass
 class TestResult:
     """Represents the result of a single test execution"""
-    def __init__(self, name: str, success: bool, duration: float, 
-                 output: str = "", error: str = "", metadata: Dict = None):
-        self.name = name
-        self.success = success
-        self.duration = duration
-        self.output = output
-        self.error = error
-        self.metadata = metadata or {}
-        self.timestamp = datetime.now(timezone.utc).isoformat()
+    name: str
+    success: bool
+    duration: str  # String format like "1.23s"
+    error: str = ""
+    metadata: Dict[str, Any] = None
+    timestamp: str = None
+    
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+        if self.timestamp is None:
+            self.timestamp = datetime.now(timezone.utc).isoformat()
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'name': self.name,
+            'success': self.success,
+            'duration': self.duration,
+            'timestamp': self.timestamp,
+            'metadata': self.metadata,
+            'error': self.error
+        }
 
 
 @dataclass
 class TestContext:
     """Shared context passed between test layers"""
     project_root: Path
-    config: Dict[str, Any]
-    results_dir: Path
     timeout: int = 300
-    previous_results: List[TestResult] = None
+    config: Dict[str, Any] = None
     
     def __post_init__(self):
-        if self.previous_results is None:
-            self.previous_results = []
+        if self.config is None:
+            self.config = {}
 
 
 class TestLayer(ABC):
     """Base class for all test layers in the 4-layer architecture"""
-    
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of this test layer"""
-        pass
     
     @abstractmethod
     def discover_tests(self, context: TestContext) -> List[str]:
@@ -60,39 +70,36 @@ class TestLayer(ABC):
     def run_test(self, test_path: str, context: TestContext) -> TestResult:
         """Run a single test and return result"""
         pass
-    
-    def is_enabled(self, context: TestContext) -> bool:
-        """Check if this layer is enabled in configuration"""
-        layer_config = context.config.get('test_layers', {}).get(self.name(), {})
-        return layer_config.get('enabled', True)
 
 
 class ShellTestLayer(TestLayer):
     """Layer for running shell script tests with all code review fixes applied"""
     
-    def name(self) -> str:
-        return "shell"
-    
     def discover_tests(self, context: TestContext) -> List[str]:
         """Auto-discover shell scripts instead of hardcoding (fixes LOW priority issue)"""
-        test_dir = context.project_root / "tests"
-        patterns = context.config.get('test_layers', {}).get('shell', {}).get('patterns', ['**/*.sh'])
+        patterns = context.config.get('patterns', ['**/*.sh'])
         
         discovered_tests = []
         for pattern in patterns:
-            discovered_tests.extend(str(p) for p in sorted(test_dir.glob(pattern)))
+            for test_file in context.project_root.glob(pattern):
+                # Get relative path for cleaner output
+                rel_path = test_file.relative_to(context.project_root)
+                discovered_tests.append(str(rel_path))
         
-        return discovered_tests
+        return sorted(discovered_tests)
     
     def run_test(self, test_path: str, context: TestContext) -> TestResult:
         """Run shell test with all fixes from code review"""
         script_path = Path(test_path)
         
+        if not script_path.is_absolute():
+            script_path = context.project_root / script_path
+            
         if not script_path.exists():
             return TestResult(
-                name=str(script_path),
+                name=test_path,
                 success=False,
-                duration=0.0,
+                duration="0.00s",
                 error=f"Script not found: {script_path}"
             )
         
@@ -116,15 +123,14 @@ class ShellTestLayer(TestLayer):
             duration = time.time() - start_time
             
             test_result = TestResult(
-                name=script_path.name,
+                name=test_path,
                 success=(result.returncode == 0),
-                duration=duration,
-                output=result.stdout,
-                error=result.stderr,
+                duration=f"{duration:.2f}s",
+                error=result.stdout + ("\n" + result.stderr if result.stderr else ""),
                 metadata={
                     "exit_code": result.returncode,
                     "script_path": str(script_path),
-                    "layer": self.name()
+                    "layer": "shell"
                 }
             )
             
@@ -138,10 +144,11 @@ class ShellTestLayer(TestLayer):
         except subprocess.TimeoutExpired:
             duration = time.time() - start_time
             test_result = TestResult(
-                name=script_path.name,
+                name=test_path,
                 success=False,
-                duration=duration,
-                error=f"Test timed out after {context.timeout} seconds"
+                duration=f"{duration:.2f}s",
+                error=f"Test timed out after {context.timeout} seconds",
+                metadata={"layer": "shell"}
             )
             print(f"\n⏱️  TIMEOUT - {script_path.name} ({context.timeout}s)")
             
@@ -149,10 +156,11 @@ class ShellTestLayer(TestLayer):
             # FIX: Handle permission errors with helpful message (MEDIUM priority fix)
             duration = time.time() - start_time
             test_result = TestResult(
-                name=script_path.name,
+                name=test_path,
                 success=False,
-                duration=duration,
-                error=f"Script not executable. Please run: chmod +x {script_path}"
+                duration=f"{duration:.2f}s",
+                error=f"Script not executable. Please run: chmod +x {script_path}",
+                metadata={"layer": "shell"}
             )
             print(f"\n🚨 PERMISSION ERROR - {script_path.name}")
             print(f"Fix with: chmod +x {script_path}")
@@ -160,90 +168,15 @@ class ShellTestLayer(TestLayer):
         except Exception as e:
             duration = time.time() - start_time
             test_result = TestResult(
-                name=script_path.name,
+                name=test_path,
                 success=False,
-                duration=duration,
-                error=f"Unexpected error: {str(e)}"
+                duration=f"{duration:.2f}s",
+                error=f"Unexpected error: {str(e)}",
+                metadata={"layer": "shell"}
             )
             print(f"\n🚨 ERROR - {script_path.name}: {str(e)}")
         
         return test_result
-
-
-class UnitTestLayer(TestLayer):
-    """Layer 1: Unit tests for deterministic components (placeholder)"""
-    
-    def name(self) -> str:
-        return "unit"
-    
-    def discover_tests(self, context: TestContext) -> List[str]:
-        """Discover Python unit tests"""
-        # TODO: Implement pytest discovery
-        return []
-    
-    def run_test(self, test_path: str, context: TestContext) -> TestResult:
-        """Run Python unit test"""
-        # TODO: Implement pytest runner
-        return TestResult(
-            name=test_path,
-            success=True,
-            duration=0.0,
-            output="Unit test layer not yet implemented"
-        )
-
-
-class MockAITestLayer(TestLayer):
-    """Layer 2: Integration tests with MockClaudeProvider (placeholder)"""
-    
-    def name(self) -> str:
-        return "integration"
-    
-    def discover_tests(self, context: TestContext) -> List[str]:
-        return []
-    
-    def run_test(self, test_path: str, context: TestContext) -> TestResult:
-        return TestResult(
-            name=test_path,
-            success=True,
-            duration=0.0,
-            output="Mock AI test layer not yet implemented"
-        )
-
-
-class ContractTestLayer(TestLayer):
-    """Layer 3: Contract-based AI testing (placeholder)"""
-    
-    def name(self) -> str:
-        return "contract"
-    
-    def discover_tests(self, context: TestContext) -> List[str]:
-        return []
-    
-    def run_test(self, test_path: str, context: TestContext) -> TestResult:
-        return TestResult(
-            name=test_path,
-            success=True,
-            duration=0.0,
-            output="Contract test layer not yet implemented"
-        )
-
-
-class ChaosTestLayer(TestLayer):
-    """Layer 4: Chaos and real AI validation tests (placeholder)"""
-    
-    def name(self) -> str:
-        return "chaos"
-    
-    def discover_tests(self, context: TestContext) -> List[str]:
-        return []
-    
-    def run_test(self, test_path: str, context: TestContext) -> TestResult:
-        return TestResult(
-            name=test_path,
-            success=True,
-            duration=0.0,
-            output="Chaos test layer not yet implemented"
-        )
 
 
 class TestLayerRegistry:
@@ -252,43 +185,86 @@ class TestLayerRegistry:
     def __init__(self):
         self._layers: Dict[str, TestLayer] = {}
     
-    def register(self, layer: TestLayer):
+    def register(self, name: str, layer: TestLayer):
         """Register a test layer"""
-        self._layers[layer.name()] = layer
+        self._layers[name] = layer
     
-    def get_layer(self, name: str) -> Optional[TestLayer]:
+    def get(self, name: str) -> Optional[TestLayer]:
         """Get a specific layer by name"""
         return self._layers.get(name)
     
-    def get_enabled_layers(self, context: TestContext) -> List[TestLayer]:
-        """Get all enabled layers"""
-        return [layer for layer in self._layers.values() if layer.is_enabled(context)]
+    def list(self) -> List[str]:
+        """List all registered layers"""
+        return list(self._layers.keys())
     
-    def discover_all_tests(self, context: TestContext) -> List[Tuple[TestLayer, str]]:
-        """Discover tests from all enabled layers"""
-        all_tests = []
-        for layer in self.get_enabled_layers(context):
-            for test_path in layer.discover_tests(context):
-                all_tests.append((layer, test_path))
-        return all_tests
+    def load_plugins(self, plugin_dir: Path):
+        """Dynamically load test layer plugins from directory"""
+        if not plugin_dir.exists():
+            print(f"Plugin directory does not exist: {plugin_dir}")
+            return
+            
+        print(f"Loading plugins from: {plugin_dir}")
+        sys.path.insert(0, str(plugin_dir.parent))
+        
+        for plugin_file in plugin_dir.glob("*_layer.py"):
+            print(f"Found plugin file: {plugin_file}")
+            try:
+                # Load the module
+                spec = importlib.util.spec_from_file_location(
+                    plugin_file.stem, plugin_file
+                )
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                
+                # Find TestLayer subclasses
+                print(f"Module members: {[name for name, obj in inspect.getmembers(module) if inspect.isclass(obj)]}")
+                print(f"Module name: {module.__name__}")
+                for name, obj in inspect.getmembers(module):
+                    # Look for classes ending with TestLayer that are defined in this module
+                    if (inspect.isclass(obj) and 
+                        name.endswith('TestLayer') and
+                        hasattr(obj, '__module__') and
+                        obj.__module__ == module.__name__):
+                        print(f"Found TestLayer class: {name}")
+                        # Create instance and register
+                        try:
+                            instance = obj()
+                            # Derive layer name from class name
+                            layer_name = name.lower().replace("testlayer", "")
+                            if layer_name == "shell":  # Skip built-in shell layer
+                                continue
+                            self.register(layer_name, instance)
+                            print(f"Loaded plugin: {layer_name} from {plugin_file.name}")
+                        except Exception as e:
+                            print(f"Failed to instantiate {name}: {e}")
+                        
+            except Exception as e:
+                print(f"Failed to load plugin {plugin_file}: {e}")
+                import traceback
+                traceback.print_exc()
 
 
 class TestRunner:
-    """Main test orchestrator using plugin architecture (MEDIUM priority fix)"""
+    """Main test orchestrator using plugin architecture"""
     
-    def __init__(self, config_path: Optional[str] = None, results_dir: str = "test_results"):
-        self.results_dir = Path(results_dir)
-        self.results_dir.mkdir(exist_ok=True)
-        self.results: List[TestResult] = []
+    def __init__(self, project_root: str = ".", config_path: Optional[str] = None):
+        self.project_root = Path(project_root)
+        self.results_dir = self.project_root / "test_results"
+        self.results_dir.mkdir(parents=True, exist_ok=True)
         self.registry = TestLayerRegistry()
         self.config = self._load_config(config_path)
         self._register_layers()
         
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """Load configuration from file or use defaults"""
-        if config_path and Path(config_path).exists():
-            with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+        if config_path:
+            config_file = Path(config_path)
+        else:
+            config_file = self.project_root / "test_config.yaml"
+            
+        if config_file.exists():
+            with open(config_file, 'r') as f:
+                return yaml.safe_load(f) or {}
         
         # Default configuration
         return {
@@ -299,7 +275,9 @@ class TestRunner:
                     "patterns": ["**/*.sh"]
                 },
                 "unit": {
-                    "enabled": False  # Not implemented yet
+                    "enabled": True,
+                    "timeout": 300,
+                    "patterns": ["**/test_*.py", "**/*_test.py"]
                 },
                 "integration": {
                     "enabled": False  # Layer 2
@@ -315,51 +293,103 @@ class TestRunner:
     
     def _register_layers(self):
         """Register all available test layers"""
-        self.registry.register(ShellTestLayer())
-        self.registry.register(UnitTestLayer())
-        self.registry.register(MockAITestLayer())
-        self.registry.register(ContractTestLayer())
-        self.registry.register(ChaosTestLayer())
+        # Register built-in shell layer
+        self.registry.register("shell", ShellTestLayer())
+        
+        # Load plugins from test_layers directory
+        plugin_dir = self.project_root / "test_layers"
+        self.registry.load_plugins(plugin_dir)
     
-    def run_all_tests(self):
-        """Run all discovered tests from all enabled layers"""
+    def _run_layer(self, layer_name: str, layer: TestLayer) -> List[TestResult]:
+        """Run all tests for a specific layer"""
+        layer_config = self.config.get("test_layers", {}).get(layer_name, {})
+        
+        if not layer_config.get("enabled", False):
+            print(f"\nSkipping disabled layer: {layer_name}")
+            return []
+        
+        print(f"\n\n{'='*60}")
+        print(f"Running {layer_name} tests")
+        print(f"{'='*60}")
+        
+        # Create context with layer-specific config
         context = TestContext(
-            project_root=Path.cwd(),
-            config=self.config,
-            results_dir=self.results_dir,
-            timeout=self.config.get('timeout', 300)
+            project_root=self.project_root,
+            timeout=layer_config.get("timeout", 300),
+            config=layer_config
         )
         
-        # Discover all tests
-        all_tests = self.registry.discover_all_tests(context)
+        # Discover tests
+        tests = layer.discover_tests(context)
+        if not tests:
+            print(f"No {layer_name} tests found")
+            return []
         
-        if not all_tests:
-            print("No tests found!")
-            return
+        print(f"Found {len(tests)} {layer_name} test(s)")
         
-        print(f"\nDiscovered {len(all_tests)} tests across {len(self.registry.get_enabled_layers(context))} layers")
-        
-        # Run all tests
-        for layer, test_path in all_tests:
+        # Run tests
+        results = []
+        for test_path in tests:
             result = layer.run_test(test_path, context)
-            self.results.append(result)
-            context.previous_results.append(result)
+            results.append(result)
+            
+        return results
     
-    def generate_report(self) -> Dict[str, Any]:
-        """Generate a comprehensive test report"""
-        total_tests = len(self.results)
-        passed_tests = sum(1 for r in self.results if r.success)
-        failed_tests = total_tests - passed_tests
-        total_duration = sum(r.duration for r in self.results)
+    def run(self):
+        """Run all enabled test layers"""
+        print("🧪 AI Software Project Management - Test Runner v2")
+        print("Extensible test framework with plugin architecture")
+        print(f"Starting test execution at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # Group results by layer
+        print(f"\nAvailable layers: {self.registry.list()}")
+        
+        all_results = []
+        
+        # Run each layer
+        for layer_name in self.registry.list():
+            layer = self.registry.get(layer_name)
+            if layer:
+                results = self._run_layer(layer_name, layer)
+                all_results.extend(results)
+        
+        # Save results
+        if all_results:
+            self._save_results(all_results)
+        
+        # Return exit code
+        failed = sum(1 for r in all_results if not r.success)
+        return 0 if failed == 0 else 1
+    
+    def _save_results(self, results: List[TestResult]):
+        """Save test results to JSON report"""
+        # Calculate summary
+        total_tests = len(results)
+        passed_tests = sum(1 for r in results if r.success)
+        failed_tests = total_tests - passed_tests
+        
+        # Parse durations and sum
+        total_duration = 0.0
+        for r in results:
+            try:
+                # Extract numeric part from duration string like "1.23s"
+                duration_str = r.duration.rstrip('s')
+                total_duration += float(duration_str)
+            except:
+                pass
+        
+        # Group by layer
         by_layer = {}
-        for result in self.results:
+        for result in results:
             layer = result.metadata.get('layer', 'unknown')
             if layer not in by_layer:
-                by_layer[layer] = []
-            by_layer[layer].append(result)
+                by_layer[layer] = {"total": 0, "passed": 0, "failed": 0}
+            by_layer[layer]["total"] += 1
+            if result.success:
+                by_layer[layer]["passed"] += 1
+            else:
+                by_layer[layer]["failed"] += 1
         
+        # Create report
         report = {
             "summary": {
                 "total": total_tests,
@@ -369,82 +399,50 @@ class TestRunner:
                 "total_duration": f"{total_duration:.2f}s",
                 "timestamp": datetime.now(timezone.utc).isoformat()
             },
-            "by_layer": {
-                layer: {
-                    "total": len(results),
-                    "passed": sum(1 for r in results if r.success),
-                    "failed": sum(1 for r in results if not r.success)
-                }
-                for layer, results in by_layer.items()
-            },
-            "results": [
-                {
-                    "name": r.name,
-                    "success": r.success,
-                    "duration": f"{r.duration:.2f}s",
-                    "timestamp": r.timestamp,
-                    "metadata": r.metadata,
-                    "error": r.error if r.error else None
-                }
-                for r in self.results
-            ]
+            "by_layer": by_layer,
+            "results": [r.to_dict() for r in results]
         }
         
-        # Save report to file
+        # Save to file
         report_path = self.results_dir / f"test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)
         
-        return report
-    
-    def print_summary(self):
-        """Print a summary of test results"""
-        report = self.generate_report()
-        summary = report["summary"]
-        
-        print(f"\n{'='*60}")
+        # Print summary
+        print(f"\n\n{'='*60}")
         print("TEST SUMMARY")
         print(f"{'='*60}")
-        print(f"Total Tests: {summary['total']}")
-        print(f"Passed:      {summary['passed']} ✅")
-        print(f"Failed:      {summary['failed']} ❌")
-        print(f"Success Rate: {summary['success_rate']}")
-        print(f"Total Time:   {summary['total_duration']}")
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed:      {passed_tests} ✅")
+        print(f"Failed:      {failed_tests} ❌")
+        print(f"Success Rate: {report['summary']['success_rate']}")
+        print(f"Total Time:   {total_duration:.2f}s")
         
-        # Show results by layer
-        if report["by_layer"]:
+        if by_layer:
             print(f"\nBy Layer:")
-            for layer, stats in report["by_layer"].items():
+            for layer, stats in by_layer.items():
                 print(f"  {layer}: {stats['passed']}/{stats['total']} passed")
         
-        print(f"{'='*60}")
-        
-        if summary['failed'] > 0:
+        if failed_tests > 0:
             print("\nFailed Tests:")
-            for result in self.results:
+            for result in results:
                 if not result.success:
-                    print(f"  ❌ {result.name}: {result.error}")
+                    print(f"  ❌ {result.name}")
+                    if result.error:
+                        # Print first line of error
+                        error_lines = result.error.strip().split('\n')
+                        if error_lines:
+                            print(f"     {error_lines[0]}")
         
-        print(f"\nDetailed report saved to: {self.results_dir}/")
+        print(f"\nDetailed report saved to: {report_path}")
+        print(f"{'='*60}")
 
 
 def main():
-    """Main entry point for test runner v2"""
-    print("🧪 AI Software Project Management - Test Runner v2")
-    print("Extensible test framework with plugin architecture")
-    print(f"Starting test execution at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    # Look for config file
-    config_path = "test_config.yaml" if Path("test_config.yaml").exists() else None
-    
-    # Create and run test runner
-    runner = TestRunner(config_path=config_path)
-    runner.run_all_tests()
-    runner.print_summary()
-    
-    # Exit with appropriate code
-    report = runner.generate_report()
-    sys.exit(0 if report["summary"]["failed"] == 0 else 1)
+    """Main entry point"""
+    runner = TestRunner()
+    exit_code = runner.run()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

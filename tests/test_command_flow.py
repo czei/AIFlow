@@ -357,12 +357,15 @@ def main():
     print("\n✅ Command flow test completed!")
     print(f"Test artifacts at: {test_dir}")
     
-    # Cleanup option
-    response = input("\nClean up test directory? (y/n): ")
-    if response.lower() == 'y':
-        import shutil
-        shutil.rmtree(test_dir)
-        print("✅ Test directory cleaned up")
+    # Cleanup option - skip in non-interactive mode
+    if sys.stdin.isatty():
+        response = input("\nClean up test directory? (y/n): ")
+        if response.lower() == 'y':
+            import shutil
+            shutil.rmtree(test_dir)
+            print("✅ Test directory cleaned up")
+    else:
+        print("\n[Non-interactive mode: Skipping cleanup prompt]")
 
 
 if __name__ == "__main__":
