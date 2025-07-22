@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Unit test layer for test runner v2.
-Discovers and runs Python unit tests using unittest framework.
+Integration test layer for test runner v2.
+Runs integration tests with MockClaudeProvider.
 """
 
 import subprocess
@@ -20,36 +20,52 @@ except ImportError:
     from test_runner_v2 import TestLayer, TestContext, TestResult
 
 
-class UnitTestLayer(TestLayer):
-    """Layer for running Python unit tests"""
+class IntegrationTestLayer(TestLayer):
+    """Layer for running integration tests with mock AI provider"""
     
     def discover_tests(self, context: TestContext) -> List[str]:
-        """Discover Python unit test files"""
-        patterns = context.config.get('patterns', ['**/test_*.py', '**/*_test.py'])
+        """Discover integration test files"""
+        patterns = context.config.get('patterns', ['**/test_*integration*.py'])
         tests = []
         
+        # Look in tests/integration directory
+        integration_dir = context.project_root / "tests" / "integration"
+        if integration_dir.exists():
+            for pattern in patterns:
+                # Handle both absolute and relative patterns
+                if pattern.startswith("**/"):
+                    # Recursive pattern
+                    for test_file in integration_dir.rglob(pattern[3:]):
+                        if test_file.is_file() and test_file.suffix == '.py':
+                            rel_path = test_file.relative_to(context.project_root)
+                            tests.append(str(rel_path))
+                else:
+                    # Direct pattern
+                    for test_file in integration_dir.glob(pattern):
+                        if test_file.is_file() and test_file.suffix == '.py':
+                            rel_path = test_file.relative_to(context.project_root)
+                            tests.append(str(rel_path))
+        
+        # Also check for integration tests in other locations
         for pattern in patterns:
             for test_file in context.project_root.glob(pattern):
-                # Skip __pycache__ directories
-                if '__pycache__' in test_file.parts:
-                    continue
-                
-                # Skip non-test files that happen to match pattern
-                if test_file.name in ['test_runner.py', 'test_runner_v2.py', 'test_runner_v2_old.py']:
+                # Skip if already found in integration dir
+                if str(test_file.relative_to(context.project_root)) in tests:
                     continue
                     
-                # Skip integration tests
-                if 'integration' in test_file.parts:
+                # Skip unit tests
+                if 'unit' in test_file.parts:
                     continue
                     
-                # Get relative path for cleaner names
-                rel_path = test_file.relative_to(context.project_root)
-                tests.append(str(rel_path))
-                
-        return sorted(tests)
+                # Must contain 'integration' in name
+                if 'integration' in test_file.name.lower():
+                    rel_path = test_file.relative_to(context.project_root)
+                    tests.append(str(rel_path))
+                    
+        return sorted(set(tests))  # Remove duplicates
     
     def run_test(self, test_path: str, context: TestContext) -> TestResult:
-        """Run a Python unit test file"""
+        """Run an integration test file"""
         start_time = time.time()
         test_file = context.project_root / test_path
         
@@ -58,11 +74,18 @@ class UnitTestLayer(TestLayer):
         module_name = str(module_path).replace('/', '.').replace('\\', '.')[:-3]  # Remove .py
         
         try:
-            # Run unittest with JSON output for better parsing
+            # Set up environment for integration tests
+            env = {
+                **subprocess.os.environ,
+                'INTEGRATION_TEST': '1',
+                'MOCK_CLAUDE_PROVIDER': '1'
+            }
+            
+            # Run integration test with unittest
             cmd = [
                 sys.executable, '-m', 'unittest',
                 module_name,
-                '-v'  # Verbose output
+                '-v'
             ]
             
             result = subprocess.run(
@@ -70,7 +93,9 @@ class UnitTestLayer(TestLayer):
                 capture_output=True,
                 text=True,
                 timeout=context.timeout,
-                cwd=str(context.project_root)
+                cwd=str(context.project_root),
+                env=env,
+                input=""  # Prevent hanging on interactive prompts
             )
             
             duration = time.time() - start_time
@@ -79,7 +104,7 @@ class UnitTestLayer(TestLayer):
             success = result.returncode == 0
             output = result.stdout + ("\n" + result.stderr if result.stderr else "")
             
-            # Extract test counts from output
+            # Extract test statistics
             test_count = 0
             failures = 0
             errors = 0
@@ -104,12 +129,17 @@ class UnitTestLayer(TestLayer):
                 'exit_code': result.returncode,
                 'test_file': str(test_file),
                 'module_name': module_name,
-                'layer': 'unit',
+                'layer': 'integration',
                 'test_count': test_count,
                 'failures': failures,
-                'errors': errors
+                'errors': errors,
+                'uses_mock_provider': True
             }
             
+            # Check if MockClaudeProvider was actually used
+            if 'MockClaudeProvider' in output:
+                metadata['mock_provider_active'] = True
+                
             return TestResult(
                 name=test_path,
                 success=success,
@@ -124,8 +154,8 @@ class UnitTestLayer(TestLayer):
                 name=test_path,
                 success=False,
                 duration=f"{duration:.2f}s",
-                error=f"Test timed out after {context.timeout} seconds",
-                metadata={'layer': 'unit', 'timeout': True}
+                error=f"Integration test timed out after {context.timeout} seconds",
+                metadata={'layer': 'integration', 'timeout': True}
             )
             
         except Exception as e:
@@ -134,6 +164,6 @@ class UnitTestLayer(TestLayer):
                 name=test_path,
                 success=False,
                 duration=f"{duration:.2f}s",
-                error=f"Error running test: {str(e)}",
-                metadata={'layer': 'unit', 'error': str(e)}
+                error=f"Error running integration test: {str(e)}",
+                metadata={'layer': 'integration', 'error': str(e)}
             )

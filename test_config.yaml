@@ -18,8 +18,11 @@ test_layers:
       - "**/*_test.py"
   
   integration:
-    enabled: false
+    enabled: true
     description: "Layer 2: Integration tests with MockClaudeProvider"
+    timeout: 600
+    patterns:
+      - "**/test_*integration*.py"
     # Will test AI behavior with deterministic mocks
   
   contract:
