@@ -9,8 +9,8 @@ The testing architecture progresses from deterministic unit tests to real AI int
 ```
 Layer 1: Unit Tests (Deterministic) ✅
 Layer 2: Integration Tests (Mock AI) ✅
-Layer 3: Contract-Based Tests (Real AI, Validated) 🔄
-Layer 4: Chaos Tests (Real AI, Edge Cases) 🔄
+Layer 3: Contract-Based Tests (Real AI, Validated) ✅
+Layer 4: Chaos Tests (Real AI, Edge Cases) ✅
 ```
 
 ## Running Tests
@@ -162,33 +162,80 @@ contract:
   cache_responses: true
 ```
 
-## Layer 4: Chaos and Real AI Validation Tests (Not Implemented)
+## Layer 4: Chaos and Real AI Validation Tests ✅
 
 **Purpose**: Test system resilience with unpredictable real AI responses.
 
-**Planned Location**: `tests/chaos/`
+**Location**: `tests/chaos/`
 
 **Characteristics**:
-- Non-deterministic
-- Tests edge cases
-- Validates error recovery
-- Ensures production readiness
+- Non-deterministic testing
+- Simulates failures and edge cases
+- Tests error recovery mechanisms
+- Validates graceful degradation
+- Tracks resilience metrics
+- Can use real AI or chaos-wrapped mock
 
 **What to test here**:
-- Timeout handling
-- Retry mechanisms
+- Timeout handling and recovery
+- Network error resilience
 - Malformed response handling
-- Rate limit handling
-- Graceful degradation
+- Rate limiting and backoff
+- Graceful degradation under load
+- Recovery from extended failures
+- Edge case and invalid input handling
+- Resource exhaustion protection
 
-**Example (Planned)**:
+**Chaos Test Base Features**:
+- Automatic retry with exponential backoff
+- Failure injection (network, timeout, errors)
+- Resilience scoring and metrics
+- Response mutation for edge cases
+- Concurrent operation testing
+- Extended failure recovery patterns
+
+**Available Test Suites**:
+- `test_timeout_resilience_chaos.py` - Timeout handling scenarios
+- `test_edge_cases_chaos.py` - Unusual inputs and edge cases
+- `test_error_recovery_chaos.py` - Error recovery patterns
+
+**Example**:
 ```python
-def test_ai_timeout_recovery(self):
-    """Test system handles AI timeouts gracefully"""
-    with simulate_timeout():
-        result = system.execute_with_ai("Complex task")
-        self.assertTrue(result.recovered)
-        self.assertIn("timeout", result.recovery_reason)
+class TestTimeoutResilienceChaos(ChaosTestBase):
+    def test_basic_timeout_recovery(self):
+        """Test basic recovery from timeout"""
+        def timeout_operation():
+            return self.chaos_query(
+                "Generate a simple function",
+                timeout=5.0
+            )
+        
+        # Should recover from occasional timeouts
+        self.assert_resilient(timeout_operation, min_success_rate=0.7)
+```
+
+**Resilience Metrics**:
+- Recovery rate from failures
+- Timeout handling effectiveness
+- Error type diversity
+- Degradation characteristics
+- Overall resilience score (0-1)
+
+**Configuration**:
+```yaml
+chaos:
+  enabled: true
+  description: "Layer 4: Chaos and real AI tests"
+  timeout: 1200  # 20 minutes
+  patterns:
+    - "**/test_*_chaos.py"
+  use_real_ai: false  # Set to true for real AI
+  simulate_failures: true
+  resilience_threshold: 0.7
+  chaos_config:
+    network_latency: 0.5
+    failure_rate: 0.1
+    timeout_probability: 0.05
 ```
 
 ## Configuration
@@ -263,7 +310,7 @@ As of last run:
 ## Future Improvements
 
 - [x] Implement Layer 3: Contract-based testing
-- [ ] Implement Layer 4: Chaos testing
+- [x] Implement Layer 4: Chaos testing
 - [ ] Add performance benchmarks
 - [ ] Create test data generators
 - [ ] Add mutation testing
@@ -271,6 +318,9 @@ As of last run:
 - [ ] Add real Anthropic Claude API integration
 - [ ] Implement cost tracking and optimization
 - [ ] Add contract schema versioning
+- [ ] Add distributed chaos testing
+- [ ] Implement load testing scenarios
+- [ ] Add security chaos tests
 
 ## Troubleshooting
 

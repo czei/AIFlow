@@ -36,8 +36,18 @@ test_layers:
     # Will validate AI outputs against JSON schemas
   
   chaos:
-    enabled: false
+    enabled: true
     description: "Layer 4: Chaos and real AI tests"
+    timeout: 1200  # 20 minutes for chaos tests
+    patterns:
+      - "**/test_*_chaos.py"
+    use_real_ai: false  # Set to true to use real AI
+    simulate_failures: true
+    resilience_threshold: 0.7  # Minimum resilience score to pass
+    chaos_config:
+      network_latency: 0.5  # Seconds
+      failure_rate: 0.1     # 10% failure rate
+      timeout_probability: 0.05  # 5% timeout chance
     # Will test resilience and real AI behavior
 
 # Global settings
