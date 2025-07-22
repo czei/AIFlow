@@ -96,33 +96,70 @@ def test_ai_guided_workflow(self):
     self.assertEqual(response["type"], "project_setup")
 ```
 
-## Layer 3: Contract-Based AI Testing (Not Implemented)
+## Layer 3: Contract-Based AI Testing ✅
 
 **Purpose**: Validate that real AI responses meet expected contracts and schemas.
 
-**Planned Location**: `tests/contract/`
+**Location**: `tests/contracts/`
 
 **Characteristics**:
-- Uses real AI API
-- Validates response structure
-- Ensures parseability
-- Tests API contracts
+- Can use real AI API or mock provider
+- Validates response structure against JSON schemas
+- Ensures parseability and type correctness
+- Tests API contracts without requiring deterministic output
+- Supports response caching for cost efficiency
 
 **What to test here**:
 - Response schema validation
 - Required field presence
 - Data type correctness
-- Format compliance
+- Format compliance (regex patterns)
 - API error handling
+- Response time constraints
+- Token usage tracking
 
-**Example (Planned)**:
+**Contract Test Base Features**:
+- JSON Schema validation using jsonschema library
+- Response caching with TTL support
+- Field type validation helpers
+- Enum field validation
+- Usage statistics tracking
+
+**Available Schemas**:
+- `project_setup_schema.json` - Project initialization responses
+- `code_generation_schema.json` - Code generation responses
+- `code_review_schema.json` - Code review responses
+- `error_analysis_schema.json` - Error debugging responses
+- `general_response_schema.json` - Generic AI responses
+
+**Example**:
 ```python
-def test_ai_response_contract(self):
-    """Test AI response matches expected schema"""
-    response = real_ai.query("Generate a function")
-    self.assertIn("code", response)
-    self.assertIsInstance(response["code"], str)
-    self.assertTrue(response["code"].startswith("def"))
+class TestCodeGenerationContract(ContractTestBase):
+    def test_function_generation_contract(self):
+        """Test that function generation meets contract"""
+        response = self.query_ai(
+            "Generate a Python function to calculate factorial",
+            context={"language": "python"}
+        )
+        
+        # Validate against JSON schema
+        self.validate_schema(response, "code_generation_schema")
+        
+        # Additional validations
+        self.assertIn("code", response)
+        self.assertTrue("def" in response["code"])
+```
+
+**Configuration**:
+```yaml
+contract:
+  enabled: true
+  description: "Layer 3: Contract-based AI validation"
+  timeout: 600
+  patterns:
+    - "**/test_*_contract.py"
+  api_provider: "mock"  # or "claude" for real API
+  cache_responses: true
 ```
 
 ## Layer 4: Chaos and Real AI Validation Tests (Not Implemented)
@@ -225,12 +262,15 @@ As of last run:
 
 ## Future Improvements
 
-- [ ] Implement Layer 3: Contract-based testing
+- [x] Implement Layer 3: Contract-based testing
 - [ ] Implement Layer 4: Chaos testing
 - [ ] Add performance benchmarks
 - [ ] Create test data generators
 - [ ] Add mutation testing
 - [ ] Implement test coverage reporting
+- [ ] Add real Anthropic Claude API integration
+- [ ] Implement cost tracking and optimization
+- [ ] Add contract schema versioning
 
 ## Troubleshooting
 

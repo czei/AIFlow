@@ -26,9 +26,14 @@ test_layers:
     # Will test AI behavior with deterministic mocks
   
   contract:
-    enabled: false
+    enabled: true
     description: "Layer 3: Contract-based AI validation"
-    # Will validate AI outputs against YAML contracts
+    timeout: 600
+    patterns:
+      - "**/test_*_contract.py"
+    api_provider: "mock"  # Use "claude" for real API, "mock" for testing
+    cache_responses: true
+    # Will validate AI outputs against JSON schemas
   
   chaos:
     enabled: false

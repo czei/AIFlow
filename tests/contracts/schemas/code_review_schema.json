@@ -1,0 +1,90 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Code Review Response Schema",
+    "description": "Schema for validating AI responses to code review requests",
+    "type": "object",
+    "required": ["type", "issues", "summary"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": ["code_review"],
+            "description": "Response type identifier"
+        },
+        "issues": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["severity", "message"],
+                "properties": {
+                    "severity": {
+                        "type": "string",
+                        "enum": ["critical", "high", "medium", "low", "info"],
+                        "description": "Issue severity level"
+                    },
+                    "message": {
+                        "type": "string",
+                        "minLength": 5,
+                        "description": "Description of the issue"
+                    },
+                    "line": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Line number where issue occurs"
+                    },
+                    "file": {
+                        "type": "string",
+                        "description": "File path where issue occurs"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["security", "performance", "maintainability", "style", "bug", "design"],
+                        "description": "Category of the issue"
+                    },
+                    "suggestion": {
+                        "type": "string",
+                        "description": "Suggested fix or improvement"
+                    }
+                }
+            },
+            "description": "List of issues found during review"
+        },
+        "summary": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Overall summary of the code review"
+        },
+        "recommendation": {
+            "type": "string",
+            "enum": ["approve", "approve_with_suggestions", "request_changes", "needs_major_refactor"],
+            "description": "Overall recommendation"
+        },
+        "positive_aspects": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Positive aspects of the code"
+        },
+        "metrics": {
+            "type": "object",
+            "properties": {
+                "complexity": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "maintainability": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "test_coverage": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                }
+            },
+            "description": "Optional code metrics"
+        }
+    },
+    "additionalProperties": true
+}

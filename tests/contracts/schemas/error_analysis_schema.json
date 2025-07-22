@@ -1,0 +1,67 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Error Analysis Response Schema",
+    "description": "Schema for validating AI responses to error analysis requests",
+    "type": "object",
+    "required": ["type", "diagnosis", "fix"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": ["error_analysis", "debug", "troubleshooting"],
+            "description": "Response type identifier"
+        },
+        "diagnosis": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Explanation of what caused the error"
+        },
+        "fix": {
+            "type": "string",
+            "minLength": 5,
+            "description": "Suggested fix for the error"
+        },
+        "code_fix": {
+            "type": "string",
+            "description": "Code snippet showing the fix"
+        },
+        "explanation": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Detailed explanation of why the fix works"
+        },
+        "error_type": {
+            "type": "string",
+            "enum": ["syntax", "runtime", "logic", "type", "reference", "permission", "network", "configuration"],
+            "description": "Category of error"
+        },
+        "root_cause": {
+            "type": "string",
+            "description": "Root cause analysis"
+        },
+        "prevention": {
+            "type": "string",
+            "description": "How to prevent this error in the future"
+        },
+        "related_issues": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Other related issues that might occur"
+        },
+        "debugging_steps": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Steps taken to debug the issue"
+        },
+        "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence level in the diagnosis (0-1)"
+        }
+    },
+    "additionalProperties": true
+}

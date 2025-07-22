@@ -1,0 +1,66 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Code Generation Response Schema",
+    "description": "Schema for validating AI responses to code generation requests",
+    "type": "object",
+    "required": ["type", "code", "explanation"],
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": ["code_generation", "code_implementation", "function", "class"],
+            "description": "Response type identifier"
+        },
+        "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Generated code content"
+        },
+        "language": {
+            "type": "string",
+            "enum": ["python", "javascript", "typescript", "java", "go", "rust", "c", "cpp", "shell", "yaml", "json"],
+            "description": "Programming language of the generated code"
+        },
+        "explanation": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Explanation of what the code does"
+        },
+        "test_code": {
+            "type": "string",
+            "description": "Optional test code for the generated function/class"
+        },
+        "dependencies": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Required dependencies or imports"
+        },
+        "usage_example": {
+            "type": "string",
+            "description": "Example of how to use the generated code"
+        },
+        "complexity": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string",
+                    "pattern": "^O\\(.+\\)$"
+                },
+                "space": {
+                    "type": "string",
+                    "pattern": "^O\\(.+\\)$"
+                }
+            },
+            "description": "Optional complexity analysis"
+        },
+        "edge_cases": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Known edge cases or limitations"
+        }
+    },
+    "additionalProperties": true
+}
