@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "success_rate": "0.0%",
+    "total_duration": "0.00s",
+    "timestamp": "2025-07-22T20:07:03.507065+00:00"
+  },
+  "results": [
+    {
+      "name": "run_all_tests.sh",
+      "success": false,
+      "duration": "0.00s",
+      "timestamp": "2025-07-22T20:07:03.505822+00:00",
+      "metadata": {},
+      "error": "Unexpected error: [Errno 2] No such file or directory: 'tests/run_all_tests.sh'"
+    },
+    {
+      "name": "integration_test.sh",
+      "success": false,
+      "duration": "0.00s",
+      "timestamp": "2025-07-22T20:07:03.506788+00:00",
+      "metadata": {},
+      "error": "Unexpected error: [Errno 2] No such file or directory: 'tests/integration_test.sh'"
+    }
+  ]
+}
