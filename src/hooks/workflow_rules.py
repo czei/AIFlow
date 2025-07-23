@@ -136,8 +136,10 @@ class WorkflowRules:
         if 'event' in context:
             event = context['event']
             # Check bash commands
-            if event.get('tool') == 'Bash' and 'command' in event:
-                text_to_check.append(event['command'])
+            if event.get('tool') == 'Bash':
+                command = event.get('input', {}).get('command', '')
+                if command:
+                    text_to_check.append(command)
             # Check commit messages
             if 'message' in event:
                 text_to_check.append(event['message'])
