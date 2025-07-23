@@ -13,7 +13,7 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from logged_secure_shell import LoggedSecureShell
+from scripts.logged_secure_shell import LoggedSecureShell
 
 
 class TestLoggedSecureShell(unittest.TestCase):
@@ -23,9 +23,9 @@ class TestLoggedSecureShell(unittest.TestCase):
         """Set up test fixtures"""
         self.test_workdir = "/test/project"
         
-    @patch('logged_secure_shell.BasicLogger')
-    @patch('logged_secure_shell.os.getpid')
-    @patch('logged_secure_shell.sys.argv', ['script.py', 'test', 'command'])
+    @patch('scripts.logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.os.getpid')
+    @patch('scripts.logged_secure_shell.sys.argv', ['script.py', 'test', 'command'])
     def test_shell_initialization(self, mock_getpid, mock_logger):
         """Test shell initializes with correct attributes"""
         mock_getpid.return_value = 12345
@@ -49,7 +49,7 @@ class TestLoggedSecureShell(unittest.TestCase):
             }
         )
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_planning(self, mock_logger):
         """Test command validation for planning phase"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -66,7 +66,7 @@ class TestLoggedSecureShell(unittest.TestCase):
             result = shell.validate_command_phase(cmd, [], "planning")
             self.assertFalse(result, f"{cmd} should not be allowed in planning phase")
             
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_implementation(self, mock_logger):
         """Test command validation for implementation phase"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -81,7 +81,7 @@ class TestLoggedSecureShell(unittest.TestCase):
         result = shell.validate_command_phase("cat", [], "implementation")
         self.assertTrue(result, "cat should be allowed in implementation phase")
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_validation(self, mock_logger):
         """Test command validation for validation phase"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -92,7 +92,7 @@ class TestLoggedSecureShell(unittest.TestCase):
             result = shell.validate_command_phase(cmd, [], "validation")
             self.assertTrue(result, f"{cmd} should be allowed in validation phase")
             
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_review(self, mock_logger):
         """Test command validation for review phase"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -107,7 +107,7 @@ class TestLoggedSecureShell(unittest.TestCase):
         result = shell.validate_command_phase("npm", [], "review")
         self.assertFalse(result, "npm should not be allowed in review phase")
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_unknown(self, mock_logger):
         """Test command validation for unknown phase"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -116,7 +116,7 @@ class TestLoggedSecureShell(unittest.TestCase):
         result = shell.validate_command_phase("ls", [], "unknown_phase")
         self.assertFalse(result, "Commands should not be allowed in unknown phase")
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     @patch('builtins.open', new_callable=mock_open)
     def test_load_project_state_success(self, mock_file, mock_logger):
         """Test successful project state loading"""
@@ -141,7 +141,7 @@ class TestLoggedSecureShell(unittest.TestCase):
             }
         )
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     @patch('builtins.open', side_effect=FileNotFoundError)
     def test_load_project_state_file_not_found(self, mock_file, mock_logger):
         """Test project state loading when file not found"""
@@ -160,7 +160,7 @@ class TestLoggedSecureShell(unittest.TestCase):
             }
         )
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     @patch('builtins.open', new_callable=mock_open)
     def test_load_project_state_invalid_json(self, mock_file, mock_logger):
         """Test project state loading with invalid JSON"""
@@ -178,8 +178,8 @@ class TestLoggedSecureShell(unittest.TestCase):
         self.assertEqual(error_call[0][0], 'errors')
         self.assertEqual(error_call[0][2], 'invalid_state_file')
         
-    @patch('logged_secure_shell.BasicLogger')
-    @patch('logged_secure_shell.time.time')
+    @patch('scripts.logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.time.time')
     def test_validate_command_phase_performance_tracking(self, mock_time, mock_logger):
         """Test that command validation tracks performance"""
         mock_time.side_effect = [0.0, 0.1]  # 100ms duration
@@ -197,7 +197,7 @@ class TestLoggedSecureShell(unittest.TestCase):
         self.assertEqual(details['args_count'], 2)
         self.assertIn('args_preview', details)
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_args_preview(self, mock_logger):
         """Test args preview in validation logging"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -215,7 +215,7 @@ class TestLoggedSecureShell(unittest.TestCase):
         self.assertEqual(details['args_preview'], ['arg1', 'arg2', 'arg3', '...'])
         self.assertEqual(details['args_count'], 5)
         
-    @patch('logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.BasicLogger')
     def test_validate_command_phase_validation_result(self, mock_logger):
         """Test validation result logging"""
         shell = LoggedSecureShell(self.test_workdir)
@@ -236,8 +236,8 @@ class TestLoggedSecureShell(unittest.TestCase):
 class TestLoggedSecureShellCommandParsing(unittest.TestCase):
     """Test command parsing and validation logic"""
     
-    @patch('logged_secure_shell.BasicLogger')
-    @patch('logged_secure_shell.sys.argv', ['script.py'])
+    @patch('scripts.logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.sys.argv', ['script.py'])
     def test_main_no_command(self, mock_logger):
         """Test main with no command provided"""
         shell = LoggedSecureShell("/test")
@@ -248,13 +248,13 @@ class TestLoggedSecureShellCommandParsing(unittest.TestCase):
             'errors', 'ERROR', 'invalid_usage',
             {
                 'message': 'No command provided',
-                'usage': 'logged_secure_shell <command>',
+                'usage': 'scripts.logged_secure_shell <command>',
                 'args_received': ['script.py']
             }
         )
         
-    @patch('logged_secure_shell.BasicLogger')
-    @patch('logged_secure_shell.sys.argv', ['script.py', 'echo "unbalanced quote'])
+    @patch('scripts.logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.sys.argv', ['script.py', 'echo "unbalanced quote'])
     def test_main_invalid_command_string(self, mock_logger):
         """Test main with invalid command string"""
         shell = LoggedSecureShell("/test")
@@ -266,8 +266,8 @@ class TestLoggedSecureShellCommandParsing(unittest.TestCase):
                       if call[0][2] == 'command_parse_error']
         self.assertEqual(len(error_calls), 1)
         
-    @patch('logged_secure_shell.BasicLogger')
-    @patch('logged_secure_shell.sys.argv', ['script.py', ''])
+    @patch('scripts.logged_secure_shell.BasicLogger')
+    @patch('scripts.logged_secure_shell.sys.argv', ['script.py', ''])
     def test_main_empty_command(self, mock_logger):
         """Test main with empty command string"""
         shell = LoggedSecureShell("/test")

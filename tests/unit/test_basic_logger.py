@@ -15,7 +15,7 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from logged_secure_shell import BasicLogger
+from scripts.logged_secure_shell import BasicLogger
 
 
 class TestBasicLogger(unittest.TestCase):
@@ -26,8 +26,8 @@ class TestBasicLogger(unittest.TestCase):
         self.test_correlation_id = "test-uuid-1234"
         self.test_project_dir = "/test/project"
         
-    @patch('logged_secure_shell.Path.mkdir')
-    @patch('logged_secure_shell.uuid.uuid4')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.uuid.uuid4')
     @patch('builtins.open', new_callable=mock_open)
     def test_logger_initialization(self, mock_file, mock_uuid, mock_mkdir):
         """Test logger initializes with correct attributes"""
@@ -50,9 +50,9 @@ class TestBasicLogger(unittest.TestCase):
         # Verify mkdir was called
         mock_mkdir.assert_called_once_with(exist_ok=True)
         
-    @patch('logged_secure_shell.uuid.uuid4')
+    @patch('scripts.logged_secure_shell.uuid.uuid4')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     def test_logger_auto_correlation_id(self, mock_mkdir, mock_file, mock_uuid):
         """Test logger generates correlation ID when not provided"""
         mock_uuid.return_value = self.test_correlation_id
@@ -63,8 +63,8 @@ class TestBasicLogger(unittest.TestCase):
         mock_uuid.assert_called_once()
         
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.datetime')
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.datetime')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     def test_log_event_structure(self, mock_mkdir, mock_datetime, mock_file):
         """Test log event creates proper JSON structure"""
         # Mock datetime to return consistent value
@@ -115,7 +115,7 @@ class TestBasicLogger(unittest.TestCase):
         self.assertEqual(log_entry, expected_fields)
         
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     @patch('builtins.print')
     def test_log_event_console_output(self, mock_print, mock_mkdir, mock_file):
         """Test log event prints to console"""
@@ -143,7 +143,7 @@ class TestBasicLogger(unittest.TestCase):
         self.assertIn('"msg":"error details"', console_msg)
         
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     def test_log_event_missing_state_file(self, mock_mkdir, mock_file):
         """Test log event handles missing state file gracefully"""
         # Create a mock file handle for writing
@@ -181,7 +181,7 @@ class TestBasicLogger(unittest.TestCase):
         self.assertEqual(log_entry['objective'], 'unknown')
         
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     def test_log_event_invalid_json_state(self, mock_mkdir, mock_file):
         """Test log event handles invalid JSON in state file"""
         # Configure mock to return invalid JSON
@@ -204,7 +204,7 @@ class TestBasicLogger(unittest.TestCase):
         self.assertEqual(log_entry['workflow_step'], 'unknown')
         
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     def test_log_file_selection(self, mock_mkdir, mock_file):
         """Test correct log file is selected based on category"""
         logger = BasicLogger(self.test_project_dir, self.test_correlation_id)
@@ -223,7 +223,7 @@ class TestBasicLogger(unittest.TestCase):
             mock_file.assert_any_call(expected_path, 'a', encoding='utf-8')
             
     @patch('builtins.open', new_callable=mock_open)
-    @patch('logged_secure_shell.Path.mkdir')
+    @patch('scripts.logged_secure_shell.Path.mkdir')
     def test_log_event_unknown_category(self, mock_mkdir, mock_file):
         """Test unknown category defaults to automation log"""
         logger = BasicLogger(self.test_project_dir, self.test_correlation_id)

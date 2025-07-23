@@ -17,7 +17,7 @@ import subprocess
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from test_runner_v2 import (
+from tests.runners.test_runner_v2 import (
     TestContext, TestResult, TestLayer, ShellTestLayer,
     TestLayerRegistry, TestRunner
 )
@@ -96,7 +96,7 @@ class TestShellTestLayer(unittest.TestCase):
             config={'patterns': ['**/*.sh']}
         )
         
-    @patch('test_runner_v2.Path.glob')
+    @patch('tests.runners.test_runner_v2.Path.glob')
     def test_discover_tests(self, mock_glob):
         """Test test discovery"""
         # Mock glob results
@@ -111,7 +111,7 @@ class TestShellTestLayer(unittest.TestCase):
         self.assertIn("test1.sh", tests)
         self.assertIn("tests/test2.sh", tests)
         
-    @patch('test_runner_v2.Path.glob')
+    @patch('tests.runners.test_runner_v2.Path.glob')
     def test_discover_tests_multiple_patterns(self, mock_glob):
         """Test discovery with multiple patterns"""
         context = TestContext(
@@ -131,8 +131,8 @@ class TestShellTestLayer(unittest.TestCase):
         self.assertIn("test.sh", tests)
         self.assertIn("tests/test.py", tests)
         
-    @patch('test_runner_v2.Path.exists')
-    @patch('test_runner_v2.subprocess.run')
+    @patch('tests.runners.test_runner_v2.Path.exists')
+    @patch('tests.runners.test_runner_v2.subprocess.run')
     def test_run_test_success(self, mock_run, mock_exists):
         """Test successful test execution"""
         # Mock file exists
@@ -157,8 +157,8 @@ class TestShellTestLayer(unittest.TestCase):
         call_args = mock_run.call_args[0][0]
         self.assertTrue(call_args[0].endswith("test.sh"))
         
-    @patch('test_runner_v2.Path.exists')
-    @patch('test_runner_v2.subprocess.run')
+    @patch('tests.runners.test_runner_v2.Path.exists')
+    @patch('tests.runners.test_runner_v2.subprocess.run')
     def test_run_test_failure(self, mock_run, mock_exists):
         """Test failed test execution"""
         # Mock file exists
@@ -177,8 +177,8 @@ class TestShellTestLayer(unittest.TestCase):
         self.assertEqual(result.metadata['exit_code'], 1)
         self.assertIn("Test failed", result.error)
         
-    @patch('test_runner_v2.Path.exists')
-    @patch('test_runner_v2.subprocess.run')
+    @patch('tests.runners.test_runner_v2.Path.exists')
+    @patch('tests.runners.test_runner_v2.subprocess.run')
     def test_run_test_timeout(self, mock_run, mock_exists):
         """Test test execution timeout"""
         # Mock file exists
@@ -191,8 +191,8 @@ class TestShellTestLayer(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Test timed out", result.error)
         
-    @patch('test_runner_v2.Path.exists')
-    @patch('test_runner_v2.subprocess.run')
+    @patch('tests.runners.test_runner_v2.Path.exists')
+    @patch('tests.runners.test_runner_v2.subprocess.run')
     def test_run_test_permission_error(self, mock_run, mock_exists):
         """Test permission error handling"""
         # Mock file exists
@@ -206,8 +206,8 @@ class TestShellTestLayer(unittest.TestCase):
         self.assertIn("Script not executable", result.error)
         self.assertIn("chmod +x", result.error)
         
-    @patch('test_runner_v2.Path.exists')
-    @patch('test_runner_v2.subprocess.run')
+    @patch('tests.runners.test_runner_v2.Path.exists')
+    @patch('tests.runners.test_runner_v2.subprocess.run')
     def test_run_test_with_input(self, mock_run, mock_exists):
         """Test that input="" is passed to prevent hangs"""
         # Mock file exists
@@ -270,12 +270,12 @@ class TestTestLayerRegistry(unittest.TestCase):
 class TestTestRunner(unittest.TestCase):
     """Test TestRunner main class"""
     
-    @patch('test_runner_v2.Path.mkdir')
+    @patch('tests.runners.test_runner_v2.Path.mkdir')
     def setUp(self, mock_mkdir):
         """Set up test fixtures"""
         self.runner = TestRunner(project_root="/test/project")
         
-    @patch('test_runner_v2.Path.mkdir')
+    @patch('tests.runners.test_runner_v2.Path.mkdir')
     def test_initialization(self, mock_mkdir):
         """Test runner initialization"""
         runner = TestRunner(project_root="/test/project")
@@ -288,10 +288,10 @@ class TestTestRunner(unittest.TestCase):
         shell_layer = runner.registry.get("shell")
         self.assertIsInstance(shell_layer, ShellTestLayer)
         
-    @patch('test_runner_v2.yaml.safe_load')
+    @patch('tests.runners.test_runner_v2.yaml.safe_load')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('test_runner_v2.Path.exists')
-    @patch('test_runner_v2.Path.mkdir')
+    @patch('tests.runners.test_runner_v2.Path.exists')
+    @patch('tests.runners.test_runner_v2.Path.mkdir')
     def test_load_config_success(self, mock_mkdir, mock_exists, mock_file, mock_yaml_load):
         """Test successful config loading"""
         mock_exists.return_value = True
@@ -334,8 +334,8 @@ class TestTestRunner(unittest.TestCase):
         
         self.assertEqual(results, [])
         
-    @patch('test_runner_v2.ShellTestLayer.discover_tests')
-    @patch('test_runner_v2.ShellTestLayer.run_test')
+    @patch('tests.runners.test_runner_v2.ShellTestLayer.discover_tests')
+    @patch('tests.runners.test_runner_v2.ShellTestLayer.run_test')
     def test_run_layer_success(self, mock_run_test, mock_discover):
         """Test running enabled layer"""
         # Set up mocks
@@ -353,7 +353,7 @@ class TestTestRunner(unittest.TestCase):
         self.assertFalse(results[1].success)
         
     @patch('builtins.open', new_callable=mock_open)
-    @patch('test_runner_v2.datetime')
+    @patch('tests.runners.test_runner_v2.datetime')
     def test_save_results(self, mock_datetime, mock_file):
         """Test saving results to JSON"""
         # Mock datetime.now instead of utcnow
@@ -375,7 +375,7 @@ class TestTestRunner(unittest.TestCase):
         write_calls = [call[0][0] for call in mock_file.return_value.write.call_args_list if call[0]]
         # Find the JSON write
         # Instead of parsing write calls, mock json.dump
-        with patch('test_runner_v2.json.dump') as mock_json_dump:
+        with patch('tests.runners.test_runner_v2.json.dump') as mock_json_dump:
             # Call again to capture json.dump
             self.runner._save_results(results)
             self.assertTrue(mock_json_dump.called)
@@ -401,7 +401,7 @@ class TestTestRunner(unittest.TestCase):
         
         # Test by calling save_results and checking output
         with patch('builtins.open', mock_open()) as mock_file:
-            with patch('test_runner_v2.json.dump') as mock_json_dump:
+            with patch('tests.runners.test_runner_v2.json.dump') as mock_json_dump:
                 self.runner._save_results(results)
                 # Get the report from json.dump call
                 self.assertTrue(mock_json_dump.called)
