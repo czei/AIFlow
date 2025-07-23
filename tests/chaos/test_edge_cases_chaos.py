@@ -8,6 +8,12 @@ import unittest
 import random
 import string
 import json
+import sys
+import os
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from chaos_base import ChaosTestBase
 
 
@@ -57,7 +63,7 @@ class TestEdgeCasesChaos(ChaosTestBase):
             ("a" * 10000, "single character repeated"),
             (" ".join([f"item_{i}" for i in range(500)]), "long list"),
             ("Lorem ipsum " * 500, "repeated phrase"),
-            (json.dumps({"key": "value"} for _ in range(100)), "json dump"),
+            (json.dumps([{"key": "value"} for _ in range(100)]), "json dump"),
         ]
         
         for content, description in test_cases:

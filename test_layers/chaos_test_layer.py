@@ -12,6 +12,7 @@ import json
 import sys
 import os
 import random
+import re
 
 # Import from parent module
 try:
@@ -138,7 +139,6 @@ class ChaosTestLayer(TestLayer):
                         test_count = int(parts[1])
                 elif "FAILED" in line:
                     # "FAILED (failures=X, errors=Y)"
-                    import re
                     failures_match = re.search(r'failures=(\d+)', line)
                     errors_match = re.search(r'errors=(\d+)', line)
                     if failures_match:

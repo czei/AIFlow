@@ -39,8 +39,12 @@ class UnitTestLayer(TestLayer):
                 if test_file.name in ['test_runner.py', 'test_runner_v2.py', 'test_runner_v2_old.py']:
                     continue
                     
-                # Skip integration tests
-                if 'integration' in test_file.parts:
+                # Skip non-unit tests (integration, chaos, contracts)
+                if any(layer in test_file.parts for layer in ['integration', 'chaos', 'contracts']):
+                    continue
+                    
+                # Skip files with specific suffixes that indicate non-unit tests
+                if any(test_file.name.endswith(suffix) for suffix in ['_chaos.py', '_contract.py', '_integration.py']):
                     continue
                     
                 # Get relative path for cleaner names

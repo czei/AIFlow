@@ -7,6 +7,12 @@ Tests system behavior under various timeout conditions.
 import unittest
 import time
 import random
+import sys
+import os
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from chaos_base import ChaosTestBase
 
 

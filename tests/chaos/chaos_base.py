@@ -27,6 +27,13 @@ from mocks.mock_claude_provider import MockClaudeProvider
 class ChaosTestBase(unittest.TestCase):
     """Base class for all chaos tests"""
     
+    # Initialize class-level metrics to ensure they always exist
+    total_attempts = 0
+    successful_recoveries = 0
+    failed_recoveries = 0
+    timeouts = 0
+    errors = {}
+    
     @classmethod
     def setUpClass(cls):
         """Set up class-level resources"""
@@ -263,7 +270,7 @@ class ChaosTestBase(unittest.TestCase):
         if self.test_errors:
             print(f"\nTest errors encountered: {len(self.test_errors)}")
             for error in self.test_errors[:5]:  # Show first 5
-                print(f"  - {error['type']}: {error.get('message', 'No message')}")
+                print(f"  - {error.get('type', 'unknown_error')}: {error.get('message', 'No message')}")
                 
         if self.recovery_attempts:
             successful = sum(1 for r in self.recovery_attempts if r['success'])
@@ -337,4 +344,4 @@ class ChaosAIProvider:
             mutation = random.choice(mutations)
             response = mutation(response)
             
-        return response '
+        return response

@@ -9,6 +9,7 @@ import json
 import sys
 import time
 import yaml
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -98,6 +99,15 @@ class ShellTestLayer(TestLayer):
         discovered_tests = []
         for pattern in patterns:
             for test_file in context.project_root.glob(pattern):
+                # Skip non-test scripts
+                name = test_file.name.lower()
+                if any(skip in name for skip in ['install', 'setup', 'build', 'deploy', 'config']):
+                    continue
+                    
+                # Only include scripts that look like tests
+                if not any(test_pattern in name for test_pattern in ['test', 'check', 'verify']):
+                    continue
+                
                 # Get relative path for cleaner output
                 rel_path = test_file.relative_to(context.project_root)
                 discovered_tests.append(str(rel_path))
@@ -373,6 +383,14 @@ class TestRunner:
             return []
         
         print(f"Found {len(tests)} {layer_name} test(s)")
+        
+        # Log test ownership for debugging
+        if os.getenv('DEBUG_TEST_OWNERSHIP', '0') == '1':
+            print(f"  Tests discovered by {layer_name} layer:")
+            for test in tests[:5]:  # Show first 5
+                print(f"    - {test}")
+            if len(tests) > 5:
+                print(f"    ... and {len(tests) - 5} more")
         
         # Run tests
         results = []

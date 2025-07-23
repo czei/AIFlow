@@ -100,6 +100,11 @@ class MockClaudeProvider:
         """Generate predictable response based on prompt patterns"""
         prompt_lower = prompt.lower()
         
+        # Debug logging
+        if self.debug:
+            print(f"DEBUG MockClaudeProvider: Processing prompt: {prompt[:100]}...")
+            print(f"DEBUG MockClaudeProvider: Context: {context}")
+        
         # Project setup requests
         if "setup" in prompt_lower or "create project" in prompt_lower:
             project_name = context.get("project_name", "test_project") if context else "test_project"
@@ -119,39 +124,65 @@ class MockClaudeProvider:
             return {
                 "type": "code_review",
                 "issues": self.response_templates["code_review"]["issues"],
-                "summary": "Found 3 issues: 1 high, 1 medium, 1 low severity",
-                "recommendation": "Address high severity issues before deployment"
+                "summary": "Found 3 issues: 1 high, 1 medium, 1 low severity. The code needs improvement in error handling and documentation.",
+                "recommendation": "request_changes",
+                "positive_aspects": ["Code structure is clean", "Function names are descriptive"]
             }
             
         # Code implementation requests
-        elif "implement" in prompt_lower or "create function" in prompt_lower:
+        elif any(keyword in prompt_lower for keyword in ["implement", "create function", "generate", "write"]):
             # Extract function name from prompt
             func_match = re.search(r"function\s+(\w+)", prompt)
             func_name = func_match.group(1) if func_match else "process_data"
             
+            # For contract tests, return appropriate type based on prompt
+            if "function" in prompt_lower:
+                response_type = "function"
+            elif "class" in prompt_lower:
+                response_type = "class"
+            else:
+                response_type = "code_implementation"
+                
+            # Determine the language from context or default to python
+            language = context.get("language", "python") if context else "python"
+            
+            # Map response types to valid enum values
+            type_mapping = {
+                "function": "function",
+                "class": "class",
+                "code_implementation": "code_implementation"
+            }
+            
             return {
-                "type": "code_implementation",
+                "type": type_mapping.get(response_type, "code_generation"),
                 "code": self.response_templates["code_implementation"]["function"].format(
                     function_name=func_name,
                     params="data",
                     return_value="processed_data"
                 ),
+                "language": language,
+                "explanation": f"Implemented {func_name} with basic structure. This function takes data as input and returns processed_data.",
                 "test_code": self.response_templates["code_implementation"]["test"].format(
                     function_name=func_name,
                     test_params="'test_data'",
                     expected_result="'processed_data'"
                 ),
-                "explanation": f"Implemented {func_name} with basic structure"
+                "dependencies": ["typing"] if language == "python" else [],
+                "usage_example": f"{func_name}('sample_data')  # Returns: 'processed_data'"
             }
             
         # Error analysis requests
         elif "error" in prompt_lower or "debug" in prompt_lower:
             return {
                 "type": "error_analysis",
-                "diagnosis": "The error appears to be a type mismatch",
+                "diagnosis": "The error appears to be a type mismatch between the expected and actual data types",
                 "fix": "Convert the input to the expected type before processing",
                 "code_fix": "data = str(data)  # Ensure data is string type",
-                "explanation": "Type conversion will resolve the immediate issue"
+                "explanation": "Type conversion will resolve the immediate issue by ensuring the data matches the expected format",
+                "error_type": "type",
+                "root_cause": "Function expects string input but received a different type",
+                "prevention": "Add type hints and input validation to catch type mismatches early",
+                "confidence": 0.85
             }
             
         # Default response

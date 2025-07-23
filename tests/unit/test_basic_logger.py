@@ -68,7 +68,7 @@ class TestBasicLogger(unittest.TestCase):
     def test_log_event_structure(self, mock_mkdir, mock_datetime, mock_file):
         """Test log event creates proper JSON structure"""
         # Mock datetime to return consistent value
-        mock_datetime.utcnow.return_value.isoformat.return_value = "2025-01-01T00:00:00"
+        mock_datetime.now.return_value.isoformat.return_value = "2025-01-01T00:00:00Z"
         
         # Mock project state file
         mock_file.return_value.read.return_value = json.dumps({
