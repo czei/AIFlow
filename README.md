@@ -90,6 +90,14 @@ The system creates comprehensive project structure:
 - **Multi-layered state management** for resumable automation
 - **Quality assurance** built into every development step
 
+## Documentation
+
+- **[HOOK_DOCUMENTATION.md](docs/HOOK_DOCUMENTATION.md)** - Complete hook system documentation
+- **[HOOK_QUICK_REFERENCE.md](docs/HOOK_QUICK_REFERENCE.md)** - Quick reference for workflow phases
+- **[PROJECT_STATE_SCHEMA.md](docs/PROJECT_STATE_SCHEMA.md)** - State file specification
+- **[IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)** - Development roadmap
+- **[FIX_COMMANDS_PLAN.md](docs/FIX_COMMANDS_PLAN.md)** - Command implementation details
+
 ## Project Structure Created
 
 ```
