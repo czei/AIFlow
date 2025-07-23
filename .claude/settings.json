@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "project_name": "test-integration",
+  "automation_enabled": false,
+  "hooks": {
+    "PreToolUse": null,
+    "PostToolUse": null,
+    "Stop": null
+  },
+  "workflow": {
+    "steps": [
+      "planning",
+      "implementation",
+      "validation",
+      "review",
+      "refinement",
+      "integration"
+    ],
+    "quality_gates": [
+      "compilation",
+      "existing_tests",
+      "new_tests",
+      "review",
+      "integration",
+      "documentation",
+      "performance"
+    ]
+  }
+}
