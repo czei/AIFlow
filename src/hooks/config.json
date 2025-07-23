@@ -1,0 +1,34 @@
+{
+  "workflow_enforcement": {
+    "mode": "guided_flexibility",
+    "allow_emergency_override": true,
+    "compliance_tracking": true
+  },
+  "emergency_patterns": [
+    "EMERGENCY:",
+    "HOTFIX:",
+    "CRITICAL:",
+    "OVERRIDE:",
+    "production.*down",
+    "security.*vulnerability",
+    "data.*loss"
+  ],
+  "step_timeouts": {
+    "planning": 3600,
+    "implementation": 7200,
+    "validation": 3600,
+    "review": 3600,
+    "refinement": 3600,
+    "integration": 1800
+  },
+  "metrics": {
+    "track_compliance": true,
+    "track_tool_usage": true,
+    "track_progress": true
+  },
+  "notifications": {
+    "step_complete": true,
+    "phase_complete": true,
+    "workflow_violation": true
+  }
+}

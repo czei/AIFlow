@@ -8,16 +8,18 @@ that violate the current workflow step rules.
 
 import json
 import sys
+import os
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add parent directory to path for imports (use append for safety)
+sys.path.append(str(Path(__file__).parent.parent))
 
 try:
     from state_manager import StateManager
-except ImportError:
-    # If no StateManager, allow all operations
-    print(json.dumps({"allow": True}))
+    from hooks.workflow_rules import WorkflowRules
+except ImportError as e:
+    # If no StateManager or WorkflowRules, allow all operations
+    print(json.dumps({"allow": True, "warning": f"Import error: {str(e)}"}))
     sys.exit(0)
 
 
@@ -37,9 +39,13 @@ def main():
         # Try to read state
         try:
             state = state_manager.read()
-        except:
+        except FileNotFoundError:
             # No state file = allow all operations
             print(json.dumps({"allow": True}))
+            return
+        except Exception as e:
+            # Other errors - log but allow
+            print(json.dumps({"allow": True, "warning": f"State read error: {str(e)}"}))
             return
             
         # Check if automation is active
@@ -52,59 +58,50 @@ def main():
         workflow_step = state.get('workflow_step', 'planning')
         tool = event.get('tool', '')
         
-        # Apply workflow rules
-        allow, message = apply_workflow_rules(workflow_step, tool, event)
+        # Use WorkflowRules engine
+        allow, message, suggestions = WorkflowRules.evaluate_tool_use(
+            workflow_step, tool, {'event': event}
+        )
         
-        # Return decision
+        # Update metrics
+        metrics = state.get('metrics', {})
+        if allow:
+            metrics['tools_allowed'] = metrics.get('tools_allowed', 0) + 1
+        else:
+            metrics['tools_blocked'] = metrics.get('tools_blocked', 0) + 1
+        
+        # Check for emergency override
+        if allow and WorkflowRules._check_emergency_override({'event': event}):
+            metrics['emergency_overrides'] = metrics.get('emergency_overrides', 0) + 1
+        
+        # Update state with metrics (async, don't block on this)
+        try:
+            state_manager.update({'metrics': metrics})
+        except Exception:
+            pass  # Don't fail the hook on metrics update
+        
+        # Build response
         result = {"allow": allow}
-        if not allow and message:
-            result["message"] = message
-            
+        if not allow:
+            if message:
+                result["message"] = message
+            if suggestions:
+                result["suggestions"] = suggestions
+                
         print(json.dumps(result))
         
+    except json.JSONDecodeError:
+        # Invalid JSON input
+        print(json.dumps({
+            "allow": True,
+            "warning": "Invalid JSON input to hook"
+        }))
     except Exception as e:
         # On error, allow operation but log
         print(json.dumps({
             "allow": True,
             "warning": f"Hook error: {str(e)}"
-        }), file=sys.stderr)
-
-
-def apply_workflow_rules(workflow_step: str, tool: str, event: dict) -> tuple[bool, str]:
-    """
-    Apply workflow-specific rules to tool usage.
-    
-    Returns: (allow, message)
-    """
-    # Planning phase rules
-    if workflow_step == 'planning':
-        # Block code writing tools
-        if tool in ['Write', 'Edit', 'MultiEdit']:
-            return False, "🚫 Planning phase: Complete requirements analysis before writing code. Focus on understanding the problem and designing the approach."
-            
-        # Block compilation/build commands
-        if tool == 'Bash':
-            command = event.get('input', {}).get('command', '')
-            if any(cmd in command for cmd in ['make', 'npm run build', 'cargo build', 'go build']):
-                return False, "🚫 Planning phase: Focus on requirements, not building. Code implementation comes in the next phase."
-                
-    # Validation phase rules
-    elif workflow_step == 'validation':
-        # Require tests before commits
-        if tool == 'Bash':
-            command = event.get('input', {}).get('command', '')
-            if 'git commit' in command:
-                # This is a simplified check - in production, check state for test results
-                return False, "🚫 Validation phase: Ensure all tests pass before committing. Run tests first."
-                
-    # Review phase rules
-    elif workflow_step == 'review':
-        # Discourage major changes during review
-        if tool in ['Write', 'MultiEdit']:
-            return True, "⚠️  Review phase: Major changes should wait for refinement phase."
-            
-    # All other cases: allow
-    return True, ""
+        }))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,52 @@
+{
+  "description": "Emergency override patterns and rules",
+  "patterns": [
+    {
+      "pattern": "EMERGENCY:",
+      "description": "General emergency override",
+      "requires_justification": true
+    },
+    {
+      "pattern": "HOTFIX:",
+      "description": "Production hotfix",
+      "requires_justification": true,
+      "auto_create_incident": true
+    },
+    {
+      "pattern": "CRITICAL:",
+      "description": "Critical issue requiring immediate action",
+      "requires_justification": true
+    },
+    {
+      "pattern": "OVERRIDE:",
+      "description": "Explicit workflow override",
+      "requires_justification": true,
+      "requires_approval": false
+    }
+  ],
+  "context_patterns": [
+    {
+      "pattern": "production.*down",
+      "description": "Production system is down",
+      "auto_approve": true
+    },
+    {
+      "pattern": "security.*vulnerability",
+      "description": "Security vulnerability detected",
+      "auto_approve": true,
+      "notify_security_team": true
+    },
+    {
+      "pattern": "data.*loss",
+      "description": "Potential data loss scenario",
+      "auto_approve": true,
+      "create_backup": true
+    }
+  ],
+  "override_rules": {
+    "max_overrides_per_phase": 3,
+    "require_documentation": true,
+    "audit_trail": true,
+    "notification_required": true
+  }
+}

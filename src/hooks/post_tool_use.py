@@ -11,13 +11,14 @@ import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add parent directory to path for imports (use append for safety)
+sys.path.append(str(Path(__file__).parent.parent))
 
 try:
     from state_manager import StateManager
+    from hooks.workflow_rules import WorkflowRules
 except ImportError:
-    # If no StateManager, just exit
+    # If no StateManager or WorkflowRules, just exit
     sys.exit(0)
 
 
@@ -37,8 +38,11 @@ def main():
         # Try to read state
         try:
             state = state_manager.read()
-        except:
+        except FileNotFoundError:
             # No state file = nothing to update
+            return
+        except Exception:
+            # Other errors - just log and continue
             return
             
         # Check if automation is active
@@ -53,6 +57,12 @@ def main():
         # Update state based on tool usage
         updates = process_tool_execution(state, tool, event, workflow_step)
         
+        # Check if workflow step might be complete
+        if updates and workflow_step:
+            completion_check = check_step_completion(state, workflow_step, updates)
+            if completion_check:
+                updates.update(completion_check)
+        
         if updates:
             # Apply updates
             state_manager.update(updates)
@@ -60,7 +70,13 @@ def main():
             # Log significant updates
             if 'quality_gates_passed' in updates:
                 print(f"✅ Quality gate passed: {updates['quality_gates_passed'][-1]}")
+            if 'workflow_progress' in updates:
+                progress = updates['workflow_progress']
+                print(f"📊 Workflow progress: {progress.get('message', 'Step advancing')}")
                 
+    except json.JSONDecodeError:
+        # Invalid JSON input
+        pass
     except Exception as e:
         # Log error but don't fail
         print(f"PostToolUse hook error: {str(e)}", file=sys.stderr)
@@ -72,6 +88,24 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
     """
     updates = {}
     
+    # Initialize workflow progress tracking
+    progress = state.get('workflow_progress', {})
+    if workflow_step not in progress:
+        progress[workflow_step] = {
+            'started': datetime.now(timezone.utc).isoformat(),
+            'tools_used': [],
+            'files_modified': [],
+            'tests_run': False,
+            'build_success': False,
+            'review_complete': False
+        }
+    
+    step_progress = progress[workflow_step]
+    
+    # Track tool usage
+    if tool not in step_progress['tools_used']:
+        step_progress['tools_used'].append(tool)
+    
     # Track file modifications
     if tool in ['Write', 'Edit', 'MultiEdit']:
         file_path = event.get('input', {}).get('file_path', '')
@@ -80,6 +114,10 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
             if file_path not in files_modified:
                 files_modified.append(file_path)
                 updates['files_modified'] = files_modified
+            
+            # Track in workflow progress
+            if file_path not in step_progress['files_modified']:
+                step_progress['files_modified'].append(file_path)
                 
     # Track test execution
     elif tool == 'Bash':
@@ -87,7 +125,8 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
         exit_code = event.get('exit_code', 0)
         
         # Check for test commands
-        if any(test_cmd in command for test_cmd in ['pytest', 'npm test', 'cargo test', 'go test']):
+        if any(test_cmd in command for test_cmd in ['pytest', 'npm test', 'cargo test', 'go test', 'rspec']):
+            step_progress['tests_run'] = True
             if exit_code == 0:
                 # Tests passed
                 gates = state.get('quality_gates_passed', [])
@@ -98,6 +137,7 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
         # Check for build commands
         elif any(build_cmd in command for build_cmd in ['make', 'npm run build', 'cargo build', 'go build']):
             if exit_code == 0:
+                step_progress['build_success'] = True
                 # Build succeeded
                 gates = state.get('quality_gates_passed', [])
                 if 'compilation' not in gates:
@@ -105,7 +145,7 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
                     updates['quality_gates_passed'] = gates
                     
         # Check for lint commands
-        elif any(lint_cmd in command for lint_cmd in ['eslint', 'pylint', 'flake8', 'cargo clippy']):
+        elif any(lint_cmd in command for lint_cmd in ['eslint', 'pylint', 'flake8', 'cargo clippy', 'rubocop']):
             if exit_code == 0:
                 # Linting passed
                 gates = state.get('quality_gates_passed', [])
@@ -115,16 +155,95 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
                     
     # Track code review usage
     elif tool == 'mcp__zen__codereview':
+        step_progress['review_complete'] = True
         gates = state.get('quality_gates_passed', [])
         if 'review' not in gates:
             gates.append('review')
             updates['quality_gates_passed'] = gates
+    
+    # Track TodoWrite for planning completion
+    elif tool == 'TodoWrite' and workflow_step == 'planning':
+        # Check if implementation tasks were created
+        if event.get('input', {}).get('todos'):
+            step_progress['planning_complete'] = True
+    
+    # Update workflow progress
+    updates['workflow_progress'] = progress
             
     # Always update last_updated
     if updates:
         updates['last_updated'] = datetime.now(timezone.utc).isoformat()
         
     return updates
+
+
+def check_step_completion(state: dict, workflow_step: str, updates: dict) -> dict:
+    """
+    Check if the current workflow step is complete based on progress indicators.
+    
+    Returns dict with potential workflow advancement.
+    """
+    completion_updates = {}
+    
+    # Get completion indicators from WorkflowRules
+    indicators = WorkflowRules.get_step_completion_indicators(workflow_step)
+    if not indicators:
+        return completion_updates
+    
+    # Get current progress
+    progress = updates.get('workflow_progress', state.get('workflow_progress', {}))
+    step_progress = progress.get(workflow_step, {})
+    
+    # Check completion based on workflow step
+    is_complete = False
+    completion_message = ""
+    
+    if workflow_step == 'planning':
+        # Planning is complete when todo list is created
+        if step_progress.get('planning_complete'):
+            is_complete = True
+            completion_message = "Planning complete - todo list created"
+            
+    elif workflow_step == 'implementation':
+        # Implementation complete when code is written
+        if len(step_progress.get('files_modified', [])) > 0:
+            is_complete = True
+            completion_message = f"Implementation complete - {len(step_progress['files_modified'])} files modified"
+            
+    elif workflow_step == 'validation':
+        # Validation complete when tests are run
+        if step_progress.get('tests_run'):
+            is_complete = True
+            completion_message = "Validation complete - tests executed"
+            
+    elif workflow_step == 'review':
+        # Review complete when code review is done
+        if step_progress.get('review_complete'):
+            is_complete = True
+            completion_message = "Review complete - code reviewed"
+            
+    elif workflow_step == 'refinement':
+        # Refinement complete when files are edited after review
+        if 'Edit' in step_progress.get('tools_used', []):
+            is_complete = True
+            completion_message = "Refinement complete - changes applied"
+            
+    elif workflow_step == 'integration':
+        # Integration complete when git operations are used
+        git_tools_used = [t for t in step_progress.get('tools_used', []) if 'Git' in t]
+        if git_tools_used:
+            is_complete = True
+            completion_message = "Integration complete - changes committed"
+    
+    if is_complete:
+        completion_updates['workflow_progress'] = {
+            'step': workflow_step,
+            'complete': True,
+            'message': completion_message,
+            'ready_for_next': indicators.get('next_step', 'planning')
+        }
+    
+    return completion_updates
 
 
 if __name__ == '__main__':
