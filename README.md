@@ -44,7 +44,7 @@ After installation, these commands will be available in any Claude Code session:
 1. Navigate to an existing git repository
 2. Run: `/user:project:setup my-awesome-project`
 3. Customize the generated phase files for your specific project requirements
-4. Review `WORKFLOW_SPECIFICATIONS.md` for detailed workflow methodology
+4. Review `docs/WORKFLOW_SPECIFICATIONS.md` for detailed workflow methodology
 5. Run: `/user:project:doctor` to validate setup
 6. Run: `/user:project:start` to begin automated development
 
@@ -143,14 +143,18 @@ Each phase includes detailed workflow guidance:
 
 ## Documentation
 
-- **POC_SETUP_GUIDE.md** - Quick start guide for proof-of-concept testing
-- **PROJECT_DOCUMENTATION.md** - Comprehensive system overview and design
-- **WORKFLOW_SPECIFICATIONS.md** - Detailed 6-step methodology and phase variations
-- **PHASE_CREATION_INSTRUCTIONS.md** - AI instructions for creating effective phase files
-- **SECURITY_ARCHITECTURE.md** - Future OPA-based security implementation
-- **LOGGING_ARCHITECTURE.md** - Comprehensive logging and debugging infrastructure
-- **example-detailed-phase.md** - Template showing workflow integration in phase files
-- **phase-template-with-state.md** - State tracking and progress management examples
+All documentation has been organized in the `docs/` directory:
+
+- **docs/POC_SETUP_GUIDE.md** - Quick start guide for proof-of-concept testing
+- **docs/PROJECT_DOCUMENTATION.md** - Comprehensive system overview and design
+- **docs/WORKFLOW_SPECIFICATIONS.md** - Detailed 6-step methodology and phase variations
+- **docs/PHASE_CREATION_INSTRUCTIONS.md** - AI instructions for creating effective phase files
+- **docs/SECURITY_ARCHITECTURE.md** - Future OPA-based security implementation
+- **docs/LOGGING_ARCHITECTURE.md** - Comprehensive logging and debugging infrastructure
+- **docs/TESTING.md** - Comprehensive testing framework documentation
+- **docs/SECURITY_FIXES_SUMMARY.md** - Summary of security improvements
+- **docs/example-detailed-phase.md** - Template showing workflow integration in phase files
+- **docs/phase-template-with-state.md** - State tracking and progress management examples
 
 ## Prerequisites
 

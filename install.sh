@@ -9,7 +9,7 @@ echo "🚀 Installing Claude Code Project Management Commands..."
 mkdir -p ~/.claude/commands/project
 
 # Copy all command files
-cp -r /Users/czei/claude-project-commands/project/* ~/.claude/commands/project/
+cp -r ./project/* ~/.claude/commands/project/
 
 echo "✅ Commands installed successfully!"
 echo ""

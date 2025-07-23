@@ -31,8 +31,8 @@ except ImportError:
     DEFAULT_TEST_TIMEOUT = 300
     DEFAULT_TEST_PATTERNS = {"shell": ["**/*.sh"]}
     DEFAULT_TEST_RESULTS_DIR = "test_results"
-    DEFAULT_PLUGIN_DIR = "test_layers"
-    DEFAULT_CONFIG_FILE = "test_config.yaml"
+    DEFAULT_PLUGIN_DIR = "tests/layers"
+    DEFAULT_CONFIG_FILE = "tests/test_config.yaml"
 
 
 @dataclass

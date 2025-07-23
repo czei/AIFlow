@@ -14,11 +14,11 @@ import re
 
 # Import from parent module
 try:
-    from test_runner_v2 import TestLayer, TestContext, TestResult
+    from tests.runners.test_runner_v2 import TestLayer, TestContext, TestResult
 except ImportError:
     # If direct import fails, try adding parent to path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from test_runner_v2 import TestLayer, TestContext, TestResult
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from tests.runners.test_runner_v2 import TestLayer, TestContext, TestResult
 
 
 class UnitTestLayer(TestLayer):
