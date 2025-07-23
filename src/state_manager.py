@@ -9,14 +9,78 @@ import json
 import os
 import tempfile
 import shutil
+import fcntl
+import time
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
+
+from config import state as state_config, messages, workflow as workflow_config
 
 
 class StateValidationError(Exception):
     """Raised when state validation fails."""
     pass
+
+
+class FileLock:
+    """Simple file locking implementation for state file protection."""
+    
+    def __init__(self, file_path: Path, timeout: float = None):
+        """
+        Initialize file lock.
+        
+        Args:
+            file_path: Path to the file to lock
+            timeout: Maximum time to wait for lock (seconds)
+        """
+        self.lock_file = Path(str(file_path) + '.lock')
+        self.timeout = timeout or state_config.LOCK_TIMEOUT_SECONDS
+        self.lock_fd = None
+        
+    def __enter__(self):
+        """Acquire lock with timeout."""
+        start_time = time.time()
+        
+        while True:
+            try:
+                # Try to create lock file exclusively
+                self.lock_fd = os.open(
+                    str(self.lock_file), 
+                    os.O_CREAT | os.O_EXCL | os.O_RDWR
+                )
+                # Lock acquired successfully
+                break
+            except FileExistsError:
+                # Lock file exists, check timeout
+                if time.time() - start_time > self.timeout:
+                    # Check if lock file is stale (older than timeout)
+                    try:
+                        lock_age = time.time() - os.path.getmtime(self.lock_file)
+                        if lock_age > self.timeout * 2:
+                            # Stale lock, remove it
+                            os.unlink(self.lock_file)
+                            continue
+                    except FileNotFoundError:
+                        # Lock was released, try again
+                        continue
+                    raise TimeoutError(messages.ERROR_MESSAGES['lock_timeout'].format(timeout=self.timeout))
+                # Wait a bit before retrying
+                time.sleep(state_config.LOCK_RETRY_DELAY)
+        
+        return self
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Release lock."""
+        if self.lock_fd is not None:
+            try:
+                os.close(self.lock_fd)
+            except:
+                pass
+            try:
+                os.unlink(self.lock_file)
+            except:
+                pass
 
 
 class StateManager:
@@ -27,15 +91,6 @@ class StateManager:
     and state transition management for the phase-driven development system.
     """
     
-    # Valid project states
-    VALID_STATES = ["setup", "active", "paused", "stopped", "completed", "error"]
-    
-    # Valid workflow steps
-    VALID_WORKFLOW_STEPS = ["planning", "implementation", "validation", "review", "refinement", "integration"]
-    
-    # Required quality gates
-    QUALITY_GATES = ["compilation", "existing_tests", "new_tests", "review", "integration", "documentation", "performance"]
-    
     def __init__(self, project_path: str):
         """
         Initialize StateManager for a specific project directory.
@@ -44,7 +99,7 @@ class StateManager:
             project_path: Path to the project directory containing .project-state.json
         """
         self.project_path = Path(project_path).resolve()
-        self.state_file = self.project_path / ".project-state.json"
+        self.state_file = self.project_path / state_config.STATE_FILE_NAME
         
     def create(self, project_name: str, initial_phase: str = "01") -> Dict[str, Any]:
         """
@@ -61,7 +116,7 @@ class StateManager:
             StateValidationError: If state file already exists or creation fails
         """
         if self.state_file.exists():
-            raise StateValidationError(f"State file already exists: {self.state_file}")
+            raise StateValidationError(messages.ERROR_MESSAGES['state_exists'].format(path=self.state_file))
             
         initial_state = {
             "project_name": project_name,
@@ -77,7 +132,7 @@ class StateManager:
             "last_updated": datetime.now(timezone.utc).isoformat(),
             "git_branch": self._get_current_branch(),
             "git_worktree": str(self.project_path),
-            "version": "1.0.0"
+            "version": state_config.STATE_FILE_VERSION
         }
         
         self._validate_state(initial_state)
@@ -98,11 +153,13 @@ class StateManager:
         if not self.state_file.exists():
             raise StateValidationError(f"State file not found: {self.state_file}")
             
-        try:
-            with open(self.state_file, 'r') as f:
-                state = json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            raise StateValidationError(f"Failed to read state file: {e}")
+        # Use file locking for concurrent access protection
+        with FileLock(self.state_file):
+            try:
+                with open(self.state_file, 'r') as f:
+                    state = json.load(f)
+            except (json.JSONDecodeError, IOError) as e:
+                raise StateValidationError(f"Failed to read state file: {e}")
             
         self._validate_state(state)
         return state
@@ -120,18 +177,28 @@ class StateManager:
         Raises:
             StateValidationError: If updates are invalid or operation fails
         """
-        current_state = self.read()
-        
-        # Apply updates
-        updated_state = current_state.copy()
-        updated_state.update(updates)
-        updated_state["last_updated"] = datetime.now(timezone.utc).isoformat()
-        
-        # Validate updated state
-        self._validate_state(updated_state)
-        
-        # Write atomically
-        self._write_state_atomic(updated_state)
+        # Use file locking for the entire update operation
+        with FileLock(self.state_file):
+            # Re-read state inside lock to ensure consistency
+            if not self.state_file.exists():
+                raise StateValidationError(f"State file not found: {self.state_file}")
+                
+            try:
+                with open(self.state_file, 'r') as f:
+                    current_state = json.load(f)
+            except (json.JSONDecodeError, IOError) as e:
+                raise StateValidationError(f"Failed to read state file: {e}")
+            
+            # Apply updates
+            updated_state = current_state.copy()
+            updated_state.update(updates)
+            updated_state["last_updated"] = datetime.now(timezone.utc).isoformat()
+            
+            # Validate updated state
+            self._validate_state(updated_state)
+            
+            # Write atomically (still within lock)
+            self._write_state_atomic(updated_state)
         
         return updated_state
         
@@ -258,10 +325,10 @@ class StateManager:
         if not isinstance(state["project_name"], str) or not state["project_name"]:
             raise StateValidationError("project_name must be a non-empty string")
             
-        if state["status"] not in self.VALID_STATES:
+        if state["status"] not in state_config.VALID_STATES:
             raise StateValidationError(f"Invalid status: {state['status']}")
             
-        if state["workflow_step"] not in self.VALID_WORKFLOW_STEPS:
+        if state["workflow_step"] not in workflow_config.WORKFLOW_STEPS:
             raise StateValidationError(f"Invalid workflow step: {state['workflow_step']}")
             
         if not isinstance(state["automation_active"], bool):

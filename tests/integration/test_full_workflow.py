@@ -86,8 +86,26 @@ class WorkflowIntegrationTest:
         """Test project setup and initialization."""
         print("\n🧪 Testing project setup...")
         
-        # Skip ProjectBuilder for now - it has issues in temp directories
-        # Just test StateManager initialization
+        # Test ProjectBuilder with explicit path
+        builder = ProjectBuilder(self.project_name, self.test_dir)
+        builder.create_structure()
+        
+        # Verify directories created
+        phases_dir = Path(self.test_dir) / 'phases'
+        assert phases_dir.exists(), f"Expected phases directory at {phases_dir} but it doesn't exist"
+        
+        claude_dir = Path(self.test_dir) / '.claude'
+        assert claude_dir.exists(), f"Expected .claude directory at {claude_dir} but it doesn't exist"
+        
+        logs_dir = Path(self.test_dir) / 'logs'
+        assert logs_dir.exists(), f"Expected logs directory at {logs_dir} but it doesn't exist"
+        
+        docs_dir = Path(self.test_dir) / 'docs'
+        assert docs_dir.exists(), f"Expected docs directory at {docs_dir} but it doesn't exist"
+        
+        # Verify phase files created
+        planning_file = Path(self.test_dir) / 'phases' / '01-planning.md'
+        assert planning_file.exists(), f"Expected planning phase file at {planning_file} but it doesn't exist"
         
         # Initialize state
         state_manager = StateManager(self.test_dir)
@@ -95,11 +113,14 @@ class WorkflowIntegrationTest:
         
         # Verify state file
         state = state_manager.read()
-        assert state['project_name'] == self.project_name
-        assert state['status'] == 'setup'
-        assert state['workflow_step'] == 'planning'
+        assert state['project_name'] == self.project_name, \
+            f"Expected project_name to be '{self.project_name}' but got '{state.get('project_name')}'"
+        assert state['status'] == 'setup', \
+            f"Expected initial status to be 'setup' but got '{state.get('status')}'"
+        assert state['workflow_step'] == 'planning', \
+            f"Expected initial workflow_step to be 'planning' but got '{state.get('workflow_step')}'"
         
-        print("✅ Project setup successful (state only)")
+        print("✅ Project setup successful with ProjectBuilder")
         self.passed += 1
         
     def test_workflow_enforcement(self):
@@ -124,21 +145,24 @@ class WorkflowIntegrationTest:
             "input": {"file_path": "test.py", "content": "print('hello')"}
         }
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'block', "Planning should block Write"
+        assert response.get('decision') == 'block', \
+            f"Planning phase should block Write tool but got decision='{response.get('decision')}'"
         print("  ✓ Planning phase blocks Write tool")
         
         # Test 2: Planning phase allows Read
         event['tool'] = 'Read'
         event['input'] = {"file_path": "README.md"}
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow', "Planning should allow Read"
+        assert response.get('decision') == 'allow', \
+            f"Planning phase should allow Read tool but got decision='{response.get('decision')}'"
         print("  ✓ Planning phase allows Read tool")
         
         # Test 3: Implementation phase allows Write
         state_manager.update({'workflow_step': 'implementation'})
         event['tool'] = 'Write'
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow', "Implementation should allow Write"
+        assert response.get('decision') == 'allow', \
+            f"Implementation phase should allow Write tool but got decision='{response.get('decision')}'"
         print("  ✓ Implementation phase allows Write tool")
         
         print("✅ Workflow enforcement working correctly")
@@ -176,7 +200,9 @@ class WorkflowIntegrationTest:
         
         # Check state was updated
         state = state_manager.read()
-        assert 'src/main.py' in state.get('files_modified', []), "File should be tracked"
+        files_modified = state.get('files_modified', [])
+        assert 'src/main.py' in files_modified, \
+            f"Expected 'src/main.py' to be in files_modified but got {files_modified}"
         print("  ✓ File modifications tracked")
         
         # Simulate test execution
@@ -229,7 +255,9 @@ class WorkflowIntegrationTest:
         
         # Check workflow advanced
         state = state_manager.read()
-        assert state.get('workflow_step') == 'implementation', "Should advance to implementation"
+        current_step = state.get('workflow_step')
+        assert current_step == 'implementation', \
+            f"Expected workflow to advance to 'implementation' but got '{current_step}'"
         print("  ✓ Workflow advances from planning to implementation")
         
         # Test implementation -> validation advancement

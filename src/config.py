@@ -1,62 +1,176 @@
-#!/usr/bin/env python3
 """
-Central configuration module for constants and settings.
-This prevents magic numbers scattered throughout the codebase.
+Configuration module for AI Software Project Management System.
+
+Central location for all configuration values to avoid hardcoded
+strings and improve maintainability.
 """
 
-# Timeout constants (in seconds)
-DEFAULT_TEST_TIMEOUT = 300  # 5 minutes
-UNIT_TEST_TIMEOUT = 300  # 5 minutes
-INTEGRATION_TEST_TIMEOUT = 600  # 10 minutes
-CONTRACT_TEST_TIMEOUT = 600  # 10 minutes
-CHAOS_TEST_TIMEOUT = 1200  # 20 minutes
-COMMAND_EXECUTION_TIMEOUT = 300  # 5 minutes
+from typing import List, Dict, Any
 
-# AI Provider constants
-MAX_PROMPT_LENGTH = 10000  # Maximum characters in a prompt
-CACHE_TTL_HOURS = 24  # Cache time-to-live
-MAX_RETRIES = 3  # Maximum retry attempts for AI queries
-DEFAULT_AI_MODEL = "claude-3-opus-20240229"
-DEFAULT_MAX_TOKENS = 4096
-DEFAULT_TEMPERATURE = 0.7
 
-# Test layer constants
-DEFAULT_TEST_PATTERNS = {
-    "shell": ["**/*.sh"],
-    "unit": ["**/test_*.py", "**/*_test.py"],
-    "integration": ["**/test_*integration*.py"],
-    "contract": ["**/test_*_contract.py"],
-    "chaos": ["**/test_*_chaos.py"]
-}
+class WorkflowConfig:
+    """Workflow-related configuration."""
+    
+    # Workflow steps in order
+    WORKFLOW_STEPS: List[str] = [
+        "planning",
+        "implementation", 
+        "validation",
+        "review",
+        "refinement",
+        "integration"
+    ]
+    
+    # Quality gates
+    QUALITY_GATES: List[str] = [
+        "compilation",
+        "existing_tests",
+        "new_tests",
+        "review",
+        "integration",
+        "documentation",
+        "performance"
+    ]
+    
+    # Tool categories
+    READ_TOOLS: List[str] = ['Read', 'LS', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Task']
+    WRITE_TOOLS: List[str] = ['Write', 'Edit', 'MultiEdit']
+    EXEC_TOOLS: List[str] = ['Bash', 'Python', 'JavaScript']
+    GIT_TOOLS: List[str] = ['GitStatus', 'GitDiff', 'GitCommit', 'GitPush']
+    
+    # Emergency override patterns
+    EMERGENCY_PATTERNS: List[str] = [
+        r'EMERGENCY:',
+        r'HOTFIX:',
+        r'CRITICAL:',
+        r'OVERRIDE:',
+        r'production.*down',
+        r'security.*vulnerability',
+        r'data.*loss'
+    ]
 
-# Chaos testing constants
-DEFAULT_NETWORK_LATENCY = 0.5  # seconds
-DEFAULT_FAILURE_RATE = 0.1  # 10% failure rate
-DEFAULT_TIMEOUT_PROBABILITY = 0.05  # 5% timeout chance
-CHAOS_SEED_RANGE = (1, 10000)
-MIN_RESILIENCE_THRESHOLD = 0.7  # 70% minimum resilience score
 
-# Logging constants
-LOG_CATEGORIES = [
-    "automation",
-    "workflow", 
-    "commands",
-    "quality-gates",
-    "phase-transitions",
-    "errors",
-    "performance"
-]
+class StateConfig:
+    """State management configuration."""
+    
+    # Valid project states
+    VALID_STATES: List[str] = [
+        "setup",
+        "active",
+        "paused",
+        "stopped",
+        "completed",
+        "error"
+    ]
+    
+    # State file settings
+    STATE_FILE_NAME: str = ".project-state.json"
+    STATE_FILE_VERSION: str = "1.0.0"
+    
+    # File locking
+    LOCK_TIMEOUT_SECONDS: float = 5.0
+    LOCK_RETRY_DELAY: float = 0.1
 
-# File path constants
-DEFAULT_TEST_RESULTS_DIR = "test_results"
-DEFAULT_PLUGIN_DIR = "test_layers"
-DEFAULT_CACHE_DIR = ".cache/ai_project_mgmt"
-DEFAULT_CONFIG_FILE = "test_config.yaml"
 
-# Rate limiting constants
-MAX_API_CALLS_PER_MINUTE = 60
-MAX_API_CALLS_PER_HOUR = 1000
+class ProjectConfig:
+    """Project structure configuration."""
+    
+    # Directory names
+    PROJECT_DIRS: List[str] = ['phases', '.claude', 'logs', 'docs']
+    
+    # Phase file names
+    PHASE_FILES: Dict[str, str] = {
+        '01-planning.md': 'Planning',
+        '02-architecture.md': 'Architecture',
+        '03-implementation.md': 'Implementation',
+        '04-testing.md': 'Testing',
+        '05-deployment.md': 'Deployment'
+    }
+    
+    # Claude settings
+    CLAUDE_SETTINGS_FILE: str = ".claude/settings.json"
+    CLAUDE_SETTINGS_VERSION: str = "1.0.0"
 
-# Performance constants
-DEFAULT_THREAD_POOL_SIZE = 4  # For parallel execution
-MAX_CONCURRENT_TESTS = 10
+
+class HookConfig:
+    """Hook configuration."""
+    
+    # Hook names
+    PRE_TOOL_USE_HOOK: str = "pre_tool_use"
+    POST_TOOL_USE_HOOK: str = "post_tool_use"
+    STOP_HOOK: str = "stop"
+    
+    # Performance settings
+    MAX_HOOK_EXECUTION_MS: int = 100
+    PERFORMANCE_TEST_ITERATIONS: int = 10
+
+
+class MessagesConfig:
+    """User-facing messages configuration."""
+    
+    # Workflow messages
+    WORKFLOW_MESSAGES: Dict[str, str] = {
+        'planning': "🚫 Planning phase: Complete requirements analysis before writing code.",
+        'implementation': "✅ Implementation phase: All tools available.",
+        'validation': "🧪 Validation phase: Focus on testing and verification.",
+        'review': "👀 Review phase: Analyze code quality and architecture.",
+        'refinement': "🔧 Refinement phase: Apply review feedback.",
+        'integration': "🔀 Integration phase: Prepare for merge."
+    }
+    
+    # Step guidance
+    STEP_GUIDANCE: Dict[str, str] = {
+        'planning': "Analyze requirements and design your approach",
+        'implementation': "Write production-quality code",
+        'validation': "Run tests and verify functionality",
+        'review': "Perform code review and analysis",
+        'refinement': "Address feedback and improve quality",
+        'integration': "Final testing, documentation, and commit"
+    }
+    
+    # Success messages
+    SUCCESS_MESSAGES: Dict[str, str] = {
+        'project_created': "✅ Project created at {path}",
+        'state_created': "✅ Project state initialized",
+        'workflow_advanced': "✅ Advanced to {step} phase",
+        'phase_completed': "🎉 Phase completed: {phase}",
+        'all_phases_completed': "🏆 All {count} phases completed!"
+    }
+    
+    # Error messages
+    ERROR_MESSAGES: Dict[str, str] = {
+        'state_exists': "State file already exists: {path}",
+        'state_not_found': "State file not found: {path}",
+        'invalid_transition': "Invalid phase transition from {current} to {target}",
+        'incomplete_phase': "Cannot advance from incomplete phase {phase}",
+        'corrupt_state': "Corrupt state file: {error}",
+        'permission_denied': "Permission denied: {error}",
+        'lock_timeout': "Could not acquire lock after {timeout}s"
+    }
+
+
+class TestConfig:
+    """Test configuration."""
+    
+    # Test settings
+    TEST_PROJECT_NAME: str = "test-integration"
+    TEST_DIR_PREFIX: str = "claude_"
+    
+    # Performance benchmarks
+    MAX_STATE_READ_MS: float = 10.0
+    MAX_STATE_UPDATE_MS: float = 10.0
+    MAX_HOOK_EXECUTION_MS: float = 100.0
+    
+    # Concurrent test settings
+    CONCURRENT_PROCESSES: int = 5
+    UPDATES_PER_PROCESS: int = 10
+    READS_PER_PROCESS: int = 20
+
+
+# Singleton instances
+workflow = WorkflowConfig()
+state = StateConfig()
+project = ProjectConfig()
+hooks = HookConfig()
+messages = MessagesConfig()
+tests = TestConfig()

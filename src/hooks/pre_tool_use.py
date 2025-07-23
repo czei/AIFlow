@@ -18,6 +18,7 @@ try:
     from state_manager import StateManager
     from hooks.workflow_rules import WorkflowRules
     from hooks.hook_utils import EventParser, ResponseBuilder, HookLogger
+    from hooks.event_validator import EventValidator
 except ImportError as e:
     # If imports fail, allow all operations
     print(json.dumps({"decision": "allow", "message": f"Import error: {str(e)}"}))
@@ -30,6 +31,13 @@ def main():
     event, error = EventParser.parse_stdin()
     if error:
         print(ResponseBuilder.error(error))
+        return
+    
+    # Validate event data
+    is_valid, validation_error = EventValidator.validate_pre_tool_use(event)
+    if not is_valid:
+        HookLogger.error(f"Invalid event data: {validation_error}")
+        print(ResponseBuilder.error(f"Invalid event data: {validation_error}"))
         return
     
     try:
@@ -78,11 +86,18 @@ def main():
         if allow and WorkflowRules._check_emergency_override({'event': event}):
             metrics['emergency_overrides'] = metrics.get('emergency_overrides', 0) + 1
         
-        # Update state with metrics (async, don't block on this)
+        # Update state with metrics
         try:
             state_manager.update({'metrics': metrics})
-        except Exception:
-            pass  # Don't fail the hook on metrics update
+        except Exception as e:
+            # Log error but don't fail the hook
+            HookLogger.error(f"Failed to update metrics: {str(e)}")
+            # Include warning in response
+            if allow:
+                print(ResponseBuilder.allow(f"Warning: metrics update failed - {str(e)}"))
+            else:
+                print(ResponseBuilder.deny(message, suggestions))
+            return
         
         # Build and send response
         if allow:

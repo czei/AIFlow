@@ -17,8 +17,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 try:
     from state_manager import StateManager
     from hooks.workflow_rules import WorkflowRules
+    from hooks.event_validator import EventValidator
 except ImportError:
-    # If no StateManager or WorkflowRules, just exit
+    # If imports fail, just exit
     sys.exit(0)
 
 
@@ -40,6 +41,17 @@ def main():
         event_data = sys.stdin.read()
         event = json.loads(event_data)
         
+        # Validate event data
+        is_valid, validation_error = EventValidator.validate_stop(event)
+        if not is_valid:
+            print(json.dumps({
+                "status": "error",
+                "message": f"Invalid event data: {validation_error}",
+                "action": "Check event format"
+            }))
+            print(f"Stop hook error: Invalid event - {validation_error}", file=sys.stderr)
+            return
+        
         # Get current working directory
         cwd = event.get('cwd', '.')
         
@@ -51,17 +63,33 @@ def main():
             state = state_manager.read()
         except FileNotFoundError:
             # No state file = nothing to do. This is expected for non-project directories
+            # Silent exit for non-project directories
             return
         except json.JSONDecodeError as e:
             # State file is corrupt
+            print(json.dumps({
+                "status": "error",
+                "message": f"Corrupt state file preventing workflow advancement: {e}",
+                "action": "Manual intervention required to fix state file"
+            }))
             print(f"Stop hook error: Corrupt state file - {e}", file=sys.stderr)
             return
         except PermissionError as e:
             # No permission to read state file
+            print(json.dumps({
+                "status": "error",
+                "message": f"Permission denied accessing state: {e}",
+                "action": "Check file permissions for .project-state.json"
+            }))
             print(f"Stop hook error: Permission denied - {e}", file=sys.stderr)
             return
         except Exception as e:
             # Other unexpected errors
+            print(json.dumps({
+                "status": "error",
+                "message": f"Unexpected error in workflow automation: {type(e).__name__}: {e}",
+                "action": "Check logs and report issue if persistent"
+            }))
             print(f"Stop hook error: Unexpected error reading state - {e}", file=sys.stderr)
             return
             

@@ -11,9 +11,13 @@ from datetime import datetime, timezone
 class ProjectBuilder:
     """Creates standardized project structure for phase-driven development."""
     
-    def __init__(self, project_name: str):
+    def __init__(self, project_name: str, project_path: str = None):
         self.project_name = project_name
-        self.project_path = Path.cwd()
+        # Allow explicit path to be passed, default to cwd
+        if project_path:
+            self.project_path = Path(project_path).resolve()
+        else:
+            self.project_path = Path.cwd()
         
     def create_structure(self):
         """Create complete project directory structure."""
@@ -33,7 +37,11 @@ class ProjectBuilder:
         """Create essential project directories."""
         dirs = ['phases', '.claude', 'logs', 'docs']
         for dir_name in dirs:
-            (self.project_path / dir_name).mkdir(exist_ok=True)
+            try:
+                dir_path = self.project_path / dir_name
+                dir_path.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                raise RuntimeError(f"Failed to create directory {dir_name}: {e}")
             
     def _create_phase_files(self):
         """Create default phase markdown files."""
@@ -45,8 +53,16 @@ class ProjectBuilder:
             '05-deployment.md': self._get_deployment_phase()
         }
         
+        # Ensure phases directory exists
+        phases_dir = self.project_path / 'phases'
+        if not phases_dir.exists():
+            raise RuntimeError(f"Phases directory does not exist: {phases_dir}")
+        
         for filename, content in phases.items():
-            (self.project_path / 'phases' / filename).write_text(content)
+            try:
+                (phases_dir / filename).write_text(content)
+            except OSError as e:
+                raise RuntimeError(f"Failed to create phase file {filename}: {e}")
             
     def _create_documentation(self):
         """Create project documentation files."""

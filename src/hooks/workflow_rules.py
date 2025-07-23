@@ -8,16 +8,23 @@ for rule evaluation, context analysis, and emergency overrides.
 
 import re
 from typing import Dict, List, Tuple, Optional, Any
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
+
+from config import workflow as workflow_config, messages
 
 
 class WorkflowRules:
     """Rule engine for enforcing the 6-step workflow."""
     
-    # Tool categories for easier rule definition
-    READ_TOOLS = ['Read', 'LS', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Task']
-    WRITE_TOOLS = ['Write', 'Edit', 'MultiEdit']
-    EXEC_TOOLS = ['Bash', 'Python', 'JavaScript']
-    GIT_TOOLS = ['GitStatus', 'GitDiff', 'GitCommit', 'GitPush']
+    # Tool categories from config
+    READ_TOOLS = workflow_config.READ_TOOLS
+    WRITE_TOOLS = workflow_config.WRITE_TOOLS
+    EXEC_TOOLS = workflow_config.EXEC_TOOLS
+    GIT_TOOLS = workflow_config.GIT_TOOLS
     
     # Workflow step rules
     WORKFLOW_RULES = {

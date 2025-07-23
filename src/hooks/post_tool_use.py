@@ -17,8 +17,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 try:
     from state_manager import StateManager
     from hooks.workflow_rules import WorkflowRules
+    from hooks.event_validator import EventValidator
 except ImportError:
-    # If no StateManager or WorkflowRules, just exit
+    # If imports fail, just exit
     sys.exit(0)
 
 
@@ -28,6 +29,17 @@ def main():
         # Read event data from stdin
         event_data = sys.stdin.read()
         event = json.loads(event_data)
+        
+        # Validate event data
+        is_valid, validation_error = EventValidator.validate_post_tool_use(event)
+        if not is_valid:
+            print(json.dumps({
+                "status": "error",
+                "message": f"Invalid event data: {validation_error}",
+                "action": "Check event format"
+            }))
+            print(f"PostToolUse hook error: Invalid event - {validation_error}", file=sys.stderr)
+            return
         
         # Get current working directory
         cwd = event.get('cwd', '.')
@@ -40,17 +52,36 @@ def main():
             state = state_manager.read()
         except FileNotFoundError:
             # No state file = nothing to update
+            print(json.dumps({
+                "status": "warning",
+                "message": "No state file found - skipping post-tool processing"
+            }))
             return
         except json.JSONDecodeError as e:
             # State file is corrupt
+            print(json.dumps({
+                "status": "error",
+                "message": f"Corrupt state file: {e}",
+                "action": "State updates skipped - manual intervention may be required"
+            }))
             print(f"PostToolUse hook error: Corrupt state file - {e}", file=sys.stderr)
             return
         except PermissionError as e:
             # No permission to read state file
+            print(json.dumps({
+                "status": "error", 
+                "message": f"Permission denied reading state: {e}",
+                "action": "Check file permissions"
+            }))
             print(f"PostToolUse hook error: Permission denied - {e}", file=sys.stderr)
             return
         except Exception as e:
             # Other unexpected errors
+            print(json.dumps({
+                "status": "error",
+                "message": f"Unexpected error: {type(e).__name__}: {e}",
+                "action": "Check logs for details"
+            }))
             print(f"PostToolUse hook error: Unexpected error reading state - {e}", file=sys.stderr)
             return
             
