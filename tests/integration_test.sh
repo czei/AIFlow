@@ -1,8 +1,8 @@
 #!/bin/bash
-# Integration test for phase-driven development system
+# Integration test for sprint-driven development system
 # This script simulates the workflow without requiring Claude Code
 
-echo "🧪 Phase-Driven Development System Integration Test"
+echo "🧪 Sprint-Driven Development System Integration Test"
 echo "=================================================="
 echo
 
@@ -77,11 +77,11 @@ test_project_setup() {
     
     # Create project structure
     info "Creating project structure..."
-    mkdir -p phases output .logs
+    mkdir -p sprints output .logs
     
-    # Create measurable phase files
-    cat > phases/01-setup.md << 'EOF'
-# Phase 01: Setup
+    # Create measurable sprint files
+    cat > sprints/01-setup.md << 'EOF'
+# Sprint 01: Setup
 
 ## Status: NOT_STARTED
 ## Completion: 0%
@@ -94,11 +94,11 @@ test_project_setup() {
 ## Measurable Outcomes:
 - File: output/setup.txt exists
 - File: output/config.json contains valid JSON
-- File: output/metrics.json tracks phase progress
+- File: output/metrics.json tracks sprint progress
 EOF
 
-    cat > phases/02-process.md << 'EOF'
-# Phase 02: Process
+    cat > sprints/02-process.md << 'EOF'
+# Sprint 02: Process
 
 ## Status: NOT_STARTED  
 ## Completion: 0%
@@ -114,8 +114,8 @@ EOF
 - File: output/processed_data.csv exists with headers
 EOF
 
-    cat > phases/03-validate.md << 'EOF'
-# Phase 03: Validate
+    cat > sprints/03-validate.md << 'EOF'
+# Sprint 03: Validate
 
 ## Status: NOT_STARTED
 ## Completion: 0%
@@ -135,11 +135,11 @@ EOF
     cat > .project-state.json << EOF
 {
   "project_name": "$PROJECT_NAME",
-  "current_phase": "01",
+  "current_sprint": "01",
   "status": "setup",
   "automation_active": false,
   "workflow_step": "planning",
-  "completed_phases": [],
+  "completed_sprints": [],
   "started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
@@ -147,33 +147,33 @@ EOF
     success "Project structure created"
 }
 
-# Test 2: Phase Execution Simulation
-test_phase_execution() {
+# Test 2: Sprint Execution Simulation
+test_sprint_execution() {
     echo
-    echo "Test 2: Phase Execution"
+    echo "Test 2: Sprint Execution"
     echo "----------------------"
     
-    # Phase 01: Setup
-    info "Executing Phase 01: Setup..."
+    # Sprint 01: Setup
+    info "Executing Sprint 01: Setup..."
     
     # Create measurable outputs
     echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Project setup initialized" > output/setup.txt
-    echo '{"version": "1.0", "environment": "test", "phase": "01"}' > output/config.json
-    echo '{"phases": {"01": {"started": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "status": "in_progress"}}}' > output/metrics.json
+    echo '{"version": "1.0", "environment": "test", "sprint": "01"}' > output/config.json
+    echo '{"sprints": {"01": {"started": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "status": "in_progress"}}}' > output/metrics.json
     
-    # Verify phase 01 outputs
+    # Verify sprint 01 outputs
     if [ -f "output/setup.txt" ] && [ -f "output/config.json" ] && [ -f "output/metrics.json" ]; then
-        success "Phase 01 outputs created"
+        success "Sprint 01 outputs created"
         
-        # Update phase status
-        sed -i '' 's/NOT_STARTED/COMPLETE/g' phases/01-setup.md
-        sed -i '' 's/\[ \]/[x]/g' phases/01-setup.md
+        # Update sprint status
+        sed -i '' 's/NOT_STARTED/COMPLETE/g' sprints/01-setup.md
+        sed -i '' 's/\[ \]/[x]/g' sprints/01-setup.md
     else
-        failure "Phase 01 outputs missing"
+        failure "Sprint 01 outputs missing"
     fi
     
-    # Phase 02: Process
-    info "Executing Phase 02: Process..."
+    # Sprint 02: Process
+    info "Executing Sprint 02: Process..."
     
     # Append to existing files
     echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Processing started" >> output/setup.txt
@@ -184,7 +184,7 @@ test_phase_execution() {
 {
   "version": "1.0",
   "environment": "test",
-  "phase": "02",
+  "sprint": "02",
   "processing": {
     "method": "batch",
     "batch_size": 100,
@@ -202,14 +202,14 @@ id,name,value,status
 EOF
     
     if [ -f "output/processed_data.csv" ]; then
-        success "Phase 02 outputs created"
-        sed -i '' 's/NOT_STARTED/COMPLETE/g' phases/02-process.md
+        success "Sprint 02 outputs created"
+        sed -i '' 's/NOT_STARTED/COMPLETE/g' sprints/02-process.md
     else
-        failure "Phase 02 outputs missing"
+        failure "Sprint 02 outputs missing"
     fi
     
-    # Phase 03: Validate
-    info "Executing Phase 03: Validate..."
+    # Sprint 03: Validate
+    info "Executing Sprint 03: Validate..."
     
     # Create validation report
     cat > output/validation_report.txt << EOF
@@ -233,7 +233,7 @@ EOF
     # Update metrics
     cat > output/metrics.json << EOF
 {
-  "phases": {
+  "sprints": {
     "01": {"started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)", "status": "complete"},
     "02": {"started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)", "status": "complete"},
     "03": {"started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)", "status": "complete"}
@@ -247,9 +247,9 @@ EOF
 EOF
     
     if [ -f "output/validation_report.txt" ]; then
-        success "Phase 03 validation complete"
+        success "Sprint 03 validation complete"
     else
-        failure "Phase 03 validation failed"
+        failure "Sprint 03 validation failed"
     fi
 }
 
@@ -336,8 +336,8 @@ test_logging() {
     
     # Automation log
     cat > .logs/automation.log << EOF
-{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","level":"INFO","category":"automation","correlation_id":"$correlation_id","phase":"01","workflow_step":"planning","event":"project_initialized","details":{"project":"$PROJECT_NAME"}}
-{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","level":"INFO","category":"automation","correlation_id":"$correlation_id","phase":"01","workflow_step":"implementation","event":"phase_started","details":{"objectives":3}}
+{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","level":"INFO","category":"automation","correlation_id":"$correlation_id","sprint":"01","workflow_step":"planning","event":"project_initialized","details":{"project":"$PROJECT_NAME"}}
+{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","level":"INFO","category":"automation","correlation_id":"$correlation_id","sprint":"01","workflow_step":"implementation","event":"sprint_started","details":{"objectives":3}}
 EOF
     
     # Command log
@@ -348,7 +348,7 @@ EOF
     
     # Performance log
     cat > .logs/performance.log << EOF
-{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","level":"DEBUG","category":"performance","event":"phase_performance","details":{"phase":"01","duration_ms":1234,"objectives_completed":3}}
+{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","level":"DEBUG","category":"performance","event":"sprint_performance","details":{"sprint":"01","duration_ms":1234,"objectives_completed":3}}
 EOF
     
     # Quality gates log
@@ -415,7 +415,7 @@ test_measurable_outcomes() {
     # Verify file contents are measurable
     info "Checking measurable changes..."
     
-    # Count lines in setup.txt (should increase across phases)
+    # Count lines in setup.txt (should increase across sprints)
     setup_lines=$(wc -l < output/setup.txt)
     info "setup.txt has $setup_lines lines"
     
@@ -435,7 +435,7 @@ test_measurable_outcomes() {
 {
   "test_run": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "project": "$PROJECT_NAME",
-  "phases_completed": 3,
+  "sprints_completed": 3,
   "files_created": $(ls output/* | wc -l),
   "log_entries": $total_entries,
   "test_status": "PASSED",
@@ -459,7 +459,7 @@ main() {
     # Run tests
     setup_test
     test_project_setup
-    test_phase_execution
+    test_sprint_execution
     test_state_management
     test_logging
     test_measurable_outcomes

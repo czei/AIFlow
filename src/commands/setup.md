@@ -1,10 +1,10 @@
 ---
 allowed-tools: Bash(echo:*), Bash(test:*), Bash(python3:*), Bash(git:*)
-description: Create new phase-driven project worktree
+description: Create new sprint-driven project worktree
 argument-hint: <project-name>
 ---
 
-# Project Setup - Create Phase-Driven Project
+# Project Setup - Create Sprint-Driven Project
 
 Create a new git worktree and branch for project: $ARGUMENTS
 
@@ -19,4 +19,4 @@ Create a new git worktree and branch for project: $ARGUMENTS
 !`mkdir -p "../$VALIDATED_NAME/.claude" && [ -f "$HOME/.claude/commands/project/hooks/settings.json.template" ] && sed "s|__HOOKS_PATH__|$HOME/.claude/commands/project/hooks|g" "$HOME/.claude/commands/project/hooks/settings.json.template" > "../$VALIDATED_NAME/.claude/settings.json" && echo "✅ Created .claude/settings.json with hook configuration" || echo "⚠️  Warning: Could not create .claude/settings.json - template not found"`
 
 !`echo "✅ Project created at ../$VALIDATED_NAME"`
-!`echo "Next: Customize phase files and run /user:project:doctor to validate setup."`
+!`echo "Next: Customize sprint files and run /user:project:doctor to validate setup."`

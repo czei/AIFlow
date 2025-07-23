@@ -60,7 +60,7 @@ class WorkflowProgressionTest:
         """Test advancement from planning to implementation."""
         print("\n🧪 Testing planning → implementation advancement...")
         
-        # Setup planning phase with completion indicators
+        # Setup planning sprint with completion indicators
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -74,7 +74,7 @@ class WorkflowProgressionTest:
         })
         
         # Run Stop hook
-        response = self.executor.simulate_stop_hook("Planning phase complete")
+        response = self.executor.simulate_stop_hook("Planning sprint complete")
         
         # Verify workflow advanced
         state = read_project_state(self.test_dir)
@@ -91,7 +91,7 @@ class WorkflowProgressionTest:
         """Test advancement from implementation to validation."""
         print("\n🧪 Testing implementation → validation advancement...")
         
-        # Setup implementation phase with progress
+        # Setup implementation sprint with progress
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -123,7 +123,7 @@ class WorkflowProgressionTest:
         """Test advancement from validation to review."""
         print("\n🧪 Testing validation → review advancement...")
         
-        # Setup validation phase with test execution
+        # Setup validation sprint with test execution
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -155,7 +155,7 @@ class WorkflowProgressionTest:
         """Test advancement from review to refinement."""
         print("\n🧪 Testing review → refinement advancement...")
         
-        # Setup review phase with completion
+        # Setup review sprint with completion
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -187,7 +187,7 @@ class WorkflowProgressionTest:
         """Test advancement from refinement to integration."""
         print("\n🧪 Testing refinement → integration advancement...")
         
-        # Setup refinement phase with edits
+        # Setup refinement sprint with edits
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -216,15 +216,15 @@ class WorkflowProgressionTest:
         self.passed += 1
         
     def test_integration_completion(self):
-        """Test integration phase completion."""
-        print("\n🧪 Testing integration phase completion...")
+        """Test integration sprint completion."""
+        print("\n🧪 Testing integration sprint completion...")
         
-        # Setup integration phase with git operations
+        # Setup integration sprint with git operations
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
             'workflow_step': 'integration',
-            'current_phase': '01',
+            'current_sprint': '01',
             'workflow_progress': {
                 'integration': {
                     'git_commands_run': True,
@@ -237,14 +237,14 @@ class WorkflowProgressionTest:
         # Run Stop hook
         response = self.executor.simulate_stop_hook("Integration complete")
         
-        # Verify phase completion
+        # Verify sprint completion
         state = read_project_state(self.test_dir)
-        assert '01' in state.get('completed_phases', []), \
-            "Phase should be marked as completed"
+        assert '01' in state.get('completed_sprints', []), \
+            "Sprint should be marked as completed"
         assert state['workflow_step'] == 'planning', \
-            "Should cycle back to planning for next phase"
+            "Should cycle back to planning for next sprint"
         
-        print("  ✓ Phase marked as completed")
+        print("  ✓ Sprint marked as completed")
         print("  ✓ Workflow cycled back to planning")
         
         print("✅ Integration completion test passed")
@@ -291,7 +291,7 @@ class WorkflowProgressionTest:
             'automation_active': True,
             'workflow_step': 'planning',
             'files_modified': ['existing.py'],
-            'quality_gates_passed': ['compilation'],
+            'acceptance_criteria_passed': ['compilation'],
             'workflow_progress': {
                 'planning': {
                     'planning_complete': True
@@ -306,7 +306,7 @@ class WorkflowProgressionTest:
         state = read_project_state(self.test_dir)
         assert 'existing.py' in state.get('files_modified', []), \
             "Files modified should be preserved"
-        assert 'compilation' in state.get('quality_gates_passed', []), \
+        assert 'compilation' in state.get('acceptance_criteria_passed', []), \
             "Quality gates should be preserved"
         
         print("  ✓ Files modified preserved across steps")
@@ -315,32 +315,32 @@ class WorkflowProgressionTest:
         print("✅ Progress preservation test passed")
         self.passed += 1
         
-    def test_manual_phase_transition(self):
-        """Test manual phase transitions."""
-        print("\n🧪 Testing manual phase transitions...")
+    def test_manual_sprint_transition(self):
+        """Test manual sprint transitions."""
+        print("\n🧪 Testing manual sprint transitions...")
         
-        # Use StateManager directly for phase transition
+        # Use StateManager directly for sprint transition
         state_manager = StateManager(self.test_dir)
         
-        # Start in phase 01
+        # Start in sprint 01
         update_project_state(self.test_dir, {
-            'current_phase': '01',
-            'completed_phases': []
+            'current_sprint': '01',
+            'completed_sprints': []
         })
         
-        # Transition to phase 02
-        updated_state = state_manager.transition_phase('02')
+        # Transition to sprint 02
+        updated_state = state_manager.transition_sprint('02')
         
-        assert updated_state['current_phase'] == '02', \
-            "Phase should transition to 02"
-        assert '01' in updated_state['completed_phases'], \
-            "Phase 01 should be marked completed"
+        assert updated_state['current_sprint'] == '02', \
+            "Sprint should transition to 02"
+        assert '01' in updated_state['completed_sprints'], \
+            "Sprint 01 should be marked completed"
         assert updated_state['workflow_step'] == 'planning', \
-            "Should reset to planning for new phase"
+            "Should reset to planning for new sprint"
         
-        print("  ✓ Manual phase transition successful")
-        print("  ✓ Previous phase marked completed")
-        print("  ✓ Workflow reset for new phase")
+        print("  ✓ Manual sprint transition successful")
+        print("  ✓ Previous sprint marked completed")
+        print("  ✓ Workflow reset for new sprint")
         
         print("✅ Manual transition test passed")
         self.passed += 1
@@ -360,7 +360,7 @@ class WorkflowProgressionTest:
             self.test_integration_completion,
             self.test_incomplete_step_blocking,
             self.test_progress_preservation,
-            self.test_manual_phase_transition
+            self.test_manual_sprint_transition
         ]
         
         for test in tests:

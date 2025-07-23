@@ -35,8 +35,8 @@ def main():
         
         # Display resume information
         workflow_step = state.get('workflow_step', 'unknown')
-        current_phase = state.get('current_phase', 'unknown')
-        print(f"Resuming from: {workflow_step} step in phase {current_phase}")
+        current_sprint = state.get('current_sprint', 'unknown')
+        print(f"Resuming from: {workflow_step} step in sprint {current_sprint}")
         
         # Update state to resume
         sm.update({

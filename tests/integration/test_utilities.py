@@ -126,20 +126,20 @@ def verify_project_structure(test_dir: Path) -> Dict[str, bool]:
     Returns:
         Dict of directory_name -> exists
     """
-    expected_dirs = ['phases', '.claude', 'logs', 'docs']
+    expected_dirs = ['sprints', '.claude', 'logs', 'docs']
     results = {}
     
     for dir_name in expected_dirs:
         dir_path = test_dir / dir_name
         results[dir_name] = dir_path.exists() and dir_path.is_dir()
         
-    # Check for phase files
-    phases_dir = test_dir / 'phases'
-    if phases_dir.exists():
-        phase_files = list(phases_dir.glob('*.md'))
-        results['phase_files'] = len(phase_files) > 0
+    # Check for sprint files
+    sprints_dir = test_dir / 'sprints'
+    if sprints_dir.exists():
+        sprint_files = list(sprints_dir.glob('*.md'))
+        results['sprint_files'] = len(sprint_files) > 0
     else:
-        results['phase_files'] = False
+        results['sprint_files'] = False
         
     return results
 

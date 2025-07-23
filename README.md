@@ -1,6 +1,6 @@
 # Claude Code Project Management Commands
 
-This directory contains a complete set of Claude Code slash commands for managing phase-driven development projects with comprehensive quality assurance workflows.
+This directory contains a complete set of Claude Code slash commands for managing sprint-based development projects with comprehensive acceptance criteria workflows.
 
 ## Installation
 
@@ -30,20 +30,20 @@ After installation, these commands will be available in any Claude Code session:
 
 - `/user:project:setup <project-name>` - Create new project worktree and structure
 - `/user:project:doctor` - Validate project setup and workflow configuration
-- `/user:project:start` - Begin automated phase-driven development
+- `/user:project:start` - Begin automated sprint-based development
 - `/user:project:status` - Show comprehensive project progress and workflow state
 - `/user:project:pause` - Temporarily pause automation
 - `/user:project:resume` - Resume automation from exact workflow position
 - `/user:project:stop` - End project cleanly with quality summary
 - `/user:project:update` - Update project state and objective completion
-- `/user:project:advance [phase]` - Force advancement to next/specific phase
-- `/user:project:phase <action>` - Manage phases (list, create, edit, jump)
+- `/user:project:advance [sprint]` - Force advancement to next/specific sprint
+- `/user:project:sprint <action>` - Manage sprints (list, create, edit, jump)
 
 ## Quick Start
 
 1. Navigate to an existing git repository
 2. Run: `/user:project:setup my-awesome-project`
-3. Customize the generated phase files for your specific project requirements
+3. Customize the generated sprint files for your specific project requirements
 4. Review `docs/WORKFLOW_SPECIFICATIONS.md` for detailed workflow methodology
 5. Run: `/user:project:doctor` to validate setup
 6. Run: `/user:project:start` to begin automated development
@@ -85,7 +85,7 @@ Each objective must pass these mandatory gates:
 
 The system creates comprehensive project structure:
 - **Git worktrees** for project isolation and safety
-- **Phase-driven development** with detailed workflow specifications
+- **Sprint-driven development** with detailed workflow specifications
 - **Automated workflow** with Claude Code hooks and quality gates
 - **Multi-layered state management** for resumable automation
 - **Quality assurance** built into every development step
@@ -93,7 +93,7 @@ The system creates comprehensive project structure:
 ## Documentation
 
 - **[HOOK_DOCUMENTATION.md](docs/HOOK_DOCUMENTATION.md)** - Complete hook system documentation
-- **[HOOK_QUICK_REFERENCE.md](docs/HOOK_QUICK_REFERENCE.md)** - Quick reference for workflow phases
+- **[HOOK_QUICK_REFERENCE.md](docs/HOOK_QUICK_REFERENCE.md)** - Quick reference for workflow sprints
 - **[PROJECT_STATE_SCHEMA.md](docs/PROJECT_STATE_SCHEMA.md)** - State file specification
 - **[IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)** - Development roadmap
 - **[FIX_COMMANDS_PLAN.md](docs/FIX_COMMANDS_PLAN.md)** - Command implementation details
@@ -102,7 +102,7 @@ The system creates comprehensive project structure:
 
 ```
 my-project/ (git worktree)
-├── phases/
+├── sprints/
 │   ├── 01-planning.md         (Requirements, architecture design)
 │   ├── 02-architecture.md     (System design, technology selection)
 │   ├── 03-implementation.md   (Feature development, coding)
@@ -127,8 +127,8 @@ my-project/ (git worktree)
 
 ## Workflow Specifications
 
-Each phase includes detailed workflow guidance:
-- **Phase-specific variations** of the 6-step universal workflow
+Each sprint includes detailed workflow guidance:
+- **Sprint-specific variations** of the 6-step universal workflow
 - **Quality gate definitions** with specific pass/fail criteria
 - **Success criteria** with measurable validation requirements
 - **Automation instructions** for Claude Code behavior
@@ -137,7 +137,7 @@ Each phase includes detailed workflow guidance:
 ## Usage Scenarios
 
 ### Ideal For:
-- **Feature Development** - Systematic implementation with built-in quality assurance
+- **Feature Development** - Systematic implementation with built-in acceptance criteria
 - **Refactoring Projects** - Quality-focused code improvement with comprehensive testing
 - **Migration Work** - Step-by-step transitions with validation at every stage
 - **Integration Projects** - Complex multi-system work with rigorous testing
@@ -155,14 +155,14 @@ All documentation has been organized in the `docs/` directory:
 
 - **docs/POC_SETUP_GUIDE.md** - Quick start guide for proof-of-concept testing
 - **docs/PROJECT_DOCUMENTATION.md** - Comprehensive system overview and design
-- **docs/WORKFLOW_SPECIFICATIONS.md** - Detailed 6-step methodology and phase variations
-- **docs/PHASE_CREATION_INSTRUCTIONS.md** - AI instructions for creating effective phase files
+- **docs/WORKFLOW_SPECIFICATIONS.md** - Detailed 6-step methodology and sprint variations
+- **docs/PHASE_CREATION_INSTRUCTIONS.md** - AI instructions for creating effective sprint files
 - **docs/SECURITY_ARCHITECTURE.md** - Future OPA-based security implementation
 - **docs/LOGGING_ARCHITECTURE.md** - Comprehensive logging and debugging infrastructure
 - **docs/TESTING.md** - Comprehensive testing framework documentation
 - **docs/SECURITY_FIXES_SUMMARY.md** - Summary of security improvements
-- **docs/example-detailed-phase.md** - Template showing workflow integration in phase files
-- **docs/phase-template-with-state.md** - State tracking and progress management examples
+- **docs/example-detailed-sprint.md** - Template showing workflow integration in sprint files
+- **docs/sprint-template-with-state.md** - State tracking and progress management examples
 
 ## Prerequisites
 
@@ -175,9 +175,9 @@ All documentation has been organized in the `docs/` directory:
 ## Support and Customization
 
 The system is highly customizable:
-- **Phase definitions** can be adapted to any project type
+- **Sprint definitions** can be adapted to any project type
 - **Quality gates** can be adjusted for project requirements
 - **Workflow steps** can be modified for specific technologies
-- **Automation behavior** can be fine-tuned through phase instructions
+- **Automation behavior** can be fine-tuned through sprint instructions
 
 This comprehensive framework transforms Claude Code into a disciplined development partner that maintains professional quality standards while providing the automation benefits needed for complex, long-running projects.

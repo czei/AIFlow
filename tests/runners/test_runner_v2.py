@@ -19,7 +19,7 @@ import importlib.util
 import inspect
 
 # Add src to path for config import
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 try:
     from config import (
         DEFAULT_TEST_TIMEOUT, DEFAULT_TEST_PATTERNS, DEFAULT_TEST_RESULTS_DIR,
@@ -33,6 +33,10 @@ except ImportError:
     DEFAULT_TEST_RESULTS_DIR = "test_results"
     DEFAULT_PLUGIN_DIR = "tests/layers"
     DEFAULT_CONFIG_FILE = "tests/test_config.yaml"
+    UNIT_TEST_TIMEOUT = 300
+    INTEGRATION_TEST_TIMEOUT = 600
+    CONTRACT_TEST_TIMEOUT = 600
+    CHAOS_TEST_TIMEOUT = 1200
 
 
 @dataclass

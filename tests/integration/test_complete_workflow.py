@@ -55,7 +55,7 @@ class CompleteWorkflowTest:
             'status': 'active',
             'automation_active': True,
             'workflow_step': 'planning',
-            'current_phase': '01'  # Ensure current_phase is set
+            'current_sprint': '01'  # Ensure current_sprint is set
         })
         
         print(f"✅ Test environment created at: {self.test_dir}")
@@ -65,9 +65,9 @@ class CompleteWorkflowTest:
         self.env.teardown()
         print("✅ Test environment cleaned up")
         
-    def simulate_planning_phase(self):
-        """Simulate planning phase activities."""
-        print("\n📋 Phase 1: Planning")
+    def simulate_planning_sprint(self):
+        """Simulate planning sprint activities."""
+        print("\n📋 Sprint 1: Planning")
         
         # Simulate reading existing code
         response = self.executor.simulate_tool_use('Read', {
@@ -105,11 +105,11 @@ class CompleteWorkflowTest:
         state = read_project_state(self.test_dir)
         assert state['workflow_step'] == 'implementation', \
             "Should advance to implementation"
-        print("  ✓ Advanced to implementation phase")
+        print("  ✓ Advanced to implementation sprint")
         
-    def simulate_implementation_phase(self):
-        """Simulate implementation phase activities."""
-        print("\n💻 Phase 2: Implementation")
+    def simulate_implementation_sprint(self):
+        """Simulate implementation sprint activities."""
+        print("\n💻 Sprint 2: Implementation")
         
         # Create Calculator class
         response = self.executor.simulate_tool_use('Write', {
@@ -210,11 +210,11 @@ def test_subtract():
         
         state = read_project_state(self.test_dir)
         assert state['workflow_step'] == 'validation', "Should advance to validation"
-        print("  ✓ Advanced to validation phase")
+        print("  ✓ Advanced to validation sprint")
         
-    def simulate_validation_phase(self):
-        """Simulate validation phase activities."""
-        print("\n🧪 Phase 3: Validation")
+    def simulate_validation_sprint(self):
+        """Simulate validation sprint activities."""
+        print("\n🧪 Sprint 3: Validation")
         
         # Run tests
         response = self.executor.simulate_tool_use('Bash', {
@@ -237,7 +237,7 @@ def test_subtract():
                     'tools_used': ['Bash']
                 }
             },
-            'quality_gates_passed': ['existing_tests']
+            'acceptance_criteria_passed': ['existing_tests']
         })
         
         # Advance workflow
@@ -247,9 +247,9 @@ def test_subtract():
         assert state['workflow_step'] == 'review', "Should advance to review"
         print("  ✓ Tests passed, advanced to review")
         
-    def simulate_review_phase(self):
-        """Simulate review phase activities."""
-        print("\n👀 Phase 4: Review")
+    def simulate_review_sprint(self):
+        """Simulate review sprint activities."""
+        print("\n👀 Sprint 4: Review")
         
         # Read code for review
         response = self.executor.simulate_tool_use('Read', {
@@ -285,11 +285,11 @@ def test_subtract():
         
         state = read_project_state(self.test_dir)
         assert state['workflow_step'] == 'refinement', "Should advance to refinement"
-        print("  ✓ Advanced to refinement phase")
+        print("  ✓ Advanced to refinement sprint")
         
-    def simulate_refinement_phase(self):
-        """Simulate refinement phase activities."""
-        print("\n🔧 Phase 5: Refinement")
+    def simulate_refinement_sprint(self):
+        """Simulate refinement sprint activities."""
+        print("\n🔧 Sprint 5: Refinement")
         
         # Apply review feedback
         response = self.executor.simulate_tool_use('Edit', {
@@ -326,11 +326,11 @@ def test_subtract():
         
         state = read_project_state(self.test_dir)
         assert state['workflow_step'] == 'integration', "Should advance to integration"
-        print("  ✓ Advanced to integration phase")
+        print("  ✓ Advanced to integration sprint")
         
-    def simulate_integration_phase(self):
-        """Simulate integration phase activities."""
-        print("\n🔀 Phase 6: Integration")
+    def simulate_integration_sprint(self):
+        """Simulate integration sprint activities."""
+        print("\n🔀 Sprint 6: Integration")
         
         # Final test run
         response = self.executor.simulate_tool_use('Bash', {
@@ -352,21 +352,21 @@ def test_subtract():
                     'git_commands_run': True  # This triggers integration completion
                 }
             },
-            'quality_gates_passed': [
+            'acceptance_criteria_passed': [
                 'existing_tests', 'compilation', 'review', 'integration'
             ]
         })
         
-        # Complete phase
+        # Complete sprint
         self.executor.simulate_stop_hook("Integration complete, ready to merge")
         
         state = read_project_state(self.test_dir)
-        assert '01' in state.get('completed_phases', []), \
-            "Phase 01 should be marked complete"
+        assert '01' in state.get('completed_sprints', []), \
+            "Sprint 01 should be marked complete"
         assert state['workflow_step'] == 'planning', \
-            "Should cycle back to planning for next phase"
-        print("  ✓ Phase 01 completed successfully")
-        print("  ✓ Ready for next phase")
+            "Should cycle back to planning for next sprint"
+        print("  ✓ Sprint 01 completed successfully")
+        print("  ✓ Ready for next sprint")
         
     def test_complete_workflow(self):
         """Run complete 6-step workflow test."""
@@ -374,13 +374,13 @@ def test_subtract():
         print("="*50)
         
         try:
-            # Run all phases in sequence
-            self.simulate_planning_phase()
-            self.simulate_implementation_phase()
-            self.simulate_validation_phase()
-            self.simulate_review_phase()
-            self.simulate_refinement_phase()
-            self.simulate_integration_phase()
+            # Run all sprints in sequence
+            self.simulate_planning_sprint()
+            self.simulate_implementation_sprint()
+            self.simulate_validation_sprint()
+            self.simulate_review_sprint()
+            self.simulate_refinement_sprint()
+            self.simulate_integration_sprint()
             
             # Verify final state
             state = read_project_state(self.test_dir)
@@ -388,15 +388,15 @@ def test_subtract():
             # Check metrics
             assert len(state.get('files_modified', [])) > 0, \
                 "Should have modified files"
-            assert len(state.get('quality_gates_passed', [])) >= 3, \
+            assert len(state.get('acceptance_criteria_passed', [])) >= 3, \
                 "Should have passed quality gates"
             assert state.get('automation_cycles', 0) > 0, \
                 "Should have automation cycles"
             
             print("\n✅ Complete workflow test passed!")
             print(f"  - Modified {len(state.get('files_modified', []))} files")
-            print(f"  - Passed {len(state.get('quality_gates_passed', []))} quality gates")
-            print(f"  - Completed phase: {state.get('completed_phases', [])}")
+            print(f"  - Passed {len(state.get('acceptance_criteria_passed', []))} quality gates")
+            print(f"  - Completed sprint: {state.get('completed_sprints', [])}")
             
             self.passed += 1
             
@@ -426,7 +426,7 @@ def test_subtract():
         response1 = self.executor.simulate_tool_use('Write', {
             'file_path': 'test.py',
             'content': 'print("test")'
-        })  # Should be blocked in planning phase
+        })  # Should be blocked in planning sprint
         print(f"  Write response: {response1}")
         
         response2 = self.executor.simulate_tool_use('Read', {'file_path': 'README.md'})  # Allowed

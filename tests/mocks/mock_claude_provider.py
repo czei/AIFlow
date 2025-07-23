@@ -255,7 +255,7 @@ class MockClaudeProviderWithState(MockClaudeProvider):
     def __init__(self, response_mode: str = "deterministic"):
         super().__init__(response_mode)
         self.state = {
-            "project_phase": "planning",
+            "project_sprint": "planning",
             "completed_tasks": [],
             "current_context": {},
             "error_count": 0
@@ -278,13 +278,13 @@ class MockClaudeProviderWithState(MockClaudeProvider):
         """Update internal state based on interactions"""
         prompt_lower = prompt.lower()
         
-        # Track phase transitions
+        # Track sprint transitions
         if "implement" in prompt_lower:
-            self.state["project_phase"] = "implementation"
+            self.state["project_sprint"] = "implementation"
         elif "test" in prompt_lower:
-            self.state["project_phase"] = "testing"
+            self.state["project_sprint"] = "testing"
         elif "deploy" in prompt_lower:
-            self.state["project_phase"] = "deployment"
+            self.state["project_sprint"] = "deployment"
             
         # Track completed tasks
         if "completed" in prompt_lower or "done" in prompt_lower:
@@ -306,7 +306,7 @@ class MockClaudeProviderWithState(MockClaudeProvider):
     def reset_state(self):
         """Reset state to initial values"""
         self.state = {
-            "project_phase": "planning",
+            "project_sprint": "planning",
             "completed_tasks": [],
             "current_context": {},
             "error_count": 0

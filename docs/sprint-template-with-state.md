@@ -1,23 +1,23 @@
-# Phase Template with State Tracking
+# Sprint Template with State Tracking
 
-## Phase File Structure
-Each phase file should include state tracking sections:
+## Sprint File Structure
+Each sprint file should include state tracking sections:
 
 ```markdown
-# Phase 03: Implementation
+# Sprint 03: Implementation
 
 ## Status: IN_PROGRESS
 ## Started: 2025-07-21T09:00:00Z  
 ## Last Updated: 2025-07-21T15:30:00Z
-## Completion: 62% (5 of 8 objectives)
+## Completion: 62% (5 of 8 user stories)
 
 ## Prerequisites: 
-- [x] Phase 02 (Architecture) COMPLETE
+- [x] Sprint 02 (Architecture) COMPLETE
 - [x] Database schema finalized
 - [x] API specifications defined
 
 ## Objectives:
-<!-- Each objective tracks completion status and timestamp -->
+<!-- Each user story tracks completion status and timestamp -->
 - [x] Database layer implementation 
   - Completed: 2025-07-21T10:15:00Z
   - Notes: Optimized queries, 40% performance improvement
@@ -49,8 +49,8 @@ Each phase file should include state tracking sections:
 - 2025-07-21T12:45: Database optimization completed
 - 2025-07-21T10:15: Core database layer finished
 
-## Next Phase Trigger:
-- All objectives marked [x] complete
+## Next Sprint Trigger:
+- All user stories marked [x] complete
 - Integration tests passing
 - Code review completed for all new code
 - Documentation updated
@@ -66,8 +66,8 @@ Each phase file should include state tracking sections:
 
 1. **Beginning of each automation cycle**: Read state for context
 2. **After each work session**: Update progress and notes  
-3. **Task completion**: Mark objectives complete with timestamps
-4. **Phase transition**: Update master state and advance to next phase
+3. **Task completion**: Mark user stories complete with timestamps
+4. **Sprint transition**: Update master state and advance to next sprint
 5. **Manual intervention**: Use `/user:project:update` for corrections
 
 The `/user:project:update` command becomes the central hub for maintaining this state synchronization, ensuring that both automated and manual updates keep all files consistent.

@@ -1,5 +1,5 @@
 """
-ProjectBuilder - Creates project directory structure for phase-driven development.
+ProjectBuilder - Creates project directory structure for sprint-based development.
 """
 
 import os
@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 
 class ProjectBuilder:
-    """Creates standardized project structure for phase-driven development."""
+    """Creates standardized project structure for sprint-based development."""
     
     def __init__(self, project_name: str, project_path: str = None):
         self.project_name = self.validate_project_name(project_name)
@@ -54,8 +54,8 @@ class ProjectBuilder:
         # Create directories
         self._create_directories()
         
-        # Create phase files
-        self._create_phase_files()
+        # Create sprint files
+        self._create_sprint_files()
         
         # Create documentation
         self._create_documentation()
@@ -65,7 +65,7 @@ class ProjectBuilder:
         
     def _create_directories(self):
         """Create essential project directories."""
-        dirs = ['phases', '.claude', 'logs', 'docs']
+        dirs = ['sprints', '.claude', 'logs', 'docs']
         for dir_name in dirs:
             try:
                 dir_path = self.project_path / dir_name
@@ -73,26 +73,26 @@ class ProjectBuilder:
             except OSError as e:
                 raise RuntimeError(f"Failed to create directory {dir_name}: {e}")
             
-    def _create_phase_files(self):
-        """Create default phase markdown files."""
-        phases = {
-            '01-planning.md': self._get_planning_phase(),
-            '02-architecture.md': self._get_architecture_phase(),
-            '03-implementation.md': self._get_implementation_phase(),
-            '04-testing.md': self._get_testing_phase(),
-            '05-deployment.md': self._get_deployment_phase()
+    def _create_sprint_files(self):
+        """Create default sprint markdown files."""
+        sprints = {
+            '01-planning.md': self._get_planning_sprint(),
+            '02-architecture.md': self._get_architecture_sprint(),
+            '03-implementation.md': self._get_implementation_sprint(),
+            '04-testing.md': self._get_testing_sprint(),
+            '05-deployment.md': self._get_deployment_sprint()
         }
         
-        # Ensure phases directory exists
-        phases_dir = self.project_path / 'phases'
-        if not phases_dir.exists():
-            raise RuntimeError(f"Phases directory does not exist: {phases_dir}")
+        # Ensure sprints directory exists
+        sprints_dir = self.project_path / 'sprints'
+        if not sprints_dir.exists():
+            raise RuntimeError(f"Sprints directory does not exist: {sprints_dir}")
         
-        for filename, content in phases.items():
+        for filename, content in sprints.items():
             try:
-                (phases_dir / filename).write_text(content)
+                (sprints_dir / filename).write_text(content)
             except OSError as e:
-                raise RuntimeError(f"Failed to create phase file {filename}: {e}")
+                raise RuntimeError(f"Failed to create sprint file {filename}: {e}")
             
     def _create_documentation(self):
         """Create project documentation files."""
@@ -100,7 +100,7 @@ class ProjectBuilder:
         claude_md = f"""# {self.project_name} - Phase-Driven Development
 
 ## Project Context
-This project follows a structured phase-driven development approach with automated workflow execution.
+This project follows a structured sprint-driven development approach with automated workflow execution.
 
 **Project**: {self.project_name}
 **Created**: {datetime.now().strftime('%Y-%m-%d')}
@@ -120,7 +120,7 @@ Every development objective follows these 6 steps:
 5. **Refinement** - Address feedback
 6. **Integration** - Final tests and commit
 
-## Quality Gates
+## Acceptance Criteria
 - ✅ Compilation - Code builds without errors
 - ✅ Tests - All tests pass with coverage
 - ✅ Review - Code review completed
@@ -140,16 +140,16 @@ Every development objective follows these 6 steps:
         # README.md
         readme = f"""# {self.project_name}
 
-A phase-driven development project with automated workflow management.
+A sprint-driven development project with automated workflow management.
 
 ## Project Structure
-- `phases/` - Development phase definitions
+- `sprints/` - Development sprint definitions
 - `.claude/` - Automation configuration
 - `logs/` - Development logs
 - `docs/` - Project documentation
 
 ## Getting Started
-1. Customize phase files in `phases/`
+1. Customize sprint files in `sprints/`
 2. Run `/user:project:doctor` to validate
 3. Run `/user:project:start` to begin
 """
@@ -175,61 +175,61 @@ A phase-driven development project with automated workflow management.
         settings_path = self.project_path / '.claude' / 'settings.json'
         settings_path.write_text(json.dumps(settings, indent=2))
         
-    def _get_planning_phase(self):
-        return f"""# Phase 01: Planning - {self.project_name}
+    def _get_planning_sprint(self):
+        return f"""# Sprint 01: Planning - {self.project_name}
 
 ## Status: Setup
 - **Started**: Not started
 - **Progress**: 0%
 - **Current Step**: planning
 
-## Objectives
+## User Stories
 - [ ] Requirements Analysis
 - [ ] Technical Specifications
 - [ ] Project Planning
 
-## Prerequisites
+## Dependencies
 - Project requirements defined
 - Stakeholder approval
 - Development environment ready
 
-## Quality Gates
+## Acceptance Criteria
 - Documentation review
 - Specifications approved
 - Timeline defined
 
-## Success Criteria
+## Definition of Done
 - Requirements documented
 - Technical specs complete
 - Timeline established
 
-CUSTOMIZE THIS FILE with project-specific objectives and requirements.
+CUSTOMIZE THIS FILE with project-specific user stories and requirements.
 """
 
-    def _get_architecture_phase(self):
-        return f"""# Phase 02: Architecture - {self.project_name}
+    def _get_architecture_sprint(self):
+        return f"""# Sprint 02: Architecture - {self.project_name}
 
 ## Status: Not Started
 - **Started**: -
 - **Progress**: 0%
 - **Current Step**: -
 
-## Objectives
+## User Stories
 - [ ] System Design
 - [ ] Technology Selection
 - [ ] API Design
 - [ ] Database Schema
 
-## Prerequisites
-- Planning phase complete
+## Dependencies
+- Planning sprint complete
 - Requirements finalized
 
-## Quality Gates
+## Acceptance Criteria
 - Architecture review
 - Technology validation
 - Design approval
 
-## Success Criteria
+## Definition of Done
 - Architecture documented
 - Tech stack selected
 - APIs defined
@@ -237,31 +237,31 @@ CUSTOMIZE THIS FILE with project-specific objectives and requirements.
 CUSTOMIZE THIS FILE with project-specific architecture goals.
 """
 
-    def _get_implementation_phase(self):
-        return f"""# Phase 03: Implementation - {self.project_name}
+    def _get_implementation_sprint(self):
+        return f"""# Sprint 03: Implementation - {self.project_name}
 
 ## Status: Not Started
 - **Started**: -
 - **Progress**: 0%
 - **Current Step**: -
 
-## Objectives
+## User Stories
 - [ ] Core Features
 - [ ] API Implementation
 - [ ] Database Setup
 - [ ] Integration Points
 
-## Prerequisites
+## Dependencies
 - Architecture approved
 - Development environment ready
 
-## Quality Gates
+## Acceptance Criteria
 - Code compilation
 - Unit tests pass
 - Code review
 - Integration tests
 
-## Success Criteria
+## Definition of Done
 - Features implemented
 - Tests passing
 - Code reviewed
@@ -269,31 +269,31 @@ CUSTOMIZE THIS FILE with project-specific architecture goals.
 CUSTOMIZE THIS FILE with specific implementation tasks.
 """
 
-    def _get_testing_phase(self):
-        return f"""# Phase 04: Testing - {self.project_name}
+    def _get_testing_sprint(self):
+        return f"""# Sprint 04: Testing - {self.project_name}
 
 ## Status: Not Started
 - **Started**: -
 - **Progress**: 0%
 - **Current Step**: -
 
-## Objectives
+## User Stories
 - [ ] Unit Testing
 - [ ] Integration Testing
 - [ ] Performance Testing
 - [ ] User Acceptance Testing
 
-## Prerequisites
+## Dependencies
 - Implementation complete
 - Test environment ready
 
-## Quality Gates
+## Acceptance Criteria
 - Test coverage >90%
 - All tests passing
 - Performance benchmarks met
 - UAT sign-off
 
-## Success Criteria
+## Definition of Done
 - Comprehensive test coverage
 - No critical bugs
 - Performance validated
@@ -301,31 +301,31 @@ CUSTOMIZE THIS FILE with specific implementation tasks.
 CUSTOMIZE THIS FILE with testing requirements.
 """
 
-    def _get_deployment_phase(self):
-        return f"""# Phase 05: Deployment - {self.project_name}
+    def _get_deployment_sprint(self):
+        return f"""# Sprint 05: Deployment - {self.project_name}
 
 ## Status: Not Started
 - **Started**: -
 - **Progress**: 0%
 - **Current Step**: -
 
-## Objectives
+## User Stories
 - [ ] Production Setup
 - [ ] Deployment Pipeline
 - [ ] Monitoring Setup
 - [ ] Documentation
 
-## Prerequisites
+## Dependencies
 - Testing complete
 - Production access
 
-## Quality Gates
+## Acceptance Criteria
 - Deployment checklist
 - Security review
 - Performance validation
 - Documentation complete
 
-## Success Criteria
+## Definition of Done
 - Successfully deployed
 - Monitoring active
 - Documentation published

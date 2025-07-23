@@ -28,7 +28,7 @@
   },
   "notifications": {
     "step_complete": true,
-    "phase_complete": true,
+    "sprint_complete": true,
     "workflow_violation": true
   }
 }

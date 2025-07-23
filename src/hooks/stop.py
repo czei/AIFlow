@@ -111,10 +111,10 @@ def main():
             indicators = WorkflowRules.get_step_completion_indicators(workflow_step)
             next_step = indicators.get('next_step', 'planning')
             
-            # Handle phase transition (integration → planning means new phase)
+            # Handle sprint transition (integration → planning means new sprint)
             if workflow_step == 'integration' and next_step == 'planning':
-                # Complete current phase
-                complete_phase(state_manager, state)
+                # Complete current sprint
+                complete_sprint(state_manager, state)
             else:
                 # Regular step advancement
                 updates = {
@@ -123,13 +123,13 @@ def main():
                     'automation_cycles': state.get('automation_cycles', 0) + 1
                 }
                 
-                # Preserve quality gates for validation → review transition
-                # For other transitions, don't reset quality_gates_passed
+                # Preserve acceptance criteria for validation → review transition
+                # For other transitions, don't reset acceptance_criteria_passed
                 # Each step should add to the existing list
                 
                 state_manager.update(updates)
                 
-                print(f"\n✅ Advanced to {next_step} phase")
+                print(f"\n✅ Advanced to {next_step} sprint")
                 print(f"📋 {get_step_guidance(next_step)}\n")
                 
                 # Show suggestions for the new step
@@ -179,24 +179,24 @@ def get_step_guidance(step: str) -> str:
     return guidance.get(step, "Continue with next step")
 
 
-def complete_phase(state_manager, state: dict):
-    """Complete the current phase and prepare for next."""
-    # Get current phase from state (not phase_info)
-    current_phase = state.get('current_phase', 'unknown')
+def complete_sprint(state_manager, state: dict):
+    """Complete the current sprint and prepare for next."""
+    # Get current sprint from state (not sprint_info)
+    current_sprint = state.get('current_sprint', 'unknown')
     
-    # Extract phase number if it's in format like "01", "02", etc.
+    # Extract sprint number if it's in format like "01", "02", etc.
     try:
-        phase_num = int(current_phase) if current_phase.isdigit() else 1
+        sprint_num = int(current_sprint) if current_sprint.isdigit() else 1
     except:
-        phase_num = 1
+        sprint_num = 1
     
-    # For now, assume 5 total phases (can be made configurable later)
-    total_phases = 5
+    # For now, assume 5 total sprints (can be made configurable later)
+    total_sprints = 5
     
-    # Mark phase as complete
-    completed_phases = state.get('completed_phases', [])
-    if current_phase not in completed_phases:
-        completed_phases.append(current_phase)
+    # Mark sprint as complete
+    completed_sprints = state.get('completed_sprints', [])
+    if current_sprint not in completed_sprints:
+        completed_sprints.append(current_sprint)
     
     # Calculate compliance score
     metrics = state.get('metrics', {})
@@ -204,11 +204,11 @@ def complete_phase(state_manager, state: dict):
     
     updates = {
         'workflow_step': 'planning',
-        # Don't reset quality_gates_passed and files_modified - preserve them
-        'completed_phases': completed_phases,
+        # Don't reset acceptance_criteria_passed and files_modified - preserve them
+        'completed_sprints': completed_sprints,
         'last_updated': datetime.now(timezone.utc).isoformat(),
         'workflow_progress': {},  # Reset progress tracking
-        'metrics': {  # Reset metrics for next phase
+        'metrics': {  # Reset metrics for next sprint
             'tools_allowed': 0,
             'tools_blocked': 0,
             'emergency_overrides': 0,
@@ -216,24 +216,24 @@ def complete_phase(state_manager, state: dict):
         }
     }
     
-    print(f"\n🎉 Phase completed: {current_phase}")
+    print(f"\n🎉 Sprint completed: {current_sprint}")
     print(f"📊 Workflow compliance score: {compliance_score:.1f}%")
     
-    # Check if there are more phases
-    if phase_num < total_phases:
-        # Advance to next phase
-        next_phase_num = phase_num + 1
-        updates['phase_info'] = {
-            'current_number': next_phase_num,
-            'total': total_phases
+    # Check if there are more sprints
+    if sprint_num < total_sprints:
+        # Advance to next sprint
+        next_sprint_num = sprint_num + 1
+        updates['sprint_info'] = {
+            'current_number': next_sprint_num,
+            'total': total_sprints
         }
-        print(f"\n📋 Ready for Phase {next_phase_num}/{total_phases}")
-        print("Use /user:project:advance to move to the next phase\n")
+        print(f"\n📋 Ready for Sprint {next_sprint_num}/{total_sprints}")
+        print("Use /user:project:advance to move to the next sprint\n")
     else:
-        # All phases complete
+        # All sprints complete
         updates['status'] = 'completed'
         updates['automation_active'] = False
-        print(f"\n🏆 All {total_phases} phases completed!")
+        print(f"\n🏆 All {total_sprints} sprints completed!")
         print("Project automation complete. Use /user:project:status for summary.\n")
     
     state_manager.update(updates)

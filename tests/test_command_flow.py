@@ -44,36 +44,36 @@ class ClaudeSimulator:
         project_path.mkdir(exist_ok=True)
         
         # Create directories
-        (project_path / "phases").mkdir(exist_ok=True)
+        (project_path / "sprints").mkdir(exist_ok=True)
         (project_path / "output").mkdir(exist_ok=True)
         (project_path / ".logs").mkdir(exist_ok=True)
         
-        # Create phase files
+        # Create sprint files
         for i in range(1, 5):
-            phase_file = project_path / "phases" / f"0{i}-phase.md"
-            phase_file.write_text(f"""# Phase 0{i}: Test Phase
+            sprint_file = project_path / "sprints" / f"0{i}-sprint.md"
+            sprint_file.write_text(f"""# Sprint 0{i}: Test Sprint
 
 ## Status: NOT_STARTED
 ## Completion: 0%
 
 ## Objectives:
-- [ ] Create output/phase0{i}.txt
+- [ ] Create output/sprint0{i}.txt
 - [ ] Update output/progress.json
 - [ ] Validate outputs
 
 ## Measurable Outcomes:
-- File output/phase0{i}.txt exists
+- File output/sprint0{i}.txt exists
 - Progress tracked in JSON
 """)
         
         # Create initial state
         state = {
             "project_name": project_name,
-            "current_phase": "01",
+            "current_sprint": "01",
             "status": "setup",
             "automation_active": False,
             "workflow_step": "planning",
-            "completed_phases": [],
+            "completed_sprints": [],
             "started": datetime.utcnow().isoformat() + "Z"
         }
         
@@ -97,9 +97,9 @@ class ClaudeSimulator:
         
         # Validation checks
         checks = {
-            "Project structure": (project_path / "phases").exists(),
+            "Project structure": (project_path / "sprints").exists(),
             "State file": (project_path / ".project-state.json").exists(),
-            "Phase files": len(list((project_path / "phases").glob("*.md"))) > 0,
+            "Sprint files": len(list((project_path / "sprints").glob("*.md"))) > 0,
             "Output directory": (project_path / "output").exists(),
             "Logs directory": (project_path / ".logs").exists()
         }
@@ -139,10 +139,10 @@ class ClaudeSimulator:
         state_file.write_text(json.dumps(state, indent=2))
         
         print("✅ Automation started")
-        print("📍 Beginning Phase 01...")
+        print("📍 Beginning Sprint 01...")
         
-        # Simulate phase execution
-        self._execute_phase(project_path, "01")
+        # Simulate sprint execution
+        self._execute_sprint(project_path, "01")
         
         return True
         
@@ -168,10 +168,10 @@ class ClaudeSimulator:
         
         print(f"Project: {state['project_name']}")
         print(f"Status: {state['status']}")
-        print(f"Current Phase: {state['current_phase']}")
+        print(f"Current Sprint: {state['current_sprint']}")
         print(f"Workflow Step: {state['workflow_step']}")
         print(f"Automation: {'ACTIVE' if state['automation_active'] else 'PAUSED'}")
-        print(f"Completed Phases: {', '.join(state['completed_phases']) or 'None'}")
+        print(f"Completed Sprints: {', '.join(state['completed_sprints']) or 'None'}")
         
         # Check outputs
         output_files = list((project_path / "output").glob("*"))
@@ -237,9 +237,9 @@ class ClaudeSimulator:
             
         return False
         
-    def cmd_advance(self, phase=None):
+    def cmd_advance(self, sprint=None):
         """Simulate /user:project:advance"""
-        print("⏭️  Advancing phase...")
+        print("⏭️  Advancing sprint...")
         
         project_dirs = [d for d in self.project_dir.iterdir() if d.is_dir()]
         if project_dirs:
@@ -247,22 +247,22 @@ class ClaudeSimulator:
             state_file = project_path / ".project-state.json"
             state = json.loads(state_file.read_text())
             
-            # Mark current phase complete
-            current = state["current_phase"]
-            if current not in state["completed_phases"]:
-                state["completed_phases"].append(current)
+            # Mark current sprint complete
+            current = state["current_sprint"]
+            if current not in state["completed_sprints"]:
+                state["completed_sprints"].append(current)
                 
-            # Advance to next phase
-            next_phase = f"0{int(current) + 1}"
-            state["current_phase"] = next_phase
+            # Advance to next sprint
+            next_sprint = f"0{int(current) + 1}"
+            state["current_sprint"] = next_sprint
             state["workflow_step"] = "planning"
             
             state_file.write_text(json.dumps(state, indent=2))
             
-            print(f"✅ Advanced from Phase {current} to Phase {next_phase}")
+            print(f"✅ Advanced from Sprint {current} to Sprint {next_sprint}")
             
-            # Execute new phase
-            self._execute_phase(project_path, next_phase)
+            # Execute new sprint
+            self._execute_sprint(project_path, next_sprint)
             
             return True
             
@@ -287,7 +287,7 @@ class ClaudeSimulator:
             # Create summary
             output_files = list((project_path / "output").glob("*"))
             print(f"\n📊 Project Summary:")
-            print(f"  - Phases Completed: {len(state['completed_phases'])}")
+            print(f"  - Sprints Completed: {len(state['completed_sprints'])}")
             print(f"  - Files Created: {len(output_files)}")
             print(f"  - Status: COMPLETED")
             
@@ -295,29 +295,29 @@ class ClaudeSimulator:
             
         return False
         
-    def _execute_phase(self, project_path, phase_num):
-        """Simulate phase execution with measurable outcomes"""
+    def _execute_sprint(self, project_path, sprint_num):
+        """Simulate sprint execution with measurable outcomes"""
         output_dir = project_path / "output"
         
-        # Create phase-specific output
-        phase_file = output_dir / f"phase{phase_num}.txt"
-        phase_file.write_text(f"Phase {phase_num} executed at {datetime.utcnow().isoformat()}\n")
+        # Create sprint-specific output
+        sprint_file = output_dir / f"sprint{sprint_num}.txt"
+        sprint_file.write_text(f"Sprint {sprint_num} executed at {datetime.utcnow().isoformat()}\n")
         
         # Update progress JSON
         progress_file = output_dir / "progress.json"
         if progress_file.exists():
             progress = json.loads(progress_file.read_text())
         else:
-            progress = {"phases": {}}
+            progress = {"sprints": {}}
             
-        progress["phases"][phase_num] = {
+        progress["sprints"][sprint_num] = {
             "completed": datetime.utcnow().isoformat(),
             "status": "complete"
         }
         
         progress_file.write_text(json.dumps(progress, indent=2))
         
-        print(f"✅ Phase {phase_num} outputs created")
+        print(f"✅ Sprint {sprint_num} outputs created")
 
 
 def main():

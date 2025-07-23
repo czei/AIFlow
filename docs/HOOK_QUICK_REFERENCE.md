@@ -1,8 +1,8 @@
 # Hook System Quick Reference
 
-## Workflow Phases At a Glance
+## Workflow Sprints At a Glance
 
-| Phase | Can Do | Cannot Do | Complete When |
+| Sprint | Can Do | Cannot Do | Complete When |
 |-------|--------|-----------|---------------|
 | **Planning** | Read code, search, create todos | Write code, execute | Todo list created |
 | **Implementation** | Everything | Nothing blocked | Code written |
@@ -21,7 +21,7 @@ Add to any command to bypass workflow rules:
 ## Key Commands
 
 ```bash
-# Check current phase and progress
+# Check current sprint and progress
 /user:project:status
 
 # Pause workflow enforcement
@@ -30,7 +30,7 @@ Add to any command to bypass workflow rules:
 # Resume workflow enforcement  
 /user:project:resume
 
-# Manually advance to next phase
+# Manually advance to next sprint
 /user:project:advance
 
 # Diagnose issues
@@ -39,11 +39,11 @@ Add to any command to bypass workflow rules:
 
 ## Common Scenarios
 
-### "I need to write code but I'm in planning phase"
+### "I need to write code but I'm in planning sprint"
 1. Complete planning by creating a todo list
 2. The system will auto-advance to implementation
 
-### "I'm stuck in a phase"
+### "I'm stuck in a sprint"
 1. Check status to see requirements
 2. Complete missing actions
 3. Or use `/user:project:advance` to force advancement
@@ -65,12 +65,12 @@ When a tool is blocked:
 ```json
 {
   "decision": "block",
-  "reason": "Planning phase: Complete requirements analysis",
+  "reason": "Planning sprint: Complete requirements analysis",
   "suggestions": ["Read existing code", "Create todo list"]
 }
 ```
 
-## Quality Gates
+## Acceptance Criteria
 
 Automatically tracked:
 - ✅ `existing_tests` - Tests run successfully
@@ -84,7 +84,7 @@ Automatically tracked:
 - Check: `.claude/settings.json` exists
 - Run: `/user:project:doctor`
 
-**Wrong phase?**
+**Wrong sprint?**
 - Check: `/user:project:status`
 - Fix: Complete required actions or advance manually
 

@@ -1,15 +1,15 @@
 ---
 allowed-tools: Bash(test:*), Bash(python3:*), Bash(jq:*)
-description: Force advance to next phase
-argument-hint: [phase-number]
+description: Force advance to next sprint
+argument-hint: [sprint-number]
 ---
 
-# Project Advance - Force Phase Transition
+# Project Advance - Force Sprint Transition
 
-Force advancement to next phase or specific phase.
+Force advancement to next sprint or specific sprint.
 
 !`[ -f ".project-state.json" ] || { echo "❌ No project found"; exit 1; }`
 !`jq -r '.status' .project-state.json | grep -qE "active|paused" || { echo "❌ Project must be active or paused"; exit 1; }`
-!`python3 -c "import sys; sys.path.append('$(git rev-parse --show-toplevel)/src'); from state_manager import StateManager; sm = StateManager('.'); phase = '${ARGUMENTS}' if '${ARGUMENTS}' else str(int(sm.read()['current_phase']) + 1).zfill(2); sm.update({'current_phase': phase, 'workflow_step': 'planning', 'quality_gates_passed': []}); print(f'✅ Advanced to phase {phase}')"`
+!`python3 -c "import sys; sys.path.append('$(git rev-parse --show-toplevel)/src'); from state_manager import StateManager; sm = StateManager('.'); sprint = '${ARGUMENTS}' if '${ARGUMENTS}' else str(int(sm.read()['current_sprint']) + 1).zfill(2); sm.update({'current_sprint': sprint, 'workflow_step': 'planning', 'acceptance_criteria_passed': []}); print(f'✅ Advanced to sprint {sprint}')"`
 
-Phase advanced. Workflow reset to planning stage.
+Sprint advanced. Workflow reset to planning stage.

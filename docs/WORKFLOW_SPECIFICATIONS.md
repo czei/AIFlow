@@ -1,18 +1,18 @@
-# Phase-Driven Development Workflow Specifications
+# Sprint-Driven Development Workflow Specifications
 
-This document defines the detailed workflows that Claude Code automation follows during each phase of development.
+This document defines the detailed workflows that Claude Code automation follows during each sprint of development.
 
 ## Universal Workflow Pattern
 
-Every development objective follows this 6-step workflow regardless of phase:
+Every development user story follows this story lifecycle regardless of sprint:
 
 ### Step 1: Planning
-- **Context Review**: Read current objective, acceptance criteria, and dependencies
-- **Task Breakdown**: Decompose objective into specific, actionable implementation tasks
+- **Context Review**: Read current user story, acceptance criteria, and dependencies
+- **Task Breakdown**: Decompose user story into specific, actionable implementation tasks
 - **Risk Assessment**: Identify potential blockers, dependencies, or technical challenges
 - **Approach Design**: Plan implementation approach following project architecture
-- **Test Strategy**: Define how the objective will be validated and tested
-- **Success Definition**: Clarify what "complete" means for this specific objective
+- **Test Strategy**: Define how the user story will be validated and tested
+- **Success Definition**: Clarify what "complete" means for this specific user story
 
 ### Step 2: Implementation  
 - **Code Development**: Write production-quality code following established patterns
@@ -55,12 +55,12 @@ Every development objective follows this 6-step workflow regardless of phase:
 - **Final Testing**: Execute complete test suite including new and existing tests
 - **Documentation Update**: Update project documentation, README, API docs as needed
 - **Commit Preparation**: Create clean, descriptive commit with clear message
-- **Progress Update**: Update project state and phase progress tracking
-- **Handoff Preparation**: Ensure work is ready for next objective or phase transition
+- **Progress Update**: Update project state and sprint progress tracking
+- **Handoff Preparation**: Ensure work is ready for next user story or sprint transition
 
-## Phase-Specific Workflow Variations
+## Sprint-Specific Workflow Variations
 
-### Planning Phase Workflow
+### Planning Sprint Workflow
 **Focus**: Project definition, requirements analysis, and approach design
 
 **Planning Step**: 
@@ -71,7 +71,7 @@ Every development objective follows this 6-step workflow regardless of phase:
 **Implementation Step**:
 - Create project specification documents
 - Design system architecture diagrams  
-- Define development phases and milestones
+- Define development sprints and milestones
 
 **Validation Step**:
 - Review specifications for completeness
@@ -86,14 +86,14 @@ Every development objective follows this 6-step workflow regardless of phase:
 **Refinement Step**:
 - Address specification gaps or issues
 - Refine architecture based on feedback
-- Adjust project phases based on findings
+- Adjust project sprints based on findings
 
 **Integration Step**:
 - Finalize project documentation
 - Create initial project structure
 - Set up development environment
 
-### Architecture Phase Workflow  
+### Architecture Sprint Workflow  
 **Focus**: System design, technology selection, and component definitions
 
 **Planning Step**:
@@ -129,9 +129,9 @@ Every development objective follows this 6-step workflow regardless of phase:
 - Finalize architecture documentation
 - Set up development environment
 - Create project skeleton with chosen technologies
-- Prepare for implementation phase
+- Prepare for implementation sprint
 
-### Implementation Phase Workflow
+### Implementation Sprint Workflow
 **Focus**: Feature development, coding, and core functionality creation
 
 **Planning Step**:
@@ -169,7 +169,7 @@ Every development objective follows this 6-step workflow regardless of phase:
 - Create comprehensive commit messages
 - Update project progress tracking
 
-### Testing Phase Workflow
+### Testing Sprint Workflow
 **Focus**: Quality assurance, test coverage, and bug identification/resolution
 
 **Planning Step**:
@@ -205,9 +205,9 @@ Every development objective follows this 6-step workflow regardless of phase:
 - Finalize test suite and automation
 - Document testing procedures and results
 - Create quality assurance reports
-- Prepare for deployment or next phase
+- Prepare for deployment or next sprint
 
-### Deployment Phase Workflow
+### Deployment Sprint Workflow
 **Focus**: Production preparation, deployment automation, and release management
 
 **Planning Step**:
@@ -243,12 +243,12 @@ Every development objective follows this 6-step workflow regardless of phase:
 - Execute production deployment
 - Monitor system health and performance
 - Document deployment results and lessons learned
-- Transition to maintenance and support phase
+- Transition to maintenance and support sprint
 
-## Quality Gates and Success Criteria
+## Acceptance Criteria and Success Criteria
 
-### Universal Quality Gates
-Every objective must pass these gates:
+### Universal Acceptance Criteria
+Every user story must pass these gates:
 
 1. **Compilation Gate**: All code compiles without errors or warnings
 2. **Test Gate**: Full test suite passes with >90% coverage for new code
@@ -257,26 +257,26 @@ Every objective must pass these gates:
 5. **Documentation Gate**: All changes properly documented
 6. **Performance Gate**: Performance benchmarks met or justified exceptions
 
-### Phase-Specific Success Criteria
+### Sprint-Specific Success Criteria
 
-**Planning Phase**: Requirements complete, architecture designed, project scoped
-**Architecture Phase**: System design finalized, technologies selected, skeleton created
-**Implementation Phase**: Features complete, tested, reviewed, and integrated
-**Testing Phase**: Comprehensive test coverage, bugs identified and resolved
-**Deployment Phase**: Production-ready system deployed and monitored
+**Planning Sprint**: Requirements complete, architecture designed, project scoped
+**Architecture Sprint**: System design finalized, technologies selected, skeleton created
+**Implementation Sprint**: Features complete, tested, reviewed, and integrated
+**Testing Sprint**: Comprehensive test coverage, bugs identified and resolved
+**Deployment Sprint**: Production-ready system deployed and monitored
 
 ## Automation Integration
 
 ### Stop Hook Integration
 The automation system should reference this workflow specification:
-- Read current phase and objective from project state
-- Follow appropriate phase workflow for current objective
-- Validate completion against phase-specific success criteria
-- Update progress only when quality gates are satisfied
+- Read current sprint and user story from project state
+- Follow appropriate sprint workflow for current user story
+- Validate completion against sprint-specific success criteria
+- Update progress only when acceptance criteria are satisfied
 - Escalate to human intervention when workflows cannot be completed
 
 ### State Management Integration
-- Track workflow position within each objective (which of the 6 steps)
+- Track workflow position within each user story (which of the 6 steps)
 - Record quality gate passage for audit trail
 - Maintain detailed progress notes with validation results
 - Enable resumption from any point in the workflow

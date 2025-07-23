@@ -21,8 +21,8 @@ class WorkflowConfig:
         "integration"
     ]
     
-    # Quality gates
-    QUALITY_GATES: List[str] = [
+    # Acceptance criteria
+    ACCEPTANCE_CRITERIA: List[str] = [
         "compilation",
         "existing_tests",
         "new_tests",
@@ -76,15 +76,15 @@ class ProjectConfig:
     """Project structure configuration."""
     
     # Directory names
-    PROJECT_DIRS: List[str] = ['phases', '.claude', 'logs', 'docs']
+    PROJECT_DIRS: List[str] = ['sprints', '.claude', 'logs', 'docs']
     
-    # Phase file names
-    PHASE_FILES: Dict[str, str] = {
-        '01-planning.md': 'Planning',
-        '02-architecture.md': 'Architecture',
-        '03-implementation.md': 'Implementation',
-        '04-testing.md': 'Testing',
-        '05-deployment.md': 'Deployment'
+    # Sprint file names
+    SPRINT_FILES: Dict[str, str] = {
+        'sprint-01-planning.md': 'Planning',
+        'sprint-02-architecture.md': 'Architecture',
+        'sprint-03-implementation.md': 'Implementation',
+        'sprint-04-testing.md': 'Testing',
+        'sprint-05-deployment.md': 'Deployment'
     }
     
     # Claude settings
@@ -110,12 +110,12 @@ class MessagesConfig:
     
     # Workflow messages
     WORKFLOW_MESSAGES: Dict[str, str] = {
-        'planning': "🚫 Planning phase: Complete requirements analysis before writing code.",
-        'implementation': "✅ Implementation phase: All tools available.",
-        'validation': "🧪 Validation phase: Focus on testing and verification.",
-        'review': "👀 Review phase: Analyze code quality and architecture.",
-        'refinement': "🔧 Refinement phase: Apply review feedback.",
-        'integration': "🔀 Integration phase: Prepare for merge."
+        'planning': "🚫 Planning sprint: Complete requirements analysis before writing code.",
+        'implementation': "✅ Implementation sprint: All tools available.",
+        'validation': "🧪 Validation sprint: Focus on testing and verification.",
+        'review': "👀 Review sprint: Analyze code quality and architecture.",
+        'refinement': "🔧 Refinement sprint: Apply review feedback.",
+        'integration': "🔀 Integration sprint: Prepare for merge."
     }
     
     # Step guidance
@@ -132,17 +132,17 @@ class MessagesConfig:
     SUCCESS_MESSAGES: Dict[str, str] = {
         'project_created': "✅ Project created at {path}",
         'state_created': "✅ Project state initialized",
-        'workflow_advanced': "✅ Advanced to {step} phase",
-        'phase_completed': "🎉 Phase completed: {phase}",
-        'all_phases_completed': "🏆 All {count} phases completed!"
+        'workflow_advanced': "✅ Advanced to {step} sprint",
+        'sprint_completed': "🎉 Sprint completed: {sprint}",
+        'all_sprints_completed': "🏆 All {count} sprints completed!"
     }
     
     # Error messages
     ERROR_MESSAGES: Dict[str, str] = {
         'state_exists': "State file already exists: {path}",
         'state_not_found': "State file not found: {path}",
-        'invalid_transition': "Invalid phase transition from {current} to {target}",
-        'incomplete_phase': "Cannot advance from incomplete phase {phase}",
+        'invalid_transition': "Invalid sprint transition from {current} to {target}",
+        'incomplete_sprint': "Cannot advance from incomplete sprint {sprint}",
         'corrupt_state': "Corrupt state file: {error}",
         'permission_denied': "Permission denied: {error}",
         'lock_timeout': "Could not acquire lock after {timeout}s"

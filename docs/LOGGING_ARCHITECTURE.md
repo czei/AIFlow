@@ -1,4 +1,4 @@
-# Comprehensive Logging for Phase-Driven Development
+# Comprehensive Logging for Sprint-Driven Development
 
 The automation system generates detailed logs at multiple levels to enable effective debugging and monitoring of the development process.
 
@@ -9,15 +9,15 @@ The automation system generates detailed logs at multiple levels to enable effec
 project-directory/
 ├── .logs/
 │   ├── automation.log          # Main automation events and decisions
-│   ├── workflow.log             # 6-step workflow progress and state changes  
+│   ├── workflow.log             # story lifecycle progress and state changes  
 │   ├── commands.log             # All commands executed with results
 │   ├── quality-gates.log        # Quality gate evaluations and results
-│   ├── phase-transitions.log    # Phase advancement and validation
+│   ├── sprint-transitions.log    # Sprint advancement and validation
 │   ├── errors.log              # Error conditions and recovery actions
 │   └── performance.log         # Timing and performance metrics
 ├── .project-state.json
 ├── .workflow-state.json
-└── phases/
+└── sprints/
 ```
 
 ## Log Format Standards
@@ -27,10 +27,10 @@ project-directory/
 {
   "timestamp": "2025-07-21T15:30:45.123Z",
   "level": "INFO|DEBUG|WARNING|ERROR",
-  "category": "automation|workflow|command|quality|phase|error|performance",
-  "phase": "03-implementation",
+  "category": "automation|workflow|command|quality|sprint|error|performance",
+  "sprint": "03-implementation",
   "workflow_step": "validate",
-  "objective": "Business logic API endpoints",
+  "user story": "Business logic API endpoints",
   "event": "quality_gate_evaluation",
   "details": {
     "gate_type": "compilation",
@@ -81,7 +81,7 @@ class EnhancedLogger:
         
         categories = [
             'automation', 'workflow', 'commands', 
-            'quality-gates', 'phase-transitions', 'errors', 'performance'
+            'quality-gates', 'sprint-transitions', 'errors', 'performance'
         ]
         
         for category in categories:
@@ -127,9 +127,9 @@ class EnhancedLogger:
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "level": level,
             "category": category,
-            "phase": project_state.get("current_phase", "unknown"),
+            "sprint": project_state.get("current_sprint", "unknown"),
             "workflow_step": project_state.get("workflow_step", "unknown"),
-            "objective": project_state.get("current_objective", "unknown"),
+            "user story": project_state.get("current_user story", "unknown"),
             "event": event,
             "correlation_id": self.correlation_id,
             "details": details or {},
@@ -170,7 +170,7 @@ class SecureShell:
                 'automation', 'DEBUG', 'project_state_loaded',
                 {
                     'state_file': self.state_file,
-                    'current_phase': state.get('current_phase'),
+                    'current_sprint': state.get('current_sprint'),
                     'workflow_step': state.get('workflow_step'),
                     'automation_active': state.get('automation_active')
                 }
@@ -195,11 +195,11 @@ class SecureShell:
             )
             return {"workflow_step": "planning"}
     
-    def validate_command_phase(self, command, args, phase):
-        """Basic phase-appropriate command validation with logging"""
+    def validate_command_sprint(self, command, args, sprint):
+        """Basic sprint-appropriate command validation with logging"""
         start_time = time.time()
         
-        # Simple phase-based validation rules
+        # Simple sprint-based validation rules
         allowed_commands = {
             "planning": ["cat", "ls", "find", "grep", "git"],
             "implementation": ["cat", "ls", "git", "touch", "mkdir", "cp", "mv", "python", "npm", "node"],
@@ -209,20 +209,20 @@ class SecureShell:
             "integration": ["git", "cat", "ls", "cp", "mv"]
         }
         
-        # Check if command is allowed in current phase
-        phase_commands = allowed_commands.get(phase, [])
-        is_allowed = command in phase_commands
+        # Check if command is allowed in current sprint
+        sprint_commands = allowed_commands.get(sprint, [])
+        is_allowed = command in sprint_commands
         
         duration_ms = (time.time() - start_time) * 1000
         
         # Log validation decision
         self.logger.log_event(
-            'quality-gates', 'INFO', 'command_phase_validation',
+            'quality-gates', 'INFO', 'command_sprint_validation',
             {
                 'command': command,
                 'args': args[:5],  # Limit arg logging for privacy
-                'phase': phase,
-                'allowed_commands': phase_commands,
+                'sprint': sprint,
+                'allowed_commands': sprint_commands,
                 'validation_result': 'allowed' if is_allowed else 'denied',
                 'duration_ms': round(duration_ms, 2)
             }
@@ -354,25 +354,25 @@ class SecureShell:
         
         # Load project state
         project_state = self.load_project_state()
-        phase = project_state.get("workflow_step", "planning")
+        sprint = project_state.get("workflow_step", "planning")
         
         self.logger.log_event(
             'workflow', 'INFO', 'command_validation_start',
             {
                 'command': command,
-                'phase': phase,
+                'sprint': sprint,
                 'args_count': len(args)
             }
         )
         
-        # Validate command against phase
-        if self.validate_command_phase(command, args, phase):
+        # Validate command against sprint
+        if self.validate_command_sprint(command, args, sprint):
             self.logger.log_event(
                 'automation', 'INFO', 'command_approved',
                 {
                     'command': command,
-                    'phase': phase,
-                    'validation_method': 'phase_based'
+                    'sprint': sprint,
+                    'validation_method': 'sprint_based'
                 }
             )
             return self.execute_command(command_parts)
@@ -381,11 +381,11 @@ class SecureShell:
                 'automation', 'WARNING', 'command_blocked',
                 {
                     'command': command,
-                    'phase': phase,
-                    'reason': 'not_allowed_in_current_phase'
+                    'sprint': sprint,
+                    'reason': 'not_allowed_in_current_sprint'
                 }
             )
-            print(f"❌ Command '{command}' blocked: not allowed in {phase} phase")
+            print(f"❌ Command '{command}' blocked: not allowed in {sprint} sprint")
             return 1
 
 if __name__ == "__main__":
@@ -426,8 +426,8 @@ jq -s 'group_by(.event) | map({event: .[0].event, count: length, avg_duration: (
 # Find failed commands
 jq 'select(.details.exit_code != 0)' .logs/commands.log
 
-# Track phase transitions
-jq 'select(.event == "phase_transition")' .logs/phase-transitions.log
+# Track sprint transitions
+jq 'select(.event == "sprint_transition")' .logs/sprint-transitions.log
 
 # Correlation analysis - find all events for a specific correlation ID
 grep "uuid-from-logs" .logs/*.log | jq .
@@ -462,7 +462,7 @@ jq 'select(.details.duration_ms > 5000)' .logs/performance.log | sort_by(.detail
 jq -r '[.timestamp, .details.command, .details.duration_ms] | @csv' .logs/performance.log
 ```
 
-## Integration with Phase-Driven Commands
+## Integration with Sprint-Driven Commands
 
 ### Enhanced Status Command
 ```markdown
@@ -470,7 +470,7 @@ jq -r '[.timestamp, .details.command, .details.duration_ms] | @csv' .logs/perfor
 The status command now includes log analysis:
 
 Recent Activity (from logs):
-  - 15:45: Command approved: git status (validation phase, 45ms)
+  - 15:45: Command approved: git status (validation sprint, 45ms)
   - 15:44: Quality gate passed: compilation (1,234ms)
   - 15:43: Workflow step transition: implement → validate
   - 15:42: Command execution: npm test (exit_code: 0, 12,456ms)

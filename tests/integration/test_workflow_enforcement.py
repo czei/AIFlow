@@ -60,11 +60,11 @@ class WorkflowEnforcementTest:
         self.env.teardown()
         print("✅ Test environment cleaned up")
         
-    def test_planning_phase_restrictions(self):
-        """Test planning phase blocks write operations."""
-        print("\n🧪 Testing planning phase restrictions...")
+    def test_planning_sprint_restrictions(self):
+        """Test planning sprint blocks write operations."""
+        print("\n🧪 Testing planning sprint restrictions...")
         
-        # Set state to planning phase
+        # Set state to planning sprint
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -85,8 +85,8 @@ class WorkflowEnforcementTest:
         assert_hook_response(response, 'block')
         message = response.get('message') or response.get('reason', '')
         assert 'planning' in message.lower(), \
-            "Block message should mention planning phase"
-        print("  ✓ Write tool blocked in planning phase")
+            "Block message should mention planning sprint"
+        print("  ✓ Write tool blocked in planning sprint")
         
         # Test 2: Edit tool should be blocked
         response = self.executor.simulate_tool_use('Edit', {
@@ -96,7 +96,7 @@ class WorkflowEnforcementTest:
         })
         
         assert_hook_response(response, 'block')
-        print("  ✓ Edit tool blocked in planning phase")
+        print("  ✓ Edit tool blocked in planning sprint")
         
         # Test 3: Read tool should be allowed
         response = self.executor.simulate_tool_use('Read', {
@@ -104,7 +104,7 @@ class WorkflowEnforcementTest:
         })
         
         assert_hook_response(response, 'allow', check_message=False)
-        print("  ✓ Read tool allowed in planning phase")
+        print("  ✓ Read tool allowed in planning sprint")
         
         # Test 4: TodoWrite should be allowed
         response = self.executor.simulate_tool_use('TodoWrite', {
@@ -114,7 +114,7 @@ class WorkflowEnforcementTest:
         })
         
         assert_hook_response(response, 'allow', check_message=False)
-        print("  ✓ TodoWrite allowed in planning phase")
+        print("  ✓ TodoWrite allowed in planning sprint")
         
         # Test 5: Bash commands should be blocked
         response = self.executor.simulate_tool_use('Bash', {
@@ -122,16 +122,16 @@ class WorkflowEnforcementTest:
         })
         
         assert_hook_response(response, 'block')
-        print("  ✓ Bash execution blocked in planning phase")
+        print("  ✓ Bash execution blocked in planning sprint")
         
-        print("✅ Planning phase restrictions working correctly")
+        print("✅ Planning sprint restrictions working correctly")
         self.passed += 1
         
-    def test_implementation_phase_permissions(self):
-        """Test implementation phase allows all tools."""
-        print("\n🧪 Testing implementation phase permissions...")
+    def test_implementation_sprint_permissions(self):
+        """Test implementation sprint allows all tools."""
+        print("\n🧪 Testing implementation sprint permissions...")
         
-        # Set state to implementation phase
+        # Set state to implementation sprint
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -150,16 +150,16 @@ class WorkflowEnforcementTest:
         for tool, params in tools_to_test:
             response = self.executor.simulate_tool_use(tool, params)
             assert_hook_response(response, 'allow', check_message=False)
-            print(f"  ✓ {tool} allowed in implementation phase")
+            print(f"  ✓ {tool} allowed in implementation sprint")
             
-        print("✅ Implementation phase permissions working correctly")
+        print("✅ Implementation sprint permissions working correctly")
         self.passed += 1
         
-    def test_validation_phase_restrictions(self):
-        """Test validation phase restricts new file creation."""
-        print("\n🧪 Testing validation phase restrictions...")
+    def test_validation_sprint_restrictions(self):
+        """Test validation sprint restricts new file creation."""
+        print("\n🧪 Testing validation sprint restrictions...")
         
-        # Set state to validation phase
+        # Set state to validation sprint
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -172,7 +172,7 @@ class WorkflowEnforcementTest:
             'content': 'new content'
         })
         assert_hook_response(response, 'block')
-        print("  ✓ Write blocked in validation phase")
+        print("  ✓ Write blocked in validation sprint")
         
         # Edit should be allowed (for fixes)
         response = self.executor.simulate_tool_use('Edit', {
@@ -181,7 +181,7 @@ class WorkflowEnforcementTest:
             'new_string': 'fix'
         })
         assert_hook_response(response, 'allow', check_message=False)
-        print("  ✓ Edit allowed in validation phase")
+        print("  ✓ Edit allowed in validation sprint")
         
         # Bash should be allowed (for running tests)
         response = self.executor.simulate_tool_use('Bash', {
@@ -190,14 +190,14 @@ class WorkflowEnforcementTest:
         assert_hook_response(response, 'allow', check_message=False)
         print("  ✓ Bash allowed for test execution")
         
-        print("✅ Validation phase restrictions working correctly")
+        print("✅ Validation sprint restrictions working correctly")
         self.passed += 1
         
-    def test_review_phase_readonly(self):
-        """Test review phase is read-only."""
-        print("\n🧪 Testing review phase read-only mode...")
+    def test_review_sprint_readonly(self):
+        """Test review sprint is read-only."""
+        print("\n🧪 Testing review sprint read-only mode...")
         
-        # Set state to review phase
+        # Set state to review sprint
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -214,7 +214,7 @@ class WorkflowEnforcementTest:
         for tool, params in write_tools:
             response = self.executor.simulate_tool_use(tool, params)
             assert_hook_response(response, 'block')
-            print(f"  ✓ {tool} blocked in review phase")
+            print(f"  ✓ {tool} blocked in review sprint")
             
         # Read operations should be allowed
         read_tools = [
@@ -225,16 +225,16 @@ class WorkflowEnforcementTest:
         for tool, params in read_tools:
             response = self.executor.simulate_tool_use(tool, params)
             assert_hook_response(response, 'allow', check_message=False)
-            print(f"  ✓ {tool} allowed in review phase")
+            print(f"  ✓ {tool} allowed in review sprint")
             
-        print("✅ Review phase read-only mode working correctly")
+        print("✅ Review sprint read-only mode working correctly")
         self.passed += 1
         
     def test_automation_disabled_bypass(self):
         """Test all tools allowed when automation is disabled."""
         print("\n🧪 Testing automation disabled bypass...")
         
-        # Disable automation in planning phase
+        # Disable automation in planning sprint
         update_project_state(self.test_dir, {
             'status': 'paused',
             'automation_active': False,
@@ -260,7 +260,7 @@ class WorkflowEnforcementTest:
         """Test emergency commands bypass restrictions."""
         print("\n🧪 Testing emergency override...")
         
-        # Set restrictive state (planning phase)
+        # Set restrictive state (planning sprint)
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -296,7 +296,7 @@ class WorkflowEnforcementTest:
         """Test post_tool_use hook tracks progress."""
         print("\n🧪 Testing post-tool-use progress tracking...")
         
-        # Enable automation in implementation phase
+        # Enable automation in implementation sprint
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -341,7 +341,7 @@ class WorkflowEnforcementTest:
         """Test hooks provide helpful suggestions when blocking."""
         print("\n🧪 Testing workflow suggestions...")
         
-        # Set to planning phase
+        # Set to planning sprint
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
@@ -372,10 +372,10 @@ class WorkflowEnforcementTest:
         print("="*60)
         
         tests = [
-            self.test_planning_phase_restrictions,
-            self.test_implementation_phase_permissions,
-            self.test_validation_phase_restrictions,
-            self.test_review_phase_readonly,
+            self.test_planning_sprint_restrictions,
+            self.test_implementation_sprint_permissions,
+            self.test_validation_sprint_restrictions,
+            self.test_review_sprint_readonly,
             self.test_automation_disabled_bypass,
             self.test_emergency_override,
             self.test_post_tool_use_tracking,

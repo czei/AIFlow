@@ -1,6 +1,6 @@
 # Proof of Concept Setup Guide
 
-This guide helps you get the basic phase-driven development system working quickly, without the complexity of the full security architecture.
+This guide helps you get the basic sprint-driven development system working quickly, without the complexity of the full security architecture.
 
 ## Current Implementation: Basic Git Worktree Safety + Comprehensive Logging
 
@@ -16,13 +16,13 @@ The proof-of-concept uses git worktree isolation as the primary safety mechanism
 
 **Secondary Protection: State Validation + Logging**
 - Commands include built-in state checking
-- Automation validates current phase and project boundaries
+- Automation validates current sprint and project boundaries
 - Human override always available through pause/stop commands
 - **Comprehensive logging**: Every command, decision, and state change logged
 - **Debug capabilities**: Full audit trail for troubleshooting automation issues
 
 **Logging Infrastructure:**
-- **7 specialized log files**: automation, workflow, commands, quality-gates, phase-transitions, errors, performance
+- **7 specialized log files**: automation, workflow, commands, quality-gates, sprint-transitions, errors, performance
 - **Structured JSON logging**: Machine-readable logs with full context
 - **Correlation IDs**: Track all related events across an automation session
 - **Real-time monitoring**: Live log tailing and analysis tools
@@ -58,7 +58,7 @@ claude-code --dangerously-skip-permissions
 ```bash
 # Check that setup created proper structure
 ls ../test-project/
-# Should show: phases/, .project-state.json, CLAUDE.md, etc.
+# Should show: sprints/, .project-state.json, CLAUDE.md, etc.
 
 # Validate with doctor command
 cd ../test-project
@@ -78,7 +78,7 @@ chmod +x ~/.claude/commands/analyze_logs.sh
 
 ### 5. Run First Automation Test
 ```bash
-# After customizing phase files per doctor recommendations:
+# After customizing sprint files per doctor recommendations:
 /user:project:start
 
 # Monitor progress:
@@ -115,7 +115,7 @@ tail -f .logs/errors.log | jq .
 
 Once the proof-of-concept is working and you're comfortable with the workflow:
 
-### Phase 2: Enhanced Security
+### Sprint 2: Enhanced Security
 The next major version will implement enterprise-grade security:
 
 1. **Docker Containerization**
@@ -160,7 +160,7 @@ You'll know the PoC is successful when:
 ✅ **Doctor Validates**: `/user:project:doctor` shows green validation
 ✅ **Logging Active**: `.logs/` directory created with structured JSON logs
 ✅ **Automation Runs**: `/user:project:start` begins autonomous development
-✅ **Quality Gates Work**: System enforces 6-step workflow with validation
+✅ **Acceptance Criteria Work**: System enforces story lifecycle with validation
 ✅ **State Persistence**: Can pause/resume automation maintaining context
 ✅ **Human Control**: Override and manual intervention work as expected
 ✅ **Debug Capability**: Can trace automation decisions through comprehensive logs
@@ -172,14 +172,14 @@ You'll know the PoC is successful when:
 ### Troubleshooting
 - **Commands Not Found**: Verify installation in `~/.claude/commands/project/`
 - **Setup Fails**: Ensure you're in a git repository directory
-- **Doctor Fails**: Check phase file customization and git worktree setup
+- **Doctor Fails**: Check sprint file customization and git worktree setup
 - **Automation Stuck**: Use `/user:project:pause` then `/user:project:status`
 
 ### Common Issues
 - **Git Worktree Errors**: Ensure clean git state before setup
 - **Permission Errors**: Must use `--dangerously-skip-permissions` flag
 - **State File Issues**: Check `.project-state.json` exists and is valid JSON
-- **Phase Validation**: Ensure phase files are fully customized (no templates)
+- **Sprint Validation**: Ensure sprint files are fully customized (no templates)
 - **Missing Logs**: Check that `.logs/` directory exists and has proper permissions
 - **Command Failures**: Use log analysis: `~/.claude/commands/analyze_logs.sh`
 - **Automation Stuck**: Check error logs and recent correlation IDs for debugging

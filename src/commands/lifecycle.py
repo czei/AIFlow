@@ -210,7 +210,7 @@ class LifecycleCommand:
                 "stop_context": {
                     "reason": reason,
                     "stopped_at": datetime.now(timezone.utc).isoformat(),
-                    "final_phase": state.get("current_phase"),
+                    "final_sprint": state.get("current_sprint"),
                     "final_workflow_step": state.get("workflow_step"),
                     "summary": project_summary
                 },
@@ -249,7 +249,7 @@ class LifecycleCommand:
         # Validate project readiness
         if not self._check_project_readiness(state):
             raise LifecycleCommandError(
-                "Project not ready for automation. Please customize phase files and "
+                "Project not ready for automation. Please customize sprint files and "
                 "update CLAUDE.md with project context."
             )
             
@@ -284,16 +284,16 @@ class LifecycleCommand:
             
     def _check_project_readiness(self, state: Dict[str, Any]) -> bool:
         """Check if project is ready for automation."""
-        # Check if phase files exist and have been customized
-        phases_dir = self.project_path / "phases"
-        if not phases_dir.exists():
+        # Check if sprint files exist and have been customized
+        sprints_dir = self.project_path / "sprints"
+        if not sprints_dir.exists():
             return False
             
-        # Check for key phase files
-        required_phases = ["01-planning.md", "02-architecture.md", "03-implementation.md"]
-        for phase_file in required_phases:
-            phase_path = phases_dir / phase_file
-            if not phase_path.exists():
+        # Check for key sprint files
+        required_sprints = ["01-planning.md", "02-architecture.md", "03-implementation.md"]
+        for sprint_file in required_sprints:
+            sprint_path = sprints_dir / sprint_file
+            if not sprint_path.exists():
                 return False
                 
         # Check if CLAUDE.md exists
@@ -329,7 +329,7 @@ class LifecycleCommand:
         
     def _validate_project_structure(self) -> Dict[str, Any]:
         """Validate project directory structure."""
-        required_dirs = ["phases", ".claude", "logs", "docs"]
+        required_dirs = ["sprints", ".claude", "logs", "docs"]
         required_files = ["CLAUDE.md", ".project-state.json"]
         
         missing_dirs = []
@@ -430,19 +430,19 @@ class LifecycleCommand:
             "paused_at": datetime.now(timezone.utc).isoformat(),
             "paused_from_status": state.get("status"),
             "paused_workflow_step": state.get("workflow_step"),
-            "paused_current_phase": state.get("current_phase"),
-            "paused_current_objective": state.get("current_objective"),
+            "paused_current_sprint": state.get("current_sprint"),
+            "paused_current_user_story": state.get("current_user_story"),
             "pause_reason": reason,
             "automation_cycles_at_pause": state.get("automation_cycles", 0),
-            "quality_gates_at_pause": state.get("quality_gates_passed", []).copy()
+            "acceptance_criteria_at_pause": state.get("acceptance_criteria_passed", []).copy()
         }
         
     def _determine_resume_point(self, pause_context: Dict[str, Any]) -> Dict[str, Any]:
         """Determine optimal resume point from pause context."""
         return {
             "workflow_step": pause_context.get("paused_workflow_step", "planning"),
-            "current_phase": pause_context.get("paused_current_phase"),
-            "current_objective": pause_context.get("paused_current_objective"),
+            "current_sprint": pause_context.get("paused_current_sprint"),
+            "current_user_story": pause_context.get("paused_current_user_story"),
             "resume_from": "exact_pause_point",
             "pause_duration": self._calculate_pause_duration(pause_context)
         }
@@ -474,28 +474,28 @@ class LifecycleCommand:
             "project_name": state.get("project_name"),
             "total_duration_days": total_duration.days,
             "total_duration_hours": total_duration.total_seconds() / 3600,
-            "current_phase": state.get("current_phase"),
-            "completed_phases": state.get("completed_phases", []),
+            "current_sprint": state.get("current_sprint"),
+            "completed_sprints": state.get("completed_sprints", []),
             "automation_cycles": state.get("automation_cycles", 0),
-            "quality_gates_passed": len(state.get("quality_gates_passed", [])),
+            "acceptance_criteria_passed": len(state.get("acceptance_criteria_passed", [])),
             "final_status": state.get("status"),
             "workflow_step": state.get("workflow_step"),
-            "current_objective": state.get("current_objective")
+            "current_user_story": state.get("current_user_story")
         }
         
     def _is_project_complete(self, state: Dict[str, Any]) -> bool:
-        """Check if project is complete (all phases finished)."""
-        completed_phases = state.get("completed_phases", [])
-        current_phase = state.get("current_phase", "01")
+        """Check if project is complete (all sprints finished)."""
+        completed_sprints = state.get("completed_sprints", [])
+        current_sprint = state.get("current_sprint", "01")
         
-        # Project complete if all 5 phases are done or if we're on phase 05 and it's complete
-        return len(completed_phases) >= 5 or (current_phase == "05" and len(completed_phases) >= 4)
+        # Project complete if all 5 sprints are done or if we're on sprint 05 and it's complete
+        return len(completed_sprints) >= 5 or (current_sprint == "05" and len(completed_sprints) >= 4)
         
     def _get_start_next_actions(self, state: Dict[str, Any]) -> List[str]:
         """Get recommended next actions after starting."""
         return [
-            "Begin working on current phase objectives",
-            "Follow the 6-step workflow for each objective",
+            "Begin working on current sprint user stories",
+            "Follow the 6-step workflow for each user story",
             "Monitor progress with /user:project:status",
             "Use /user:project:pause if you need to interrupt work"
         ]
@@ -513,7 +513,7 @@ class LifecycleCommand:
         """Get recommended actions after resuming."""
         workflow_step = resume_point.get("workflow_step", "planning")
         return [
-            f"Continue with {workflow_step} step of current objective",
+            f"Continue with {workflow_step} step of current user story",
             "Review progress made before pause",
             "Monitor with /user:project:status",
             "Use /user:project:pause again if needed"
@@ -535,7 +535,7 @@ class LifecycleCommand:
                 "Project stopped before completion",
                 "Consider using /user:project:start to resume development",
                 "Review current progress and adjust timeline if needed",
-                "Update phase files if requirements have changed"
+                "Update sprint files if requirements have changed"
             ])
             
         return recommendations
@@ -570,7 +570,7 @@ class LifecycleCommand:
         print(f"")
         print(f"📍 Pause Context:")
         print(f"   Paused at: {pause_context.get('paused_at', 'Unknown')}")
-        print(f"   From phase: {pause_context.get('paused_current_phase', 'Unknown')}")
+        print(f"   From sprint: {pause_context.get('paused_current_sprint', 'Unknown')}")
         print(f"   Workflow step: {pause_context.get('paused_workflow_step', 'Unknown')}")
         
         reason = pause_context.get('pause_reason')
@@ -580,7 +580,7 @@ class LifecycleCommand:
         print(f"")
         print(f"💾 State Preserved:")
         print(f"   • Current automation position saved")
-        print(f"   • Quality gates status preserved")
+        print(f"   • Acceptance criteria status preserved")
         print(f"   • Progress counters maintained")
         print(f"")
         print(f"▶️  Resume Instructions:")
@@ -595,13 +595,13 @@ class LifecycleCommand:
         print(f"\n▶️  Project automation resumed successfully!")
         print(f"")
         print(f"📍 Resume Point:")
-        print(f"   Phase: {resume_point.get('current_phase', 'Unknown')}")
+        print(f"   Sprint: {resume_point.get('current_sprint', 'Unknown')}")
         print(f"   Workflow step: {resume_point.get('workflow_step', 'Unknown')}")
         print(f"   Pause duration: {resume_point.get('pause_duration', 'Unknown')}")
         
-        current_objective = resume_point.get('current_objective')
-        if current_objective:
-            print(f"   Current objective: {current_objective}")
+        current_user_story = resume_point.get('current_user_story')
+        if current_user_story:
+            print(f"   Current user story: {current_user_story}")
             
         print(f"")
         print(f"🔄 Restoration Complete:")
@@ -623,10 +623,10 @@ class LifecycleCommand:
         print(f"📊 Project Summary:")
         print(f"   Project: {summary.get('project_name', 'Unknown')}")
         print(f"   Total Duration: {summary.get('total_duration_days', 0)} days, {summary.get('total_duration_hours', 0):.1f} hours")
-        print(f"   Current Phase: {summary.get('current_phase', 'Unknown')}")
-        print(f"   Completed Phases: {len(summary.get('completed_phases', []))}")
+        print(f"   Current Sprint: {summary.get('current_sprint', 'Unknown')}")
+        print(f"   Completed Sprints: {len(summary.get('completed_sprints', []))}")
         print(f"   Automation Cycles: {summary.get('automation_cycles', 0)}")
-        print(f"   Quality Gates Passed: {summary.get('quality_gates_passed', 0)}")
+        print(f"   Acceptance Criteria Passed: {summary.get('acceptance_criteria_passed', 0)}")
         
         if reason:
             print(f"   Stop Reason: {reason}")
@@ -637,15 +637,15 @@ class LifecycleCommand:
         else:
             print(f"   Final Status: ⏹️  STOPPED")
             
-        current_objective = summary.get('current_objective')
-        if current_objective:
-            print(f"   Last Objective: {current_objective}")
+        current_user_story = summary.get('current_user_story')
+        if current_user_story:
+            print(f"   Last User Story: {current_user_story}")
             
         print(f"")
         
         if final_status == 'completed':
             print(f"🎉 Congratulations! Project completed successfully!")
-            print(f"   • All development phases finished")
+            print(f"   • All development sprints finished")
             print(f"   • Quality gates achieved throughout")
             print(f"   • Ready for production use")
         else:

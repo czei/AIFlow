@@ -72,7 +72,7 @@ class TestBasicLogger(unittest.TestCase):
         
         # Mock project state file
         mock_file.return_value.read.return_value = json.dumps({
-            "current_phase": "implementation",
+            "current_sprint": "implementation",
             "workflow_step": "coding",
             "current_objective": "test-objective"
         })

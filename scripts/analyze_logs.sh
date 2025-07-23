@@ -1,5 +1,5 @@
 #!/bin/bash
-# Log analysis tools for phase-driven development debugging
+# Log analysis tools for sprint-driven development debugging
 
 PROJECT_DIR=${1:-.}
 LOGS_DIR="$PROJECT_DIR/.logs"
@@ -11,7 +11,7 @@ if [ ! -d "$LOGS_DIR" ]; then
     exit 1
 fi
 
-echo "📊 Phase-Driven Development Log Analysis"
+echo "📊 Sprint-Driven Development Log Analysis"
 echo "========================================"
 echo "Project: $PROJECT_DIR"
 echo "Logs: $LOGS_DIR"
@@ -84,7 +84,7 @@ echo "⚡ WORKFLOW PROGRESS"
 echo "-------------------"
 if [ -f "$LOGS_DIR/workflow.log" ]; then
     echo "Recent workflow events:"
-    tail -10 "$LOGS_DIR/workflow.log" | safe_jq -r '[.timestamp, .workflow_step, .event, .phase] | @csv' | \
+    tail -10 "$LOGS_DIR/workflow.log" | safe_jq -r '[.timestamp, .workflow_step, .event, .sprint] | @csv' | \
     sed 's/"//g' | column -t -s','
 else
     echo "No workflow.log found"

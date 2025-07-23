@@ -9,12 +9,17 @@ import unittest
 import tempfile
 import shutil
 import json
+import sys
+import os
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timezone
 
-from src.commands.lifecycle import LifecycleCommand, LifecycleCommandError
-from src.state_manager import StateValidationError
+# Add src to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+from commands.lifecycle import LifecycleCommand, LifecycleCommandError
+from state_manager import StateValidationError
 
 
 class TestLifecycleCommand(unittest.TestCase):
@@ -27,7 +32,7 @@ class TestLifecycleCommand(unittest.TestCase):
         self.project_path.mkdir()
         
         # Create basic project structure
-        (self.project_path / "phases").mkdir()
+        (self.project_path / "sprints").mkdir()
         (self.project_path / ".claude").mkdir()
         (self.project_path / "logs").mkdir()
         (self.project_path / "docs").mkdir()
@@ -36,10 +41,10 @@ class TestLifecycleCommand(unittest.TestCase):
         (self.project_path / "CLAUDE.md").write_text("# Test Project")
         (self.project_path / ".project-state.json").write_text('{"project_name": "test"}')
         
-        # Create phase files
-        phases_dir = self.project_path / "phases"
-        for phase in ["01-planning.md", "02-architecture.md", "03-implementation.md"]:
-            (phases_dir / phase).write_text(f"# {phase}")
+        # Create sprint files
+        sprints_dir = self.project_path / "sprints"
+        for sprint in ["01-planning.md", "02-architecture.md", "03-implementation.md"]:
+            (sprints_dir / sprint).write_text(f"# {sprint}")
             
         # Create Claude settings
         settings = {
@@ -87,10 +92,10 @@ class TestLifecycleCommand(unittest.TestCase):
         setup_state = {
             "status": "setup",
             "automation_active": False,
-            "current_phase": "01",
+            "current_sprint": "01",
             "workflow_step": "planning",
             "automation_cycles": 0,
-            "quality_gates_passed": []
+            "acceptance_criteria_passed": []
         }
         self.mock_state_manager.read.return_value = setup_state
         
@@ -172,11 +177,11 @@ class TestLifecycleCommand(unittest.TestCase):
         active_state = {
             "status": "active",
             "automation_active": True,
-            "current_phase": "02",
+            "current_sprint": "02",
             "workflow_step": "implementation", 
-            "current_objective": "Build API endpoints",
+            "current_user story": "Build API endpoints",
             "automation_cycles": 5,
-            "quality_gates_passed": ["compilation", "tests"]
+            "acceptance_criteria_passed": ["compilation", "tests"]
         }
         self.mock_state_manager.read.return_value = active_state
         
@@ -241,8 +246,8 @@ class TestLifecycleCommand(unittest.TestCase):
             "pause_context": {
                 "paused_at": "2023-12-01T10:00:00Z",
                 "paused_workflow_step": "validation",
-                "paused_current_phase": "03",
-                "paused_current_objective": "Write unit tests"
+                "paused_current_sprint": "03",
+                "paused_current_user story": "Write unit tests"
             }
         }
         self.mock_state_manager.read.return_value = paused_state
@@ -305,12 +310,12 @@ class TestLifecycleCommand(unittest.TestCase):
             "status": "active",
             "project_name": "test-project",
             "started": "2023-12-01T08:00:00Z",
-            "current_phase": "02",
-            "completed_phases": ["01"],
+            "current_sprint": "02",
+            "completed_sprints": ["01"],
             "automation_cycles": 3,
-            "quality_gates_passed": ["compilation", "tests"],
+            "acceptance_criteria_passed": ["compilation", "tests"],
             "workflow_step": "review",
-            "current_objective": "Complete architecture"
+            "current_user story": "Complete architecture"
         }
         self.mock_state_manager.read.return_value = active_state
         
@@ -333,7 +338,7 @@ class TestLifecycleCommand(unittest.TestCase):
         # Verify stop context
         stop_context = update_call["stop_context"]
         self.assertEqual(stop_context["reason"], "User requested stop")
-        self.assertEqual(stop_context["final_phase"], "02")
+        self.assertEqual(stop_context["final_sprint"], "02")
         
         # Verify result
         self.assertEqual(result["status"], "stopped")
@@ -346,10 +351,10 @@ class TestLifecycleCommand(unittest.TestCase):
             "status": "active",
             "project_name": "test-project",
             "started": "2023-12-01T08:00:00Z",
-            "current_phase": "05",
-            "completed_phases": ["01", "02", "03", "04", "05"],
+            "current_sprint": "05",
+            "completed_sprints": ["01", "02", "03", "04", "05"],
             "automation_cycles": 15,
-            "quality_gates_passed": ["compilation", "tests", "review", "integration"],
+            "acceptance_criteria_passed": ["compilation", "tests", "review", "integration"],
             "workflow_step": "integration"
         }
         self.mock_state_manager.read.return_value = completed_state
@@ -372,14 +377,14 @@ class TestLifecycleCommand(unittest.TestCase):
     def test_validate_project_structure_missing_dirs(self):
         """Test project structure validation with missing directories."""
         # Remove required directory
-        shutil.rmtree(self.project_path / "phases")
+        shutil.rmtree(self.project_path / "sprints")
         
         cmd = LifecycleCommand(str(self.project_path))
         result = cmd._validate_project_structure()
         
         self.assertFalse(result["valid"])
         self.assertTrue(result["critical"])
-        self.assertIn("phases", result["missing_directories"])
+        self.assertIn("sprints", result["missing_directories"])
         
     def test_validate_project_structure_missing_files(self):
         """Test project structure validation with missing files."""
@@ -464,9 +469,9 @@ class TestLifecycleCommand(unittest.TestCase):
         cmd = LifecycleCommand(str(self.project_path))
         self.assertTrue(cmd._check_project_readiness({}))
         
-    def test_check_project_readiness_missing_phases(self):
-        """Test project readiness check with missing phases."""
-        shutil.rmtree(self.project_path / "phases")
+    def test_check_project_readiness_missing_sprints(self):
+        """Test project readiness check with missing sprints."""
+        shutil.rmtree(self.project_path / "sprints")
         
         cmd = LifecycleCommand(str(self.project_path))
         self.assertFalse(cmd._check_project_readiness({}))
@@ -483,10 +488,10 @@ class TestLifecycleCommand(unittest.TestCase):
         state = {
             "status": "active",
             "workflow_step": "implementation",
-            "current_phase": "03",
-            "current_objective": "Build features",
+            "current_sprint": "03",
+            "current_user story": "Build features",
             "automation_cycles": 7,
-            "quality_gates_passed": ["compilation", "tests"]
+            "acceptance_criteria_passed": ["compilation", "tests"]
         }
         
         cmd = LifecycleCommand(str(self.project_path))
@@ -497,7 +502,7 @@ class TestLifecycleCommand(unittest.TestCase):
             
         self.assertEqual(context["paused_from_status"], "active")
         self.assertEqual(context["paused_workflow_step"], "implementation")
-        self.assertEqual(context["paused_current_phase"], "03")
+        self.assertEqual(context["paused_current_sprint"], "03")
         self.assertEqual(context["pause_reason"], "Break time")
         self.assertEqual(context["automation_cycles_at_pause"], 7)
         
@@ -506,8 +511,8 @@ class TestLifecycleCommand(unittest.TestCase):
         pause_context = {
             "paused_at": "2023-12-01T10:00:00Z",
             "paused_workflow_step": "validation",
-            "paused_current_phase": "02",
-            "paused_current_objective": "Design APIs"
+            "paused_current_sprint": "02",
+            "paused_current_user story": "Design APIs"
         }
         
         cmd = LifecycleCommand(str(self.project_path))
@@ -518,7 +523,7 @@ class TestLifecycleCommand(unittest.TestCase):
             resume_point = cmd._determine_resume_point(pause_context)
             
         self.assertEqual(resume_point["workflow_step"], "validation")
-        self.assertEqual(resume_point["current_phase"], "02")
+        self.assertEqual(resume_point["current_sprint"], "02")
         self.assertEqual(resume_point["resume_from"], "exact_pause_point")
         self.assertEqual(resume_point["pause_duration"], "4 hours, 0 minutes")
         
@@ -527,10 +532,10 @@ class TestLifecycleCommand(unittest.TestCase):
         state = {
             "project_name": "test-project",
             "started": "2023-12-01T08:00:00Z",
-            "current_phase": "03",
-            "completed_phases": ["01", "02"],
+            "current_sprint": "03",
+            "completed_sprints": ["01", "02"],
             "automation_cycles": 8,
-            "quality_gates_passed": ["compilation", "tests", "review"],
+            "acceptance_criteria_passed": ["compilation", "tests", "review"],
             "status": "active",
             "workflow_step": "implementation"
         }
@@ -545,15 +550,15 @@ class TestLifecycleCommand(unittest.TestCase):
         self.assertEqual(summary["project_name"], "test-project")
         self.assertEqual(summary["total_duration_days"], 1)
         self.assertEqual(summary["total_duration_hours"], 32.0)
-        self.assertEqual(summary["current_phase"], "03")
+        self.assertEqual(summary["current_sprint"], "03")
         self.assertEqual(summary["automation_cycles"], 8)
-        self.assertEqual(summary["quality_gates_passed"], 3)
+        self.assertEqual(summary["acceptance_criteria_passed"], 3)
         
     def test_is_project_complete_true(self):
         """Test project completion check when complete."""
         state = {
-            "completed_phases": ["01", "02", "03", "04", "05"],
-            "current_phase": "05"
+            "completed_sprints": ["01", "02", "03", "04", "05"],
+            "current_sprint": "05"
         }
         
         cmd = LifecycleCommand(str(self.project_path))
@@ -562,8 +567,8 @@ class TestLifecycleCommand(unittest.TestCase):
     def test_is_project_complete_false(self):
         """Test project completion check when incomplete."""
         state = {
-            "completed_phases": ["01", "02"],
-            "current_phase": "03"
+            "completed_sprints": ["01", "02"],
+            "current_sprint": "03"
         }
         
         cmd = LifecycleCommand(str(self.project_path))

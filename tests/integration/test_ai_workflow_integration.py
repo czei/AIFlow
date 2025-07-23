@@ -34,7 +34,7 @@ class TestAIWorkflowIntegration(unittest.TestCase):
         
     def test_complete_development_workflow(self):
         """Test complete workflow from setup to implementation"""
-        # Phase 1: Project Setup
+        # Sprint 1: Project Setup
         setup_response = self.provider.query(
             "Setup a new project called calculator",
             context={"project_name": "calculator"}
@@ -45,9 +45,9 @@ class TestAIWorkflowIntegration(unittest.TestCase):
         
         # Verify state tracking
         state = self.provider.get_state()
-        self.assertEqual(state["project_phase"], "planning")
+        self.assertEqual(state["project_sprint"], "planning")
         
-        # Phase 2: Implementation
+        # Sprint 2: Implementation
         impl_response = self.provider.query(
             "Implement a function add_numbers that adds two numbers"
         )
@@ -56,16 +56,16 @@ class TestAIWorkflowIntegration(unittest.TestCase):
         self.assertIn("code", impl_response)
         self.assertIn("def add_numbers", impl_response["code"])
         
-        # Verify phase transition
+        # Verify sprint transition
         state = self.provider.get_state()
-        self.assertEqual(state["project_phase"], "implementation")
+        self.assertEqual(state["project_sprint"], "implementation")
         
-        # Phase 3: Testing
+        # Sprint 3: Testing
         test_response = self.provider.query(
             "Create tests for the add_numbers function"
         )
         
-        # Phase 4: Code Review
+        # Sprint 4: Code Review
         review_response = self.provider.query(
             "Review the add_numbers implementation for quality"
         )
@@ -73,7 +73,7 @@ class TestAIWorkflowIntegration(unittest.TestCase):
         self.assertEqual(review_response["type"], "code_review")
         self.assertIn("issues", review_response)
         
-        # Phase 5: Error Handling
+        # Sprint 5: Error Handling
         error_response = self.provider.query(
             "Debug error: TypeError when adding string and number"
         )
@@ -114,26 +114,26 @@ class TestAIWorkflowIntegration(unittest.TestCase):
         history = self.provider.get_call_history()
         self.assertEqual(len(history), 3)
         
-    def test_multi_phase_state_persistence(self):
-        """Test that state persists across multiple phases"""
-        # Planning phase
+    def test_multi_sprint_state_persistence(self):
+        """Test that state persists across multiple sprints"""
+        # Planning sprint
         self.provider.query("Plan the architecture for a web API")
         initial_state = self.provider.get_state()
         
-        # Implementation phase
+        # Implementation sprint
         self.provider.query("Implement the user authentication endpoint")
         self.provider.query("Task completed", context={"task": "auth_endpoint"})
         
-        # Testing phase  
+        # Testing sprint  
         self.provider.query("Write tests for the authentication")
         self.provider.query("Task completed", context={"task": "auth_tests"})
         
-        # Deployment phase
+        # Deployment sprint
         self.provider.query("Deploy the API to production")
         
         # Verify accumulated state
         final_state = self.provider.get_state()
-        self.assertEqual(final_state["project_phase"], "deployment")
+        self.assertEqual(final_state["project_sprint"], "deployment")
         self.assertIn("auth_endpoint", final_state["completed_tasks"])
         self.assertIn("auth_tests", final_state["completed_tasks"])
         

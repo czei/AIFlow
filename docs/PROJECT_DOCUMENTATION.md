@@ -1,8 +1,8 @@
-# Claude Code Phase-Driven Development System
+# Claude Code Sprint-Driven Development System
 
 ## Project Overview
 
-This system provides automated, phase-driven development using Claude Code's capabilities to manage long-running software projects with minimal human intervention. It addresses the challenge of maintaining context and momentum across extended development sessions that can span days or weeks.
+This system provides automated, sprint-driven development using Claude Code's capabilities to manage long-running software projects with minimal human intervention. It addresses the challenge of maintaining context and momentum across extended development sessions that can span days or weeks.
 
 ## Problem Statement
 
@@ -10,15 +10,15 @@ Traditional development with Claude Code suffers from several limitations:
 - **Context drift**: Claude loses track of project goals and current position over long sessions
 - **Manual overhead**: Developers spend hours repeatedly prompting the same workflow sequences
 - **Inconsistent execution**: Without structured guidance, Claude may deviate from planned approaches
-- **State management**: No persistent tracking of progress across phases and sessions
+- **State management**: No persistent tracking of progress across sprints and sessions
 - **Quality inconsistency**: No systematic approach to validation, testing, and code review
 
 ## Goals
 
 ### Primary Goals
-1. **Automated Workflow Execution**: Enable Claude Code to work autonomously through predefined development phases
+1. **Automated Workflow Execution**: Enable Claude Code to work autonomously through predefined development sprints
 2. **Context Preservation**: Maintain project context and current position across extended sessions
-3. **Structured Development**: Enforce consistent 6-step workflow with quality gates
+3. **Structured Development**: Enforce consistent story lifecycle with acceptance criteria
 4. **Human Oversight**: Provide control points for pausing, monitoring, and steering automation
 5. **State Persistence**: Track progress at both project and task levels with resumable automation
 6. **Quality Assurance**: Built-in testing, review, and validation at every step
@@ -34,9 +34,9 @@ Traditional development with Claude Code suffers from several limitations:
 
 ### Core Workflow Methodology
 
-The system implements a rigorous 6-step workflow for every development objective, ensuring consistent quality and thorough validation:
+The system implements a rigorous story lifecycle for every development user story, ensuring consistent quality and thorough validation:
 
-#### Universal 6-Step Workflow
+#### Universal Story Lifecycle
 1. **Planning**: Context review, task breakdown, risk assessment, approach design, test strategy
 2. **Implementation**: Production-quality code development following architecture and standards
 3. **Validation**: Compilation check, test execution (unit + integration), manual testing, performance validation
@@ -44,8 +44,8 @@ The system implements a rigorous 6-step workflow for every development objective
 5. **Refinement**: Address review feedback, re-run tests, optimize performance, resolve all issues
 6. **Integration**: Final testing, documentation updates, clean commits, progress state updates
 
-#### Quality Gates
-Each objective must pass these mandatory gates before completion:
+#### Acceptance Criteria
+Each user story must pass these mandatory gates before completion:
 - **Compilation Gate**: Code builds without errors or warnings
 - **Test Gate**: All existing tests pass + new tests written with >90% coverage
 - **Review Gate**: Code review completed with all critical issues resolved
@@ -63,15 +63,15 @@ Custom Claude Code slash commands provide user control:
 - `/user:project:status` - Display comprehensive progress information
 - `/user:project:pause/resume` - Control automation state
 - `/user:project:stop` - Clean project completion
-- `/user:project:update` - Maintain project and phase state
-- `/user:project:phase <action>` - Manage individual phases
-- `/user:project:advance` - Force phase progression
+- `/user:project:update` - Maintain project and sprint state
+- `/user:project:sprint <action>` - Manage individual sprints
+- `/user:project:advance` - Force sprint progression
 
-#### 2. Phase Definition System
-Structured markdown files define project phases with detailed workflow specifications:
+#### 2. Sprint Definition System
+Structured markdown files define project sprints with detailed workflow specifications:
 
 ```
-phases/
+sprints/
 ├── 01-planning.md      (Requirements, specifications, architecture design)
 ├── 02-architecture.md  (System design, technology selection, component definition)
 ├── 03-implementation.md (Feature development, coding, core functionality)
@@ -79,16 +79,16 @@ phases/
 └── 05-deployment.md    (Production preparation, deployment automation)
 ```
 
-Each phase includes:
+Each sprint includes:
 - **Status tracking** with timestamps and completion percentages
 - **Objectives** with checkbox completion and detailed validation requirements
 - **Prerequisites** and dependencies with verification criteria
-- **Detailed 6-step workflow** specifications for each objective
+- **Detailed story lifecycle** specifications for each user story
 - **Quality gates** with specific pass/fail criteria
 - **Success criteria** with measurable validation requirements
 - **Progress logs** with workflow step tracking and quality gate status
 - **Automation instructions** providing specific guidance for Claude Code
-- **Phase-specific workflow variations** adapted to phase requirements
+- **Sprint-specific workflow variations** adapted to sprint requirements
 
 #### 3. Comprehensive State Management
 Multi-layered state persistence enabling resumable automation:
@@ -97,22 +97,22 @@ Multi-layered state persistence enabling resumable automation:
 ```json
 {
   "project_name": "my-project",
-  "current_phase": "03", 
+  "current_sprint": "03", 
   "status": "active",
   "automation_active": true,
   "workflow_step": "validation",
-  "current_objective": "Business logic API endpoints",
+  "current_user story": "Business logic API endpoints",
   "quality_gates_passed": ["compilation", "existing_tests"],
-  "completed_phases": ["01", "02"],
+  "completed_sprints": ["01", "02"],
   "automation_cycles": 47,
   "started": "2025-07-21T09:00:00Z",
   "last_updated": "2025-07-21T15:30:00Z"
 }
 ```
 
-**Phase-Level State**: Individual phase files track:
-- Detailed objective completion with timestamps
-- Workflow step position for each objective
+**Sprint-Level State**: Individual sprint files track:
+- Detailed user story completion with timestamps
+- Workflow step position for each user story
 - Quality gate passage tracking
 - Progress notes with validation results
 - Review feedback and resolution status
@@ -121,21 +121,21 @@ Multi-layered state persistence enabling resumable automation:
 
 #### 4. Automation Engine
 Claude Code hooks provide autonomous operation with workflow enforcement:
-- **Stop hooks** intercept session endings to continue 6-step workflow
+- **Stop hooks** intercept session endings to continue story lifecycle
 - **PreToolUse hooks** validate operations align with current workflow step
-- **PostToolUse hooks** update progress and validate quality gates
+- **PostToolUse hooks** update progress and validate acceptance criteria
 
 ### Development Workflow
 
-#### Phase Management
-Phases provide structure and checkpoints:
-- Each phase defines specific objectives with detailed workflow requirements
-- Automation works within current phase boundaries following 6-step methodology
-- Phase advancement occurs only when all objectives pass quality gates
-- Manual phase control available with validation checks
+#### Sprint Management
+Sprints provide structure and checkpoints:
+- Each sprint defines specific user stories with detailed workflow requirements
+- Automation works within current sprint boundaries following 6-step methodology
+- Sprint advancement occurs only when all user stories pass acceptance criteria
+- Manual sprint control available with validation checks
 
 #### Workflow Step Management  
-Each objective progresses through all 6 steps:
+Each user story progresses through all 6 steps:
 - **Planning**: Requirements analysis, task breakdown, approach design
 - **Implementation**: Code development following project standards and architecture
 - **Validation**: Comprehensive testing (compilation, unit, integration, manual, performance)
@@ -145,11 +145,11 @@ Each objective progresses through all 6 steps:
 
 #### State Synchronization
 Continuous state updates ensure workflow consistency:
-- Progress tracked at workflow step level within each objective
+- Progress tracked at workflow step level within each user story
 - Quality gate passage recorded with timestamps and validation results
 - Git history provides implementation audit trail
 - State enables pause/resume at any workflow step
-- Workflow cannot advance until all quality gates pass
+- Workflow cannot advance until all acceptance criteria pass
 
 ## Operation
 
@@ -164,16 +164,16 @@ claude-code --dangerously-skip-permissions
 
 Creates:
 - New git worktree: `../my-new-feature`
-- Phase template files with detailed 6-step workflows
+- Sprint template files with detailed story lifecycles
 - WORKFLOW_SPECIFICATIONS.md with comprehensive methodology
 - Project state files initialized to "setup" mode
 - Quality gate definitions and validation criteria
 
-#### 2. Planning and Customization Phase
+#### 2. Planning and Customization Sprint
 Developer customizes generated files:
-- Replace template objectives with project-specific tasks
+- Replace template user stories with project-specific tasks
 - Define success criteria and quality gate requirements
-- Set up phase progression logic and dependencies
+- Set up sprint progression logic and dependencies
 - Customize workflow steps for project-specific needs
 - Add project context to CLAUDE.md with development standards
 
@@ -183,7 +183,7 @@ Developer customizes generated files:
 ```
 
 Validates:
-- Phase files are properly customized with detailed workflows
+- Sprint files are properly customized with detailed workflows
 - No template placeholders remain
 - Quality gates are properly defined
 - Git worktree is correctly configured  
@@ -195,12 +195,12 @@ Validates:
 /user:project:start
 ```
 
-Begins autonomous operation following 6-step workflow:
-- Reads current phase objectives and detailed workflow requirements
+Begins autonomous operation following story lifecycle:
+- Reads current sprint user stories and detailed workflow requirements
 - Executes systematic plan → implement → validate → review → refine → integrate cycle
-- Enforces quality gates at each step before advancement
+- Enforces acceptance criteria at each step before advancement
 - Updates progress and state continuously with workflow step tracking
-- Advances phases only when all objectives pass all quality gates
+- Advances sprints only when all user stories pass all acceptance criteria
 - Continues until project finished or manually stopped
 
 #### 5. Monitoring and Control
@@ -225,7 +225,7 @@ Provides comprehensive project summary:
 
 #### Current Implementation: Git Worktree Isolation
 - **Git worktrees** prevent impact to main codebase
-- **Project boundaries** limit automation scope to current phase
+- **Project boundaries** limit automation scope to current sprint
 - **Quality gates** prevent advancement with incomplete or poor-quality work
 - **Workflow validation** ensures systematic approach is followed
 - **Manual override** always available at any workflow step
@@ -237,15 +237,15 @@ The next major enhancement will implement enterprise-grade security through Open
 **Planned Security Architecture:**
 - **Docker Sandbox**: Container isolation with filesystem and network restrictions
 - **OPA Policy Engine**: Declarative security policies written in Rego language
-- **Command Validation**: Every command validated against current workflow phase
+- **Command Validation**: Every command validated against current workflow sprint
 - **Audit Trail**: Complete security decision logging for compliance
 - **Elimination of `--dangerously-skip-permissions`**: Contextual command approval instead of blanket permissions
 
 **Security Roadmap:**
-1. **Phase 1 (Current)**: Proof of concept with git worktree isolation
-2. **Phase 2**: Docker containerization of development environment
-3. **Phase 3**: OPA policy engine integration and command validation
-4. **Phase 4**: Production security hardening and audit capabilities
+1. **Sprint 1 (Current)**: Proof of concept with git worktree isolation
+2. **Sprint 2**: Docker containerization of development environment
+3. **Sprint 3**: OPA policy engine integration and command validation
+4. **Sprint 4**: Production security hardening and audit capabilities
 
 See `SECURITY_ARCHITECTURE.md` for detailed future security implementation.
 
@@ -259,7 +259,7 @@ See `SECURITY_ARCHITECTURE.md` for detailed future security implementation.
 
 #### Recovery and Rollback
 - **Git history** enables rollback to any workflow step
-- **Phase checkpoints** provide natural restore points with quality validation
+- **Sprint checkpoints** provide natural restore points with quality validation
 - **Workflow step tracking** enables precise resumption
 - **Quality gate audit trail** shows exactly where issues occurred
 - **State archival** preserves complete decision and validation history
@@ -271,7 +271,7 @@ See `SECURITY_ARCHITECTURE.md` for detailed future security implementation.
 - Git repository for development work
 - macOS (uses bash scripts and file operations)
 - Understanding of `--dangerously-skip-permissions` risks
-- Commitment to following structured 6-step workflow methodology
+- Commitment to following structured story lifecycle methodology
 
 ### Installation Steps
 
@@ -299,11 +299,11 @@ In an existing git repository:
 ### Configuration Options
 
 #### Workflow Configuration
-Phase files include detailed workflow customization:
+Sprint files include detailed workflow customization:
 - **Quality gate thresholds** (test coverage, performance benchmarks)
 - **Review criteria** (security, performance, maintainability standards)
 - **Validation requirements** (testing strategies, documentation standards)
-- **Phase-specific variations** of the 6-step workflow
+- **Sprint-specific variations** of the story lifecycle
 
 #### Automation Integration
 Hook configuration in `.claude/settings.json`:
@@ -358,12 +358,12 @@ Hook configuration in `.claude/settings.json`:
 ### Security Enhancements (Priority)
 - **OPA Policy Engine Integration**: Replace `--dangerously-skip-permissions` with contextual command validation
 - **Docker Sandbox Environment**: Complete isolation of development automation
-- **Command Validation Layer**: Every command validated against current workflow phase policies
+- **Command Validation Layer**: Every command validated against current workflow sprint policies
 - **Security Audit Trail**: Comprehensive logging of all security decisions and command executions
 - **Enterprise Security Model**: Production-ready security suitable for corporate environments
 
 ### Workflow Enhancements
-- **Custom Quality Gates**: Project-specific quality gate definitions
+- **Custom Acceptance Criteria**: Project-specific quality gate definitions
 - **Workflow Analytics**: Detailed analysis of workflow efficiency and bottlenecks
 - **Integration Pipelines**: Connection to CI/CD systems for automated validation
 - **Quality Reporting**: Comprehensive quality metrics and trend analysis
@@ -372,6 +372,6 @@ Hook configuration in `.claude/settings.json`:
 
 ## Conclusion
 
-This phase-driven development system transforms Claude Code into a disciplined, quality-focused development partner capable of sustained, systematic work on complex projects. By implementing a rigorous 6-step workflow with mandatory quality gates, it addresses not only the challenges of context and momentum but also ensures consistent, high-quality output that meets professional development standards.
+This sprint-driven development system transforms Claude Code into a disciplined, quality-focused development partner capable of sustained, systematic work on complex projects. By implementing a rigorous story lifecycle with mandatory acceptance criteria, it addresses not only the challenges of context and momentum but also ensures consistent, high-quality output that meets professional development standards.
 
 The system's emphasis on testing, review, and validation makes it suitable for production-quality development work, providing a foundation for reliable, maintainable software while maintaining development velocity through intelligent automation.

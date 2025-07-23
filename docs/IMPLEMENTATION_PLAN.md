@@ -1,8 +1,8 @@
-# Implementation Plan: Build Missing Automated Phase-Driven Development System
+# Implementation Plan: Build Missing Automated Sprint-Driven Development System
 
 ## OVERVIEW
 
-Build the complete automated phase-driven development system described in docs/PROJECT_DOCUMENTATION.md, bridging the gap between documentation and reality. This system will provide Claude Code hooks, project state management, and automated workflow execution.
+Build the complete automated sprint-driven development system described in docs/PROJECT_DOCUMENTATION.md, bridging the gap between documentation and reality. This system will provide Claude Code hooks, project state management, and automated workflow execution.
 
 ## CRITICAL ARCHITECTURE UPDATE
 
@@ -10,7 +10,7 @@ Recent analysis revealed the current implementation fundamentally misunderstood 
 
 1. **Commands**: Simple markdown triggers (10-20 lines) with YAML frontmatter
 2. **Hooks**: Python scripts that enforce workflows and manage state
-3. **StateManager**: Already built in Phase 1, provides persistence
+3. **StateManager**: Already built in Sprint 1, provides persistence
 
 ## ARCHITECTURE FOUNDATION
 
@@ -27,8 +27,8 @@ Current State:               Target State:
 
 ### 1.1 Project State Schema Design
 - Create comprehensive .project-state.json schema
-- Fields: current_phase, workflow_step, current_objective, automation_active, quality_gates, progress_tracking, timestamps, git_info
-- Define state transitions between phases and workflow steps
+- Fields: current_sprint, workflow_step, current_user story, automation_active, quality_gates, progress_tracking, timestamps, git_info
+- Define state transitions between sprints and workflow steps
 - Add validation rules and error handling specifications
 
 ### 1.2 StateManager Class Implementation
@@ -37,7 +37,7 @@ Current State:               Target State:
   - read(): Load and validate existing state
   - update(): Atomic state updates with validation
   - validate(): Schema and business rule validation
-  - transition_phase(): Controlled phase transitions
+  - transition_sprint(): Controlled sprint transitions
 - Add comprehensive error handling and logging integration
 - Include atomic file operations for reliability
 
@@ -73,7 +73,7 @@ Start automated development for this project.
 !`[ -f ".project-state.json" ] || { echo "❌ No project found"; exit 1; }`
 !`python3 -c "from state_manager import StateManager; StateManager('.').update({'status': 'active', 'automation_active': True})"`
 
-Automation activated. I'll now follow the 6-step workflow.
+Automation activated. I'll now follow the story lifecycle.
 ```
 
 ### 2.3 Commands to Rewrite
@@ -157,7 +157,7 @@ def main():
         if event['tool'] in ['Write', 'Edit']:
             print(json.dumps({
                 "allow": False,
-                "message": "🚫 Planning phase: Complete analysis first"
+                "message": "🚫 Planning sprint: Complete analysis first"
             }))
             return
     
@@ -165,14 +165,14 @@ def main():
 ```
 
 **PostToolUse Hook (src/hooks/post_tool_use.py)**
-- Track quality gates completion
+- Track acceptance criteria completion
 - Update files modified list
 - Record test results
 
 **Stop Hook (src/hooks/stop.py)**
 - Check if current step complete
 - Advance to next workflow step
-- Reset quality gates for new step
+- Reset acceptance criteria for new step
 
 ### 3.4 Workflow State Machine
 Implement in hooks, not separate engine:
@@ -183,9 +183,9 @@ Implement in hooks, not separate engine:
 5. **Refinement**: Address review feedback
 6. **Integration**: Final checks and commit
 
-**Success Criteria:** Claude Code follows 6-step workflow automatically. Quality gates prevent progression without validation. Automation can be paused/resumed reliably.
+**Success Criteria:** Claude Code follows story lifecycle automatically. Quality gates prevent progression without validation. Automation can be paused/resumed reliably.
 
-## EXAMPLE WORKFLOW: "Fix Product Build" Phase
+## EXAMPLE WORKFLOW: "Fix Product Build" Sprint
 
 Let's trace through a complete workflow to show how commands and hooks interact:
 
@@ -193,11 +193,11 @@ Let's trace through a complete workflow to show how commands and hooks interact:
 ```json
 {
   "project_name": "e-commerce-platform",
-  "current_phase": "03-fix-build",
+  "current_sprint": "03-fix-build",
   "status": "active",
   "automation_active": true,
   "workflow_step": "planning",
-  "current_objective": "Fix product build compilation errors"
+  "current_user story": "Fix product build compilation errors"
 }
 ```
 
@@ -296,27 +296,27 @@ Let's trace through a complete workflow to show how commands and hooks interact:
 ## IMPLEMENTATION SEQUENCE (UPDATED)
 
 ```
-Phase 1: StateManager ✅ COMPLETED
-Phase 2A: Rewrite Commands (Simple markdown triggers)
-Phase 2B: Create Hook Scripts (Complex Python logic)
-Phase 2C: Integration (Commands + Hooks + StateManager)
-Phase 3: Testing → Validate complete system
-Phase 4: Documentation → Update to reflect reality
+Sprint 1: StateManager ✅ COMPLETED
+Sprint 2A: Rewrite Commands (Simple markdown triggers)
+Sprint 2B: Create Hook Scripts (Complex Python logic)
+Sprint 2C: Integration (Commands + Hooks + StateManager)
+Sprint 3: Testing → Validate complete system
+Sprint 4: Documentation → Update to reflect reality
 ```
 
-### Phase 2A: Command Rewrites (1-2 days)
+### Sprint 2A: Command Rewrites (1-2 days)
 - Rewrite all 10 commands as simple triggers
 - Add YAML frontmatter
 - Use `!` execution syntax
 - Total: ~200 lines (vs current 3000+)
 
-### Phase 2B: Hook Development (2-3 days)
+### Sprint 2B: Hook Development (2-3 days)
 - Create PreToolUse hook (workflow enforcement)
 - Create PostToolUse hook (state tracking)
 - Create Stop hook (step advancement)
 - Total: ~500 lines of Python
 
-### Phase 2C: Integration (1 day)
+### Sprint 2C: Integration (1 day)
 - Configure hooks in settings.json
 - Update install.sh
 - Test complete workflow
@@ -325,14 +325,14 @@ Phase 4: Documentation → Update to reflect reality
 ## CRITICAL DEPENDENCIES
 
 1. **Claude Code Hook API** - Now understood; hooks can execute Python scripts
-2. **StateManager** - ✅ Already implemented in Phase 1
+2. **StateManager** - ✅ Already implemented in Sprint 1
 3. **Command Format** - Must use YAML frontmatter and `!` execution
 4. **Hook Communication** - Via stdin/stdout JSON protocol
 
 ## RISK MITIGATION
 
 - **Hook API Risk:** Build complete manual system first, layer automation on top
-- **Complexity Risk:** Incremental implementation with working system at each phase
+- **Complexity Risk:** Incremental implementation with working system at each sprint
 - **Integration Risk:** Extensive testing with existing codebase
 - **User Experience Risk:** Early validation and feedback incorporation
 
@@ -350,18 +350,18 @@ This plan transforms the documented vision into a working automated development 
 
 - **Date Created:** 2025-07-22
 - **Date Updated:** 2025-07-23
-- **Current Phase:** Phase 2A - Command Rewrites
+- **Current Sprint:** Sprint 2A - Command Rewrites
 - **Next Milestone:** Rewrite commands with proper Claude Code syntax
 - **Critical Change:** Architecture redesigned to use hooks for complex logic
 
 ## PROGRESS TRACKING
 
-- [x] Phase 1: State Management Core ✅ COMPLETED
-- [ ] Phase 2A: Command Rewrites (Simple markdown triggers)
-- [ ] Phase 2B: Hook Development (Python workflow engine)
-- [ ] Phase 2C: Integration (Commands + Hooks + State)
-- [ ] Phase 3: Testing & Validation
-- [ ] Phase 4: Documentation & Polish
+- [x] Sprint 1: State Management Core ✅ COMPLETED
+- [ ] Sprint 2A: Command Rewrites (Simple markdown triggers)
+- [ ] Sprint 2B: Hook Development (Python workflow engine)
+- [ ] Sprint 2C: Integration (Commands + Hooks + State)
+- [ ] Sprint 3: Testing & Validation
+- [ ] Sprint 4: Documentation & Polish
 
 ## KEY ARCHITECTURE INSIGHTS
 

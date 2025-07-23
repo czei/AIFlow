@@ -2,7 +2,7 @@
 Setup Command - Create new project worktree and structure.
 
 Orchestrates GitOperations, ProjectBuilder, and StateManager to create
-a complete phase-driven project setup with error handling and rollback.
+a complete sprint-based project setup with error handling and rollback.
 """
 
 import sys
@@ -44,7 +44,7 @@ class SetupCommand:
         self, 
         project_name: str,
         base_branch: str = "main",
-        initial_phase: str = "01"
+        initial_sprint: str = "01"
     ) -> Tuple[Path, str]:
         """
         Execute project setup.
@@ -52,7 +52,7 @@ class SetupCommand:
         Args:
             project_name: Name of the project/worktree
             base_branch: Base branch to branch from
-            initial_phase: Starting phase identifier
+            initial_sprint: Starting sprint identifier
             
         Returns:
             Tuple of (worktree_path, branch_name)
@@ -77,7 +77,7 @@ class SetupCommand:
                 # Step 3: Create project structure
                 print("📁 Creating project structure...")
                 self._create_project_structure(
-                    worktree_path, project_name, initial_phase
+                    worktree_path, project_name, initial_sprint
                 )
                 
                 # Step 4: Create initial commit
@@ -158,16 +158,16 @@ class SetupCommand:
         self, 
         worktree_path: Path, 
         project_name: str,
-        initial_phase: str
+        initial_sprint: str
     ) -> None:
         """Create complete project structure."""
         try:
             self.project_builder.create_project_structure(
-                worktree_path, project_name, initial_phase
+                worktree_path, project_name, initial_sprint
             )
             
             print("✅ Created project directories")
-            print("✅ Generated phase templates")
+            print("✅ Generated sprint templates")
             print("✅ Created Claude configuration")
             print("✅ Generated documentation")
             print("✅ Initialized project state")
@@ -179,10 +179,10 @@ class SetupCommand:
         """Create initial commit with project structure."""
         try:
             commit_msg = f"Initial setup: {project_name} project structure\n\n" \
-                        f"- Created phase-driven development structure\n" \
-                        f"- Generated phase templates and documentation\n" \
+                        f"- Created sprint-based development structure\n" \
+                        f"- Generated sprint templates and documentation\n" \
                         f"- Initialized project state and configuration\n" \
-                        f"- Ready for phase customization and development"
+                        f"- Ready for sprint customization and development"
                         
             commit_hash = self.git_ops.create_commit(
                 commit_msg, worktree_path, add_all=True
@@ -217,29 +217,29 @@ class SetupCommand:
         print(f"   Branch: {branch_name}")
         print(f"")
         print(f"📂 Created Structure:")
-        print(f"   ├── phases/              # Phase definitions (customize these!)")
+        print(f"   ├── sprints/              # Sprint definitions (customize these!)")
         print(f"   ├── .claude/            # Claude Code configuration")
         print(f"   ├── docs/               # Project documentation")
         print(f"   ├── logs/               # Development logs")
         print(f"   ├── CLAUDE.md           # Project context for Claude")
-        print(f"   ├── README-PHASES.md    # Phase documentation")
+        print(f"   ├── README-SPRINTS.md    # Phase documentation")
         print(f"   ├── WORKFLOW_SPECIFICATIONS.md  # Detailed methodology")
         print(f"   └── .project-state.json # Project state tracking")
         print(f"")
         print(f"🔧 Next Steps:")
         print(f"   1. cd {worktree_path}")
-        print(f"   2. Customize phase files in phases/ directory")
+        print(f"   2. Customize sprint files in sprints/ directory")
         print(f"   3. Edit CLAUDE.md with project-specific context")
         print(f"   4. Run: /user:project:doctor to validate setup")
         print(f"   5. Run: /user:project:start to begin automated development")
         print(f"")
         print(f"💡 Important:")
-        print(f"   - Phase files contain templates - customize them for your project")
-        print(f"   - Each phase has detailed objectives and quality gates")
+        print(f"   - Sprint files contain templates - customize them for your project")
+        print(f"   - Each sprint has detailed user stories and acceptance criteria")
         print(f"   - Review WORKFLOW_SPECIFICATIONS.md for methodology details")
         print(f"   - Project uses git worktree isolation for safety")
         print(f"")
-        print(f"🚀 Ready for phase-driven development!")
+        print(f"🚀 Ready for sprint-based development!")
 
 
 def main():

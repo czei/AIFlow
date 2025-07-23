@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Workflow Rules Engine for Phase-Driven Development
+Workflow Rules Engine for Sprint-Driven Development
 
 This module defines rules for each workflow step and provides utilities
 for rule evaluation, context analysis, and emergency overrides.
@@ -31,7 +31,7 @@ class WorkflowRules:
         'planning': {
             'allowed': READ_TOOLS + ['TodoWrite'],
             'blocked': WRITE_TOOLS + EXEC_TOOLS,
-            'message': "🚫 Planning phase: Complete requirements analysis before writing code.",
+            'message': "🚫 Planning sprint: Complete requirements analysis before writing code.",
             'suggestions': [
                 "Read existing code to understand the architecture",
                 "Search for similar implementations",
@@ -41,13 +41,13 @@ class WorkflowRules:
         'implementation': {
             'allowed': '*',  # All tools allowed
             'blocked': [],
-            'message': "✅ Implementation phase: All tools available.",
+            'message': "✅ Implementation sprint: All tools available.",
             'track': ['files_modified', 'tests_created']
         },
         'validation': {
             'allowed': READ_TOOLS + EXEC_TOOLS + ['Edit'],  # Allow minor fixes
             'blocked': ['Write'],  # No new files during validation
-            'message': "🧪 Validation phase: Focus on testing and verification.",
+            'message': "🧪 Validation sprint: Focus on testing and verification.",
             'suggestions': [
                 "Run existing tests",
                 "Create new test cases",
@@ -57,7 +57,7 @@ class WorkflowRules:
         'review': {
             'allowed': READ_TOOLS + ['TodoWrite'],
             'blocked': WRITE_TOOLS + EXEC_TOOLS,
-            'message': "👀 Review phase: Analyze code quality and architecture.",
+            'message': "👀 Review sprint: Analyze code quality and architecture.",
             'suggestions': [
                 "Review code for quality issues",
                 "Check for security vulnerabilities",
@@ -67,13 +67,13 @@ class WorkflowRules:
         'refinement': {
             'allowed': READ_TOOLS + ['Edit', 'MultiEdit'] + EXEC_TOOLS,
             'blocked': ['Write'],  # No new files, only refinements
-            'message': "🔧 Refinement phase: Apply review feedback.",
+            'message': "🔧 Refinement sprint: Apply review feedback.",
             'track': ['review_items_addressed']
         },
         'integration': {
             'allowed': READ_TOOLS + GIT_TOOLS + EXEC_TOOLS,
             'blocked': WRITE_TOOLS,
-            'message': "🔀 Integration phase: Prepare for merge.",
+            'message': "🔀 Integration sprint: Prepare for merge.",
             'suggestions': [
                 "Run final tests",
                 "Update documentation",
@@ -132,7 +132,7 @@ class WorkflowRules:
             return True, rules.get('message', ''), []
         
         # Default deny for tools not explicitly allowed
-        return False, f"🚫 {tool_name} not allowed in {workflow_step} phase.", []
+        return False, f"🚫 {tool_name} not allowed in {workflow_step} sprint.", []
     
     @classmethod
     def _check_emergency_override(cls, context: Dict[str, Any]) -> bool:
@@ -222,7 +222,7 @@ class WorkflowRules:
                     'pushed',
                     'merged'
                 ],
-                'next_step': 'planning'  # Next phase
+                'next_step': 'planning'  # Next sprint
             }
         }
         

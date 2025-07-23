@@ -60,7 +60,7 @@ class BasicLogger:
             "level": level,
             "category": category,
             "correlation_id": self.correlation_id,
-            "phase": project_state.get("current_phase", "unknown"),
+            "phase": project_state.get("current_sprint", "unknown"),
             "workflow_step": project_state.get("workflow_step", "unknown"), 
             "objective": project_state.get("current_objective", "unknown"),
             "event": event,
@@ -104,7 +104,7 @@ class LoggedSecureShell:
                 
             self.logger.log_event('automation', 'DEBUG', 'project_state_loaded', {
                 'state_file': str(self.state_file),
-                'current_phase': state.get('current_phase'),
+                'current_sprint': state.get('current_sprint'),
                 'workflow_step': state.get('workflow_step'),
                 'automation_active': state.get('automation_active')
             })

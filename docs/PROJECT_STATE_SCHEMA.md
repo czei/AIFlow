@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `.project-state.json` file maintains the complete state of an automated phase-driven development project. This file enables resumable automation, progress tracking, and workflow coordination across extended development sessions.
+The `.project-state.json` file maintains the complete state of an automated sprint-driven development project. This file enables resumable automation, progress tracking, and workflow coordination across extended development sessions.
 
 ## Schema Definition
 
@@ -11,13 +11,13 @@ The `.project-state.json` file maintains the complete state of an automated phas
 ```json
 {
   "project_name": "string",
-  "current_phase": "string", 
+  "current_sprint": "string", 
   "status": "enum",
   "automation_active": "boolean",
   "workflow_step": "enum",
-  "current_objective": "string|null",
+  "current_user story": "string|null",
   "quality_gates_passed": "array[string]",
-  "completed_phases": "array[string]",
+  "completed_sprints": "array[string]",
   "automation_cycles": "integer",
   "started": "iso8601_timestamp",
   "last_updated": "iso8601_timestamp",
@@ -36,8 +36,8 @@ The `.project-state.json` file maintains the complete state of an automated phas
 - **Constraints**: Non-empty string, no special characters recommended
 - **Example**: `"user-authentication-feature"`
 
-#### `current_phase` (string)
-- **Description**: Current development phase identifier
+#### `current_sprint` (string)
+- **Description**: Current development sprint identifier
 - **Constraints**: Typically numeric (01, 02, etc.) but allows custom identifiers
 - **Example**: `"03"`
 
@@ -48,7 +48,7 @@ The `.project-state.json` file maintains the complete state of an automated phas
   - `"active"` - Automation running or ready to run
   - `"paused"` - Temporarily stopped, can be resumed
   - `"stopped"` - Cleanly ended, requires manual restart
-  - `"completed"` - All phases finished successfully
+  - `"completed"` - All sprints finished successfully
   - `"error"` - Stopped due to unrecoverable error
 - **Example**: `"active"`
 
@@ -57,17 +57,17 @@ The `.project-state.json` file maintains the complete state of an automated phas
 - **Example**: `true`
 
 #### `workflow_step` (enum)
-- **Description**: Current position in 6-step workflow
+- **Description**: Current position in story lifecycle
 - **Valid Values**: `"planning"`, `"implementation"`, `"validation"`, `"review"`, `"refinement"`, `"integration"`
 - **Example**: `"validation"`
 
 #### `quality_gates_passed` (array[string])
-- **Description**: Quality gates passed for current objective
+- **Description**: Quality gates passed for current user story
 - **Valid Gate Types**: `"compilation"`, `"existing_tests"`, `"new_tests"`, `"review"`, `"integration"`, `"documentation"`, `"performance"`
 - **Example**: `["compilation", "existing_tests"]`
 
-#### `completed_phases` (array[string])
-- **Description**: List of phases that have been fully completed
+#### `completed_sprints` (array[string])
+- **Description**: List of sprints that have been fully completed
 - **Example**: `["01", "02"]`
 
 #### `automation_cycles` (integer)
@@ -87,8 +87,8 @@ The `.project-state.json` file maintains the complete state of an automated phas
 
 ### Optional Fields
 
-#### `current_objective` (string|null)
-- **Description**: Current task or objective being worked on
+#### `current_user story` (string|null)
+- **Description**: Current task or user story being worked on
 - **Example**: `"Business logic API endpoints"`
 
 #### `git_branch` (string|null)
@@ -108,13 +108,13 @@ The `.project-state.json` file maintains the complete state of an automated phas
 ```json
 {
   "project_name": "user-authentication-system",
-  "current_phase": "03",
+  "current_sprint": "03",
   "status": "active",
   "automation_active": true,
   "workflow_step": "validation", 
-  "current_objective": "Business logic API endpoints",
+  "current_user story": "Business logic API endpoints",
   "quality_gates_passed": ["compilation", "existing_tests"],
-  "completed_phases": ["01", "02"],
+  "completed_sprints": ["01", "02"],
   "automation_cycles": 47,
   "started": "2025-07-21T09:00:00Z",
   "last_updated": "2025-07-21T15:30:00Z",
@@ -133,7 +133,7 @@ setup → active    (via /user:project:start)
 active → paused   (via /user:project:pause)
 paused → active   (via /user:project:resume)  
 active → stopped  (via /user:project:stop)
-active → completed (automatic when all phases done)
+active → completed (automatic when all sprints done)
 any → error       (on unrecoverable failure)
 ```
 
@@ -145,11 +145,11 @@ planning → implementation → validation → review → refinement → integra
                                 └── (cycle back on failed gates) ←──┘
 ```
 
-### Phase Advancement
+### Sprint Advancement
 
-- Phases advance only when all objectives complete with quality gates passed
-- `current_phase` updates to next phase identifier
-- Previous phase added to `completed_phases` array
+- Sprints advance only when all user stories complete with acceptance criteria passed
+- `current_sprint` updates to next sprint identifier
+- Previous sprint added to `completed_sprints` array
 - `workflow_step` resets to `"planning"`
 - `quality_gates_passed` resets to empty array
 
@@ -165,9 +165,9 @@ planning → implementation → validation → review → refinement → integra
 ### Business Logic Validation
 - `automation_cycles` must be non-negative
 - `last_updated` must be >= `started`
-- `current_phase` must not be in `completed_phases`
+- `current_sprint` must not be in `completed_sprints`
 - Quality gates must be from valid set
-- Phase identifiers should follow project conventions
+- Sprint identifiers should follow project conventions
 
 ### State Consistency
 - Status must align with automation_active state
@@ -206,11 +206,11 @@ current = manager.read()
 # Update specific fields
 updated = manager.update({
     "workflow_step": "implementation",
-    "current_objective": "User login endpoint"
+    "current_user story": "User login endpoint"
 })
 
-# Transition phases
-next_phase = manager.transition_phase("04")
+# Transition sprints
+next_sprint = manager.transition_sprint("04")
 
 # Validate state
 is_valid = manager.validate()
@@ -220,7 +220,7 @@ is_valid = manager.validate()
 
 ### Version 1.0.0 (Current)
 - Initial schema implementation
-- Core workflow and phase management
+- Core workflow and sprint management
 - Basic quality gate tracking
 
 ### Future Versions

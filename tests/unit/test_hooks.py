@@ -79,8 +79,8 @@ class TestHooks:
         assert response.get('decision') == 'allow'
     
     def test_pre_tool_use_planning_blocks_write(self):
-        """Test PreToolUse hook blocks Write tool during planning phase."""
-        # Create state with automation active and planning phase
+        """Test PreToolUse hook blocks Write tool during planning sprint."""
+        # Create state with automation active and planning sprint
         self.state_manager.create('test-project')
         self.state_manager.update({
             'automation_active': True,
@@ -95,11 +95,11 @@ class TestHooks:
         
         response = self.run_hook('pre_tool_use', event)
         assert response.get('decision') == 'block'
-        assert 'Planning phase' in response.get('reason', '')
+        assert 'Planning sprint' in response.get('reason', '')
     
     def test_pre_tool_use_planning_allows_read(self):
-        """Test PreToolUse hook allows Read tool during planning phase."""
-        # Create state with automation active and planning phase
+        """Test PreToolUse hook allows Read tool during planning sprint."""
+        # Create state with automation active and planning sprint
         self.state_manager.create('test-project')
         self.state_manager.update({
             'automation_active': True,
@@ -117,7 +117,7 @@ class TestHooks:
     
     def test_pre_tool_use_implementation_allows_all(self):
         """Test PreToolUse hook allows all tools during implementation."""
-        # Create state with implementation phase
+        # Create state with implementation sprint
         self.state_manager.create('test-project')
         self.state_manager.update({
             'automation_active': True,
@@ -181,8 +181,8 @@ class TestHooks:
             assert 'Write' in impl_progress.get('tools_used', [])
     
     def test_pre_tool_use_validation_blocks_write(self):
-        """Test PreToolUse hook blocks Write tool during validation phase."""
-        # Create state with validation phase
+        """Test PreToolUse hook blocks Write tool during validation sprint."""
+        # Create state with validation sprint
         self.state_manager.create('test-project')
         self.state_manager.update({
             'automation_active': True,
@@ -197,11 +197,11 @@ class TestHooks:
         
         response = self.run_hook('pre_tool_use', event)
         assert response.get('decision') == 'block'
-        assert 'Validation phase' in response.get('reason', '')
+        assert 'Validation sprint' in response.get('reason', '')
     
     def test_pre_tool_use_emergency_override(self):
         """Test PreToolUse hook allows emergency overrides."""
-        # Create state with planning phase (normally blocks Write)
+        # Create state with planning sprint (normally blocks Write)
         self.state_manager.create('test-project')
         self.state_manager.update({
             'automation_active': True,
@@ -219,7 +219,7 @@ class TestHooks:
     
     def test_stop_hook_workflow_advancement(self):
         """Test Stop hook advances workflow when step is complete."""
-        # Create state with implementation phase and completion indicators
+        # Create state with implementation sprint and completion indicators
         self.state_manager.create('test-project')
         self.state_manager.update({
             'automation_active': True,

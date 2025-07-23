@@ -88,7 +88,7 @@ class StateManager:
     Manages project state with atomic operations and comprehensive validation.
     
     Handles .project-state.json files with schema validation, atomic updates,
-    and state transition management for the phase-driven development system.
+    and state transition management for the sprint-based development system.
     """
     
     def __init__(self, project_path: str):
@@ -101,13 +101,13 @@ class StateManager:
         self.project_path = Path(project_path).resolve()
         self.state_file = self.project_path / state_config.STATE_FILE_NAME
         
-    def create(self, project_name: str, initial_phase: str = "01") -> Dict[str, Any]:
+    def create(self, project_name: str, initial_sprint: str = "01") -> Dict[str, Any]:
         """
         Create initial project state file with default values.
         
         Args:
             project_name: Name of the project
-            initial_phase: Starting phase (default: "01")
+            initial_sprint: Starting sprint (default: "01")
             
         Returns:
             Created state dictionary
@@ -120,13 +120,13 @@ class StateManager:
             
         initial_state = {
             "project_name": project_name,
-            "current_phase": initial_phase,
+            "current_sprint": initial_sprint,
             "status": "setup",
             "automation_active": False,
             "workflow_step": "planning",
-            "current_objective": None,
-            "quality_gates_passed": [],
-            "completed_phases": [],
+            "current_user_story": None,
+            "acceptance_criteria_passed": [],
+            "completed_sprints": [],
             "automation_cycles": 0,
             "started": datetime.now(timezone.utc).isoformat(),
             "last_updated": datetime.now(timezone.utc).isoformat(),
@@ -202,12 +202,12 @@ class StateManager:
         
         return updated_state
         
-    def transition_phase(self, new_phase: str, force: bool = False) -> Dict[str, Any]:
+    def transition_sprint(self, new_sprint: str, force: bool = False) -> Dict[str, Any]:
         """
-        Transition to a new phase with validation.
+        Transition to a new sprint with validation.
         
         Args:
-            new_phase: Target phase identifier
+            new_sprint: Target sprint identifier
             force: Skip validation checks if True
             
         Returns:
@@ -217,32 +217,32 @@ class StateManager:
             StateValidationError: If transition is invalid
         """
         current_state = self.read()
-        current_phase = current_state["current_phase"]
+        current_sprint = current_state["current_sprint"]
         
         if not force:
-            # Validate phase transition logic
-            if not self._is_valid_phase_transition(current_phase, new_phase):
+            # Validate sprint transition logic
+            if not self._is_valid_sprint_transition(current_sprint, new_sprint):
                 raise StateValidationError(
-                    f"Invalid phase transition from {current_phase} to {new_phase}"
+                    f"Invalid sprint transition from {current_sprint} to {new_sprint}"
                 )
                 
-            # Check if current phase is complete
-            if not self._is_phase_complete(current_phase):
+            # Check if current sprint is complete
+            if not self._is_sprint_complete(current_sprint):
                 raise StateValidationError(
-                    f"Cannot advance from incomplete phase {current_phase}"
+                    f"Cannot advance from incomplete sprint {current_sprint}"
                 )
         
-        # Update completed phases if advancing
-        completed_phases = current_state["completed_phases"].copy()
-        if current_phase not in completed_phases and current_phase != new_phase:
-            completed_phases.append(current_phase)
+        # Update completed sprints if advancing
+        completed_sprints = current_state["completed_sprints"].copy()
+        if current_sprint not in completed_sprints and current_sprint != new_sprint:
+            completed_sprints.append(current_sprint)
             
         updates = {
-            "current_phase": new_phase,
-            "completed_phases": completed_phases,
-            "workflow_step": "planning",  # Reset to planning for new phase
-            "current_objective": None,
-            "quality_gates_passed": []  # Reset quality gates for new phase
+            "current_sprint": new_sprint,
+            "completed_sprints": completed_sprints,
+            "workflow_step": "planning",  # Reset to planning for new sprint
+            "current_user_story": None,
+            "acceptance_criteria_passed": []  # Reset acceptance criteria for new sprint
         }
         
         return self.update(updates)
@@ -311,8 +311,8 @@ class StateManager:
     def _validate_state(self, state: Dict[str, Any]) -> None:
         """Validate state dictionary against schema."""
         required_fields = [
-            "project_name", "current_phase", "status", "automation_active",
-            "workflow_step", "quality_gates_passed", "completed_phases",
+            "project_name", "current_sprint", "status", "automation_active",
+            "workflow_step", "acceptance_criteria_passed", "completed_sprints",
             "automation_cycles", "started", "last_updated"
         ]
         
@@ -334,11 +334,11 @@ class StateManager:
         if not isinstance(state["automation_active"], bool):
             raise StateValidationError("automation_active must be boolean")
             
-        if not isinstance(state["quality_gates_passed"], list):
-            raise StateValidationError("quality_gates_passed must be a list")
+        if not isinstance(state["acceptance_criteria_passed"], list):
+            raise StateValidationError("acceptance_criteria_passed must be a list")
             
-        if not isinstance(state["completed_phases"], list):
-            raise StateValidationError("completed_phases must be a list")
+        if not isinstance(state["completed_sprints"], list):
+            raise StateValidationError("completed_sprints must be a list")
             
         if not isinstance(state["automation_cycles"], int) or state["automation_cycles"] < 0:
             raise StateValidationError("automation_cycles must be a non-negative integer")
@@ -388,21 +388,21 @@ class StateManager:
         except (subprocess.CalledProcessError, FileNotFoundError):
             return None
             
-    def _is_valid_phase_transition(self, current: str, target: str) -> bool:
-        """Validate phase transition logic."""
+    def _is_valid_sprint_transition(self, current: str, target: str) -> bool:
+        """Validate sprint transition logic."""
         # Simple sequential validation - can be enhanced with complex rules
         try:
             current_num = int(current)
             target_num = int(target)
             
-            # Allow advancing to next phase or jumping back
+            # Allow advancing to next sprint or jumping back
             return target_num <= current_num + 1
         except ValueError:
-            # Non-numeric phases allowed for now
+            # Non-numeric sprints allowed for now
             return True
             
-    def _is_phase_complete(self, phase: str) -> bool:
-        """Check if phase objectives are complete."""
-        # This would check phase files for completion status
-        # For now, assume phases can be advanced
+    def _is_sprint_complete(self, sprint: str) -> bool:
+        """Check if sprint user stories are complete."""
+        # This would check sprint files for completion status
+        # For now, assume sprints can be advanced
         return True

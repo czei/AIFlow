@@ -57,11 +57,11 @@ class CommandExecutionTest:
             
             # Verify project structure in the worktree
             structure = verify_project_structure(worktree_path)
-            assert structure['phases'], "phases directory not created"
+            assert structure['sprints'], "sprints directory not created"
             assert structure['.claude'], ".claude directory not created"
             assert structure['logs'], "logs directory not created"
             assert structure['docs'], "docs directory not created"
-            assert structure['phase_files'], "phase files not created"
+            assert structure['sprint_files'], "sprint files not created"
             
             # Verify state file in the worktree
             state = read_project_state(worktree_path)
@@ -106,7 +106,7 @@ class CommandExecutionTest:
             
             print("  ✓ Project started successfully")
             print("  ✓ Automation activated")
-            print("  ✓ Workflow set to planning phase")
+            print("  ✓ Workflow set to planning sprint")
             print("✅ Start command test passed")
             self.passed += 1
         else:
@@ -177,10 +177,10 @@ class CommandExecutionTest:
         update_project_state(self.test_dir, {
             'project_name': 'test-project',
             'status': 'active',
-            'current_phase': '01',
+            'current_sprint': '01',
             'workflow_step': 'implementation',
             'automation_active': True,
-            'completed_phases': [],
+            'completed_sprints': [],
             'files_modified': ['src/main.py', 'tests/test_main.py']
         })
         

@@ -268,7 +268,7 @@ class TestErrorRecoveryChaos(ChaosTestBase):
     
     def test_recovery_after_extended_failure(self):
         """Test recovery after extended period of failures"""
-        phases = [
+        sprints = [
             {"name": "healthy", "duration": 5, "failure_rate": 0.1},
             {"name": "degraded", "duration": 5, "failure_rate": 0.5},
             {"name": "failing", "duration": 5, "failure_rate": 0.9},
@@ -276,11 +276,11 @@ class TestErrorRecoveryChaos(ChaosTestBase):
             {"name": "restored", "duration": 5, "failure_rate": 0.1},
         ]
         
-        phase_results = []
+        sprint_results = []
         
-        for phase in phases:
-            phase_data = {
-                "name": phase["name"],
+        for sprint in sprints:
+            sprint_data = {
+                "name": sprint["name"],
                 "requests": [],
                 "success_count": 0,
                 "avg_recovery_time": 0
@@ -288,15 +288,15 @@ class TestErrorRecoveryChaos(ChaosTestBase):
             
             recovery_times = []
             
-            for i in range(phase["duration"]):
+            for i in range(sprint["duration"]):
                 request_start = time.time()
                 
                 try:
                     response = self.chaos_query(
-                        f"Request during {phase['name']} phase",
+                        f"Request during {sprint['name']} sprint",
                         context={
-                            "phase": phase["name"],
-                            "failure_rate": phase["failure_rate"],
+                            "sprint": sprint["name"],
+                            "failure_rate": sprint["failure_rate"],
                             "request_num": i
                         },
                         max_retries=2
@@ -305,44 +305,44 @@ class TestErrorRecoveryChaos(ChaosTestBase):
                     request_time = time.time() - request_start
                     
                     success = response.get('type') != 'error'
-                    phase_data["requests"].append({
+                    sprint_data["requests"].append({
                         "success": success,
                         "time": request_time
                     })
                     
                     if success:
-                        phase_data["success_count"] += 1
-                        if phase["name"] in ["recovery", "restored"]:
+                        sprint_data["success_count"] += 1
+                        if sprint["name"] in ["recovery", "restored"]:
                             recovery_times.append(request_time)
                             
                 except Exception:
-                    phase_data["requests"].append({
+                    sprint_data["requests"].append({
                         "success": False,
                         "time": time.time() - request_start
                     })
             
             # Calculate recovery metrics
             if recovery_times:
-                phase_data["avg_recovery_time"] = sum(recovery_times) / len(recovery_times)
+                sprint_data["avg_recovery_time"] = sum(recovery_times) / len(recovery_times)
                 
-            phase_results.append(phase_data)
+            sprint_results.append(sprint_data)
         
         # Verify recovery pattern
-        failing_success_rate = phase_results[2]["success_count"] / phase_results[2]["duration"]
-        recovery_success_rate = phase_results[3]["success_count"] / phase_results[3]["duration"]
-        restored_success_rate = phase_results[4]["success_count"] / phase_results[4]["duration"]
+        failing_success_rate = sprint_results[2]["success_count"] / sprint_results[2]["duration"]
+        recovery_success_rate = sprint_results[3]["success_count"] / sprint_results[3]["duration"]
+        restored_success_rate = sprint_results[4]["success_count"] / sprint_results[4]["duration"]
         
         # Should show improvement during recovery
         self.assertGreater(recovery_success_rate, failing_success_rate,
-                          "No improvement during recovery phase")
+                          "No improvement during recovery sprint")
         
         # Should be mostly restored by the end
         self.assertGreater(restored_success_rate, 0.7,
                           "System not adequately restored after recovery")
         
         # Recovery time should improve
-        recovery_avg_time = phase_results[3]["avg_recovery_time"]
-        restored_avg_time = phase_results[4]["avg_recovery_time"]
+        recovery_avg_time = sprint_results[3]["avg_recovery_time"]
+        restored_avg_time = sprint_results[4]["avg_recovery_time"]
         
         if recovery_avg_time > 0 and restored_avg_time > 0:
             self.assertLess(restored_avg_time, recovery_avg_time * 1.5,

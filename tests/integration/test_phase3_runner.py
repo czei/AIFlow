@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Phase 3 Test Runner - Run all end-to-end integration tests.
+Sprint 3 Test Runner - Run all end-to-end integration tests.
 
 Executes the minimal test suite for proof-of-concept validation.
 """
@@ -19,8 +19,8 @@ from test_complete_workflow import CompleteWorkflowTest
 from test_performance import HookPerformanceTest
 
 
-class Phase3TestRunner:
-    """Run all Phase 3 integration tests."""
+class Sprint3TestRunner:
+    """Run all Sprint 3 integration tests."""
     
     def __init__(self):
         self.total_passed = 0
@@ -123,7 +123,7 @@ class Phase3TestRunner:
         print("="*70)
         
     def run_all_tests(self):
-        """Run all Phase 3 tests."""
+        """Run all Sprint 3 tests."""
         print("\n" + "#"*70)
         print("# PHASE 3 END-TO-END INTEGRATION TESTS")
         print("# Minimal test suite for proof-of-concept validation")
@@ -174,7 +174,7 @@ class Phase3TestRunner:
 
 def main():
     """Main entry point."""
-    runner = Phase3TestRunner()
+    runner = Sprint3TestRunner()
     success = runner.run_all_tests()
     sys.exit(0 if success else 1)
 

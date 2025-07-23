@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from mocks.mock_claude_provider import MockClaudeProvider, MockClaudeProviderWithState
-from logged_secure_shell import LoggedSecureShell, BasicLogger
+from scripts.logged_secure_shell import LoggedSecureShell, BasicLogger
 
 
 class TestMockClaudeProviderBasic(unittest.TestCase):
@@ -124,20 +124,20 @@ class TestMockClaudeProviderWithState(unittest.TestCase):
         """Test initial state values"""
         state = self.provider.get_state()
         
-        self.assertEqual(state["project_phase"], "planning")
+        self.assertEqual(state["project_sprint"], "planning")
         self.assertEqual(state["completed_tasks"], [])
         self.assertEqual(state["current_context"], {})
         self.assertEqual(state["error_count"], 0)
         
-    def test_phase_transition_tracking(self):
-        """Test that phase transitions are tracked"""
+    def test_sprint_transition_tracking(self):
+        """Test that sprint transitions are tracked"""
         self.provider.query("Let's implement the user authentication")
         state = self.provider.get_state()
-        self.assertEqual(state["project_phase"], "implementation")
+        self.assertEqual(state["project_sprint"], "implementation")
         
         self.provider.query("Run the test suite")
         state = self.provider.get_state()
-        self.assertEqual(state["project_phase"], "testing")
+        self.assertEqual(state["project_sprint"], "testing")
         
     def test_error_count_tracking(self):
         """Test error counting"""
@@ -173,7 +173,7 @@ class TestMockClaudeProviderWithState(unittest.TestCase):
         self.provider.reset_state()
         state = self.provider.get_state()
         
-        self.assertEqual(state["project_phase"], "planning")
+        self.assertEqual(state["project_sprint"], "planning")
         self.assertEqual(state["completed_tasks"], [])
         self.assertEqual(state["error_count"], 0)
         
@@ -183,7 +183,7 @@ class TestMockClaudeProviderWithState(unittest.TestCase):
         response = self.provider.query("Check current status")
         
         self.assertIn("state", response)
-        self.assertEqual(response["state"]["project_phase"], "implementation")
+        self.assertEqual(response["state"]["project_sprint"], "implementation")
 
 
 class TestMockClaudeWithLoggedShell(unittest.TestCase):
@@ -205,8 +205,8 @@ class TestMockClaudeWithLoggedShell(unittest.TestCase):
         
         # In a real integration, the AI response would influence command validation
         # For now, we test the flow
-        self.shell.current_phase = "implementation"
-        is_valid = self.shell.validate_command_phase("ls -la", "implementation")
+        self.shell.current_sprint = "implementation"
+        is_valid = self.shell.validate_command_sprint("ls -la", "implementation")
         
         self.assertTrue(is_valid)
         # Verify AI was consulted
@@ -218,7 +218,7 @@ class TestMockClaudeWithLoggedShell(unittest.TestCase):
         error_context = {
             "error_type": "FileNotFoundError",
             "error_message": "No such file: config.json",
-            "phase": "implementation"
+            "sprint": "implementation"
         }
         
         # Ask AI for help
@@ -236,19 +236,19 @@ class TestMockClaudeWithLoggedShell(unittest.TestCase):
     @patch('logged_secure_shell.subprocess.run')
     def test_ai_guided_workflow(self, mock_run):
         """Test complete workflow with AI guidance"""
-        # Phase 1: Planning
-        self.shell.current_phase = "planning"
+        # Sprint 1: Planning
+        self.shell.current_sprint = "planning"
         plan_response = self.provider.query("Create a plan for building a calculator")
         
-        # Phase 2: Implementation based on AI plan
-        self.shell.current_phase = "implementation"
+        # Sprint 2: Implementation based on AI plan
+        self.shell.current_sprint = "implementation"
         impl_response = self.provider.query("Implement the calculator based on the plan")
         
         # Simulate executing AI-suggested commands
         if "commands" in impl_response:
             for cmd in impl_response.get("commands", []):
                 # In real integration, these would be validated and executed
-                is_valid = self.shell.validate_command_phase(cmd, "implementation")
+                is_valid = self.shell.validate_command_sprint(cmd, "implementation")
                 self.assertTrue(is_valid)
         
         # Verify AI interaction history

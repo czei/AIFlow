@@ -1,4 +1,4 @@
-# Enhanced Security Architecture for Claude Code Phase-Driven Development
+# Enhanced Security Architecture for Claude Code Sprint-Driven Development
 
 ## Layer 1: Docker Sandbox (Foundation)
 
@@ -54,7 +54,7 @@ package commands
 import future.keywords.if
 import future.keywords.in
 
-# Phase-based command allowlist with argument validation
+# Sprint-based command allowlist with argument validation
 allowed_commands := {
   "planning": {
     "cat": {"max_args": 10, "path_restricted": true},
@@ -87,11 +87,11 @@ allowed_commands := {
 
 # Main policy decision
 allow if {
-  # Verify phase exists
-  input.phase in object.keys(allowed_commands)
+  # Verify sprint exists
+  input.sprint in object.keys(allowed_commands)
   
-  # Verify command is allowed in this phase
-  input.command in object.keys(allowed_commands[input.phase])
+  # Verify command is allowed in this sprint
+  input.command in object.keys(allowed_commands[input.sprint])
   
   # Apply command-specific validation
   command_is_valid
@@ -99,7 +99,7 @@ allow if {
 
 # Command-specific validation rules
 command_is_valid if {
-  command_config := allowed_commands[input.phase][input.command]
+  command_config := allowed_commands[input.sprint][input.command]
   
   # Check argument count if specified
   not command_config.max_args
@@ -132,7 +132,7 @@ subcommand_is_allowed(allowed_list) if {
 # Audit logging (for security monitoring)
 audit_log := {
   "timestamp": time.now_ns(),
-  "phase": input.phase,
+  "sprint": input.sprint,
   "command": input.command,
   "args": input.args,
   "allowed": allow,
@@ -167,20 +167,20 @@ class SecureShell:
             with open(self.state_file, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
-            print("⚠️  State file not found, defaulting to 'planning' phase.", 
+            print("⚠️  State file not found, defaulting to 'planning' sprint.", 
                   file=sys.stderr)
             return {"workflow_step": "planning"}
         except json.JSONDecodeError as e:
             print(f"🚨 Invalid state file format: {e}", file=sys.stderr)
             return {"workflow_step": "planning"}
     
-    def check_opa_policy(self, command, args, phase):
+    def check_opa_policy(self, command, args, sprint):
         """Check command against OPA policy with comprehensive error handling"""
         policy_data = {
             "input": {
                 "command": command,
                 "args": args,
-                "phase": phase,
+                "sprint": sprint,
                 "workdir": self.workdir,
                 "timestamp": int(time.time())
             }
@@ -211,7 +211,7 @@ class SecureShell:
         """Log policy decisions for security audit"""
         log_entry = {
             "timestamp": time.time(),
-            "phase": input_data["phase"],
+            "sprint": input_data["sprint"],
             "command": f"{input_data['command']} {' '.join(input_data['args'])}",
             "decision": "ALLOW" if decision else "DENY"
         }
@@ -273,12 +273,12 @@ class SecureShell:
         
         # Load project state
         project_state = self.load_project_state()
-        phase = project_state.get("workflow_step", "planning")
+        sprint = project_state.get("workflow_step", "planning")
         
-        print(f"🔍 Phase: {phase}, Command: {full_command_str}")
+        print(f"🔍 Sprint: {sprint}, Command: {full_command_str}")
         
         # Check policy
-        if self.check_opa_policy(command, args, phase):
+        if self.check_opa_policy(command, args, sprint):
             print(f"✅ Command approved")
             return self.execute_command(command_parts)
         else:
@@ -291,7 +291,7 @@ if __name__ == "__main__":
     sys.exit(exit_code)
 ```
 
-## Integration with Phase-Driven System
+## Integration with Sprint-Driven System
 
 Update the command files to use the secure shell:
 
@@ -299,13 +299,13 @@ Update the command files to use the secure shell:
 <!-- Example: Updated start.md -->
 Tasks:
 1. Initialize Docker security container with OPA policy engine
-2. Validate project state and phase definitions
+2. Validate project state and sprint definitions
 3. Configure secure command execution through policy layer
 4. Enable automation hooks with security validation
-5. Begin Phase 01 with secure 6-step workflow
+5. Begin Sprint 01 with secure story lifecycle
 
 All automation commands will be executed through the security layer:
-- Each command validated against current phase policy
+- Each command validated against current sprint policy
 - Shell injection prevention through command parsing
 - Audit trail generation for all security decisions
 - Container isolation for safe autonomous operation

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Unit tests for LoggedSecureShell class.
-Tests deterministic command validation and phase management without I/O.
+Tests deterministic command validation and sprint management without I/O.
 """
 
 import unittest
@@ -50,78 +50,78 @@ class TestLoggedSecureShell(unittest.TestCase):
         )
         
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_planning(self, mock_logger):
-        """Test command validation for planning phase"""
+    def test_validate_command_sprint_planning(self, mock_logger):
+        """Test command validation for planning sprint"""
         shell = LoggedSecureShell(self.test_workdir)
         
         # Test allowed commands
         allowed_commands = ["cat", "ls", "find", "grep", "git", "head", "tail", "wc", "sort"]
         for cmd in allowed_commands:
-            result = shell.validate_command_phase(cmd, [], "planning")
-            self.assertTrue(result, f"{cmd} should be allowed in planning phase")
+            result = shell.validate_command_sprint(cmd, [], "planning")
+            self.assertTrue(result, f"{cmd} should be allowed in planning sprint")
             
         # Test disallowed commands
         disallowed_commands = ["python", "npm", "make", "rm", "touch"]
         for cmd in disallowed_commands:
-            result = shell.validate_command_phase(cmd, [], "planning")
-            self.assertFalse(result, f"{cmd} should not be allowed in planning phase")
+            result = shell.validate_command_sprint(cmd, [], "planning")
+            self.assertFalse(result, f"{cmd} should not be allowed in planning sprint")
             
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_implementation(self, mock_logger):
-        """Test command validation for implementation phase"""
+    def test_validate_command_sprint_implementation(self, mock_logger):
+        """Test command validation for implementation sprint"""
         shell = LoggedSecureShell(self.test_workdir)
         
         # Test allowed commands
         allowed_commands = ["python", "python3", "npm", "node", "pip", "make", "touch", "mkdir"]
         for cmd in allowed_commands:
-            result = shell.validate_command_phase(cmd, [], "implementation")
-            self.assertTrue(result, f"{cmd} should be allowed in implementation phase")
+            result = shell.validate_command_sprint(cmd, [], "implementation")
+            self.assertTrue(result, f"{cmd} should be allowed in implementation sprint")
             
         # Test that planning commands are also allowed
-        result = shell.validate_command_phase("cat", [], "implementation")
-        self.assertTrue(result, "cat should be allowed in implementation phase")
+        result = shell.validate_command_sprint("cat", [], "implementation")
+        self.assertTrue(result, "cat should be allowed in implementation sprint")
         
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_validation(self, mock_logger):
-        """Test command validation for validation phase"""
+    def test_validate_command_sprint_validation(self, mock_logger):
+        """Test command validation for validation sprint"""
         shell = LoggedSecureShell(self.test_workdir)
         
         # Test allowed commands
         allowed_commands = ["pytest", "npm", "jest", "test", "coverage"]
         for cmd in allowed_commands:
-            result = shell.validate_command_phase(cmd, [], "validation")
-            self.assertTrue(result, f"{cmd} should be allowed in validation phase")
+            result = shell.validate_command_sprint(cmd, [], "validation")
+            self.assertTrue(result, f"{cmd} should be allowed in validation sprint")
             
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_review(self, mock_logger):
-        """Test command validation for review phase"""
+    def test_validate_command_sprint_review(self, mock_logger):
+        """Test command validation for review sprint"""
         shell = LoggedSecureShell(self.test_workdir)
         
         # Test allowed commands
         allowed_commands = ["git", "diff", "grep", "cat", "ls"]
         for cmd in allowed_commands:
-            result = shell.validate_command_phase(cmd, [], "review")
-            self.assertTrue(result, f"{cmd} should be allowed in review phase")
+            result = shell.validate_command_sprint(cmd, [], "review")
+            self.assertTrue(result, f"{cmd} should be allowed in review sprint")
             
         # Test disallowed commands
-        result = shell.validate_command_phase("npm", [], "review")
-        self.assertFalse(result, "npm should not be allowed in review phase")
+        result = shell.validate_command_sprint("npm", [], "review")
+        self.assertFalse(result, "npm should not be allowed in review sprint")
         
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_unknown(self, mock_logger):
-        """Test command validation for unknown phase"""
+    def test_validate_command_sprint_unknown(self, mock_logger):
+        """Test command validation for unknown sprint"""
         shell = LoggedSecureShell(self.test_workdir)
         
-        # Unknown phase should not allow any commands
-        result = shell.validate_command_phase("ls", [], "unknown_phase")
-        self.assertFalse(result, "Commands should not be allowed in unknown phase")
+        # Unknown sprint should not allow any commands
+        result = shell.validate_command_sprint("ls", [], "unknown_sprint")
+        self.assertFalse(result, "Commands should not be allowed in unknown sprint")
         
     @patch('scripts.logged_secure_shell.BasicLogger')
     @patch('builtins.open', new_callable=mock_open)
     def test_load_project_state_success(self, mock_file, mock_logger):
         """Test successful project state loading"""
         mock_state = {
-            "current_phase": "implementation",
+            "current_sprint": "implementation",
             "workflow_step": "coding",
             "automation_active": True
         }
@@ -135,7 +135,7 @@ class TestLoggedSecureShell(unittest.TestCase):
             'automation', 'DEBUG', 'project_state_loaded',
             {
                 'state_file': str(shell.state_file),
-                'current_phase': 'implementation',
+                'current_sprint': 'implementation',
                 'workflow_step': 'coding',
                 'automation_active': True
             }
@@ -180,16 +180,16 @@ class TestLoggedSecureShell(unittest.TestCase):
         
     @patch('scripts.logged_secure_shell.BasicLogger')
     @patch('scripts.logged_secure_shell.time.time')
-    def test_validate_command_phase_performance_tracking(self, mock_time, mock_logger):
+    def test_validate_command_sprint_performance_tracking(self, mock_time, mock_logger):
         """Test that command validation tracks performance"""
         mock_time.side_effect = [0.0, 0.1]  # 100ms duration
         
         shell = LoggedSecureShell(self.test_workdir)
-        shell.validate_command_phase("ls", ["file1", "file2"], "planning")
+        shell.validate_command_sprint("ls", ["file1", "file2"], "planning")
         
         # Find the validation log call
         log_calls = shell.logger.log_event.call_args_list
-        validation_call = [call for call in log_calls if call[0][2] == 'command_phase_validation'][0]
+        validation_call = [call for call in log_calls if call[0][2] == 'command_sprint_validation'][0]
         
         # Verify performance metrics
         details = validation_call[0][3]
@@ -198,17 +198,17 @@ class TestLoggedSecureShell(unittest.TestCase):
         self.assertIn('args_preview', details)
         
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_args_preview(self, mock_logger):
+    def test_validate_command_sprint_args_preview(self, mock_logger):
         """Test args preview in validation logging"""
         shell = LoggedSecureShell(self.test_workdir)
         
         # Test with many args
         many_args = ['arg1', 'arg2', 'arg3', 'arg4', 'arg5']
-        shell.validate_command_phase("ls", many_args, "planning")
+        shell.validate_command_sprint("ls", many_args, "planning")
         
         # Get validation log call
         log_calls = shell.logger.log_event.call_args_list
-        validation_call = [call for call in log_calls if call[0][2] == 'command_phase_validation'][0]
+        validation_call = [call for call in log_calls if call[0][2] == 'command_sprint_validation'][0]
         
         # Verify args preview is truncated
         details = validation_call[0][3]
@@ -216,20 +216,20 @@ class TestLoggedSecureShell(unittest.TestCase):
         self.assertEqual(details['args_count'], 5)
         
     @patch('scripts.logged_secure_shell.BasicLogger')
-    def test_validate_command_phase_validation_result(self, mock_logger):
+    def test_validate_command_sprint_validation_result(self, mock_logger):
         """Test validation result logging"""
         shell = LoggedSecureShell(self.test_workdir)
         
         # Test allowed command
-        shell.validate_command_phase("ls", [], "planning")
+        shell.validate_command_sprint("ls", [], "planning")
         log_calls = shell.logger.log_event.call_args_list
-        validation_call = [call for call in log_calls if call[0][2] == 'command_phase_validation'][-1]
+        validation_call = [call for call in log_calls if call[0][2] == 'command_sprint_validation'][-1]
         self.assertEqual(validation_call[0][3]['validation_result'], 'ALLOWED')
         
         # Test denied command
-        shell.validate_command_phase("rm", [], "planning")
+        shell.validate_command_sprint("rm", [], "planning")
         log_calls = shell.logger.log_event.call_args_list
-        validation_call = [call for call in log_calls if call[0][2] == 'command_phase_validation'][-1]
+        validation_call = [call for call in log_calls if call[0][2] == 'command_sprint_validation'][-1]
         self.assertEqual(validation_call[0][3]['validation_result'], 'DENIED')
 
 
@@ -248,7 +248,7 @@ class TestLoggedSecureShellCommandParsing(unittest.TestCase):
             'errors', 'ERROR', 'invalid_usage',
             {
                 'message': 'No command provided',
-                'usage': 'scripts.logged_secure_shell <command>',
+                'usage': 'logged_secure_shell <command>',
                 'args_received': ['script.py']
             }
         )

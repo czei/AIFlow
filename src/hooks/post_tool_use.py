@@ -3,7 +3,7 @@
 PostToolUse Hook - Updates state after tool execution.
 
 This hook runs after successful tool execution and updates project state
-based on what was done (e.g., marking quality gates as passed).
+based on what was done (e.g., marking acceptance criteria as passed).
 """
 
 import json
@@ -108,8 +108,8 @@ def main():
             state_manager.update(updates)
             
             # Log significant updates
-            if 'quality_gates_passed' in updates:
-                print(f"✅ Quality gate passed: {updates['quality_gates_passed'][-1]}")
+            if 'acceptance_criteria_passed' in updates:
+                print(f"✅ Quality gate passed: {updates['acceptance_criteria_passed'][-1]}")
             if 'workflow_progress' in updates:
                 progress = updates['workflow_progress']
                 print(f"📊 Workflow progress: {progress.get('message', 'Step advancing')}")
@@ -172,37 +172,37 @@ def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: s
             step_progress['tests_run'] = True
             if exit_code == 0:
                 # Tests passed
-                gates = state.get('quality_gates_passed', [])
+                gates = state.get('acceptance_criteria_passed', [])
                 if 'existing_tests' not in gates:
                     gates.append('existing_tests')
-                    updates['quality_gates_passed'] = gates
+                    updates['acceptance_criteria_passed'] = gates
                     
         # Check for build commands
         elif any(build_cmd in command for build_cmd in ['make', 'npm run build', 'cargo build', 'go build']):
             if exit_code == 0:
                 step_progress['build_success'] = True
                 # Build succeeded
-                gates = state.get('quality_gates_passed', [])
+                gates = state.get('acceptance_criteria_passed', [])
                 if 'compilation' not in gates:
                     gates.append('compilation')
-                    updates['quality_gates_passed'] = gates
+                    updates['acceptance_criteria_passed'] = gates
                     
         # Check for lint commands
         elif any(lint_cmd in command for lint_cmd in ['eslint', 'pylint', 'flake8', 'cargo clippy', 'rubocop']):
             if exit_code == 0:
                 # Linting passed
-                gates = state.get('quality_gates_passed', [])
+                gates = state.get('acceptance_criteria_passed', [])
                 if 'lint' not in gates:
                     gates.append('lint')
-                    updates['quality_gates_passed'] = gates
+                    updates['acceptance_criteria_passed'] = gates
                     
     # Track code review usage
     elif tool == 'mcp__zen__codereview':
         step_progress['review_complete'] = True
-        gates = state.get('quality_gates_passed', [])
+        gates = state.get('acceptance_criteria_passed', [])
         if 'review' not in gates:
             gates.append('review')
-            updates['quality_gates_passed'] = gates
+            updates['acceptance_criteria_passed'] = gates
     
     # Track TodoWrite for planning completion
     elif tool == 'TodoWrite' and workflow_step == 'planning':

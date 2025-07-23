@@ -44,7 +44,7 @@
     }
   ],
   "override_rules": {
-    "max_overrides_per_phase": 3,
+    "max_overrides_per_sprint": 3,
     "require_documentation": true,
     "audit_trail": true,
     "notification_required": true

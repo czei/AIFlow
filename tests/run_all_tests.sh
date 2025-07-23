@@ -1,7 +1,7 @@
 #!/bin/bash
-# Run all tests for the Phase-Driven Development System
+# Run all tests for the Sprint-Driven Development System
 
-echo "🧪 Phase-Driven Development System - Full Test Suite"
+echo "🧪 Sprint-Driven Development System - Full Test Suite"
 echo "==================================================="
 echo
 
@@ -36,7 +36,7 @@ tests_passed=0
 tests_failed=0
 
 # Run unit tests
-if run_test "Unit Tests" "python3 test_phases.py"; then
+if run_test "Unit Tests" "python3 test_sprints.py"; then
     ((tests_passed++))
 else
     ((tests_failed++))

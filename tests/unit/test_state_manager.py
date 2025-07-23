@@ -9,10 +9,15 @@ import unittest
 import tempfile
 import shutil
 import json
+import sys
+import os
 from pathlib import Path
 from datetime import datetime, timezone
 
-from src.state_manager import StateManager, StateValidationError
+# Add src to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+from state_manager import StateManager, StateValidationError
 
 
 class TestStateManager(unittest.TestCase):
@@ -33,13 +38,13 @@ class TestStateManager(unittest.TestCase):
         
         # Verify required fields
         self.assertEqual(state["project_name"], "test-project")
-        self.assertEqual(state["current_phase"], "01")
+        self.assertEqual(state["current_sprint"], "01")
         self.assertEqual(state["status"], "setup")
         self.assertEqual(state["automation_active"], False)
         self.assertEqual(state["workflow_step"], "planning")
-        self.assertIsNone(state["current_objective"])
-        self.assertEqual(state["quality_gates_passed"], [])
-        self.assertEqual(state["completed_phases"], [])
+        self.assertIsNone(state["current_user story"])
+        self.assertEqual(state["acceptance_criteria_passed"], [])
+        self.assertEqual(state["completed_sprints"], [])
         self.assertEqual(state["automation_cycles"], 0)
         
         # Verify timestamps are valid
@@ -82,7 +87,7 @@ class TestStateManager(unittest.TestCase):
             "status": "active",
             "automation_active": True,
             "workflow_step": "implementation",
-            "current_objective": "Test feature"
+            "current_user story": "Test feature"
         }
         
         updated_state = self.manager.update(updates)
@@ -91,7 +96,7 @@ class TestStateManager(unittest.TestCase):
         self.assertEqual(updated_state["status"], "active")
         self.assertEqual(updated_state["automation_active"], True)
         self.assertEqual(updated_state["workflow_step"], "implementation")
-        self.assertEqual(updated_state["current_objective"], "Test feature")
+        self.assertEqual(updated_state["current_user story"], "Test feature")
         
         # Verify last_updated timestamp updated
         original_timestamp = self.manager.read()["last_updated"]
@@ -115,16 +120,16 @@ class TestStateManager(unittest.TestCase):
             
         self.assertIn("Invalid workflow step", str(context.exception))
         
-    def test_transition_phase(self):
-        """Test phase transition."""
+    def test_transition_sprint(self):
+        """Test sprint transition."""
         self.manager.create("test-project")
         
-        updated_state = self.manager.transition_phase("02")
+        updated_state = self.manager.transition_sprint("02")
         
-        self.assertEqual(updated_state["current_phase"], "02")
-        self.assertEqual(updated_state["completed_phases"], ["01"])
+        self.assertEqual(updated_state["current_sprint"], "02")
+        self.assertEqual(updated_state["completed_sprints"], ["01"])
         self.assertEqual(updated_state["workflow_step"], "planning")
-        self.assertEqual(updated_state["quality_gates_passed"], [])
+        self.assertEqual(updated_state["acceptance_criteria_passed"], [])
         
     def test_validate_correct_state(self):
         """Test validation of correct state."""
@@ -155,14 +160,14 @@ class TestStateManager(unittest.TestCase):
         self.assertTrue(Path(backup_path).exists())
         
         # Modify state
-        self.manager.update({"status": "active", "current_objective": "Modified"})
+        self.manager.update({"status": "active", "current_user story": "Modified"})
         
         # Restore from backup
         restored_state = self.manager.restore_state(backup_path)
         
         # Verify restoration
         self.assertEqual(restored_state["status"], original_state["status"])
-        self.assertEqual(restored_state["current_objective"], original_state["current_objective"])
+        self.assertEqual(restored_state["current_user story"], original_state["current_user story"])
         
     def test_atomic_write_on_failure(self):
         """Test that failed writes don't corrupt existing state."""
@@ -183,12 +188,12 @@ class TestStateManager(unittest.TestCase):
         # Create state file manually with missing field
         invalid_state = {
             "project_name": "test",
-            "current_phase": "01",
+            "current_sprint": "01",
             # Missing status field
             "automation_active": False,
             "workflow_step": "planning",
-            "quality_gates_passed": [],
-            "completed_phases": [],
+            "acceptance_criteria_passed": [],
+            "completed_sprints": [],
             "automation_cycles": 0,
             "started": datetime.now(timezone.utc).isoformat(),
             "last_updated": datetime.now(timezone.utc).isoformat()
@@ -209,19 +214,19 @@ class TestStateManager(unittest.TestCase):
         with self.assertRaises(StateValidationError):
             self.manager.update({"started": "invalid-timestamp"})
             
-    def test_quality_gates_tracking(self):
+    def test_acceptance_criteria_tracking(self):
         """Test quality gates functionality."""
         self.manager.create("test-project")
         
         # Add quality gates
         gates = ["compilation", "existing_tests", "review"]
-        updated_state = self.manager.update({"quality_gates_passed": gates})
+        updated_state = self.manager.update({"acceptance_criteria_passed": gates})
         
-        self.assertEqual(updated_state["quality_gates_passed"], gates)
+        self.assertEqual(updated_state["acceptance_criteria_passed"], gates)
         
-        # Verify gates reset on phase transition
-        transitioned = self.manager.transition_phase("02")
-        self.assertEqual(transitioned["quality_gates_passed"], [])
+        # Verify gates reset on sprint transition
+        transitioned = self.manager.transition_sprint("02")
+        self.assertEqual(transitioned["acceptance_criteria_passed"], [])
         
     def test_automation_cycles_increment(self):
         """Test automation cycles tracking."""

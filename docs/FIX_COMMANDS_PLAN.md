@@ -10,7 +10,7 @@ https://docs.anthropic.com/en/docs/claude-code/slash-commands
   Technical Reality:
   - Claude Code uses markdown prompts, not executable Python
   - My Python system is sophisticated but architecturally incompatible
-  - The .project-state.json approach from Phase 1 works well
+  - The .project-state.json approach from Sprint 1 works well
   - Existing markdown templates provide a solid foundation
 
   Implementation Complexity Assessment:
@@ -20,13 +20,13 @@ https://docs.anthropic.com/en/docs/claude-code/slash-commands
 
   2. Recommended Approach: Incremental Hybrid Strategy
 
-  Phase 2A: Enhanced Markdown Prompts (Immediate)
+  Sprint 2A: Enhanced Markdown Prompts (Immediate)
   - Improve existing markdown templates with sophisticated instructions
   - Integrate .project-state.json state management into prompts
-  - Add detailed workflow guidance and quality gates
+  - Add detailed workflow guidance and acceptance criteria
   - Enhance existing commands (setup.md, status.md, etc.) with better logic
 
-  Phase 2B: Optional Python Tools (Future)
+  Sprint 2B: Optional Python Tools (Future)
   - Keep the Python modules as standalone development tools
   - Create optional integration points where prompts can reference Python analysis
   - Provide both approaches for different use cases
@@ -59,7 +59,7 @@ https://docs.anthropic.com/en/docs/claude-code/slash-commands
   Must Address:
   - Work within Claude Code's prompt-based architecture
   - Only use allowed syntax
-  - Leverage the successful .project-state.json foundation from Phase 1
+  - Leverage the successful .project-state.json foundation from Sprint 1
   - Maintain simplicity while adding sophistication
   - Provide clear upgrade path from current system
 

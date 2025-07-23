@@ -199,21 +199,21 @@ async function checkPython() {
 }
 ```
 
-## Implementation Phases
+## Implementation Sprints
 
-### Phase 1: Basic npm Package (Week 1)
+### Sprint 1: Basic npm Package (Week 1)
 - Create package structure
 - Implement basic installer copying Python files
 - Test on Mac/Linux
 - Publish to npm as beta
 
-### Phase 2: Enhanced Features (Week 2)
+### Sprint 2: Enhanced Features (Week 2)
 - Add Windows support
 - Implement update mechanism
 - Add health check command
 - Improve error messages
 
-### Phase 3: Polish & Release (Week 3)
+### Sprint 3: Polish & Release (Week 3)
 - Add progress indicators
 - Create migration guide from bash install
 - Update main documentation

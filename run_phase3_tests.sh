@@ -1,7 +1,7 @@
 #!/bin/bash
-# Run Phase 3 End-to-End Integration Tests
+# Run Sprint 3 End-to-End Integration Tests
 
-echo "🚀 Running Phase 3 Integration Tests..."
+echo "🚀 Running Sprint 3 Integration Tests..."
 echo "====================================="
 echo ""
 
@@ -16,9 +16,9 @@ EXIT_CODE=$?
 
 echo ""
 if [ $EXIT_CODE -eq 0 ]; then
-    echo "✅ Phase 3 tests completed successfully!"
+    echo "✅ Sprint 3 tests completed successfully!"
 else
-    echo "❌ Phase 3 tests failed with exit code: $EXIT_CODE"
+    echo "❌ Sprint 3 tests failed with exit code: $EXIT_CODE"
 fi
 
 exit $EXIT_CODE

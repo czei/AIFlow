@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Software Project Management System uses Claude Code hooks to enforce a disciplined 6-step workflow for phase-driven development. These hooks integrate with Claude Code to guide development through planning, implementation, validation, review, refinement, and integration phases.
+The AI Software Project Management System uses Claude Code hooks to enforce a disciplined story lifecycle for sprint-driven development. These hooks integrate with Claude Code to guide development through planning, implementation, validation, review, refinement, and integration sprints.
 
 ## Hook Architecture
 
@@ -27,34 +27,34 @@ All hooks interact with the project state stored in `.project-state.json`:
 
 **Location**: `src/hooks/pre_tool_use.py`
 
-### Workflow Rules by Phase
+### Workflow Rules by Sprint
 
-#### Planning Phase
+#### Planning Sprint
 - **Allowed**: Read, LS, Glob, Grep, WebSearch, WebFetch, Task, TodoWrite
 - **Blocked**: Write, Edit, MultiEdit, Bash, Python, JavaScript
 - **Purpose**: Force requirements analysis before coding
 
-#### Implementation Phase  
+#### Implementation Sprint  
 - **Allowed**: All tools
 - **Blocked**: None
 - **Purpose**: Full development freedom
 
-#### Validation Phase
+#### Validation Sprint
 - **Allowed**: Read tools, execution tools, Edit (for minor fixes)
 - **Blocked**: Write (no new files)
 - **Purpose**: Focus on testing and verification
 
-#### Review Phase
+#### Review Sprint
 - **Allowed**: Read tools, TodoWrite
 - **Blocked**: Write tools, execution tools
 - **Purpose**: Code analysis without modifications
 
-#### Refinement Phase
+#### Refinement Sprint
 - **Allowed**: Read tools, Edit, MultiEdit, execution tools
 - **Blocked**: Write (no new files)
 - **Purpose**: Apply review feedback
 
-#### Integration Phase
+#### Integration Sprint
 - **Allowed**: Read tools, Git tools, execution tools
 - **Blocked**: Write tools
 - **Purpose**: Final testing and commit
@@ -96,9 +96,9 @@ The hook tracks:
 - Lint results (eslint, pylint, flake8, etc.)
 - Code review completion (mcp__zen__codereview)
 
-### Quality Gates
+### Acceptance Criteria
 
-Automatically marks quality gates as passed:
+Automatically marks acceptance criteria as passed:
 - `existing_tests` - When tests run successfully
 - `compilation` - When build commands succeed
 - `lint` - When linting passes
@@ -125,16 +125,16 @@ Uses indicators to determine when a step is complete:
 The hook:
 1. Checks if current step is complete
 2. Advances to next step in sequence
-3. Resets quality gates for new step
-4. Provides guidance for the new phase
-5. Handles phase completion (integration → planning)
+3. Resets acceptance criteria for new step
+4. Provides guidance for the new sprint
+5. Handles sprint completion (integration → planning)
 
-### Phase Completion
+### Sprint Completion
 
 When integration completes:
 - Calculates workflow compliance score
-- Marks phase as complete
-- Prepares for next phase or marks project complete
+- Marks sprint as complete
+- Prepares for next sprint or marks project complete
 
 ## Troubleshooting Guide
 
@@ -151,21 +151,21 @@ When integration completes:
 
 #### 2. Tool Blocked Unexpectedly
 
-**Symptom**: "Tool not allowed in current phase" errors
+**Symptom**: "Tool not allowed in current sprint" errors
 
 **Solutions**:
-- Check current phase: `/user:project:status`
+- Check current sprint: `/user:project:status`
 - Use emergency override for critical fixes
 - Advance workflow if step is complete
 - Use `/user:project:pause` to disable automation temporarily
 
 #### 3. Workflow Not Advancing
 
-**Symptom**: Stuck in same phase despite completing work
+**Symptom**: Stuck in same sprint despite completing work
 
 **Solutions**:
 - Check step completion requirements
-- Ensure quality gates are passed
+- Ensure acceptance criteria are passed
 - Look for required actions in status output
 - Manually advance with `/user:project:advance`
 
@@ -229,9 +229,9 @@ Tests verify:
 
 ## Best Practices
 
-1. **Follow the Workflow**: Let the system guide you through phases
+1. **Follow the Workflow**: Let the system guide you through sprints
 2. **Use Emergency Overrides Sparingly**: Only for production issues
-3. **Complete Quality Gates**: Run tests, linting, and reviews
+3. **Complete Acceptance Criteria**: Run tests, linting, and reviews
 4. **Trust the Automation**: The system prevents common mistakes
 5. **Monitor Progress**: Use `/user:project:status` frequently
 
@@ -269,4 +269,4 @@ To modify workflow rules:
 4. Update completion indicators
 5. Run tests to verify changes
 
-Remember: The goal is disciplined, high-quality development through systematic phases.
+Remember: The goal is disciplined, high-quality development through systematic sprints.

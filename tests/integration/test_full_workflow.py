@@ -91,8 +91,8 @@ class WorkflowIntegrationTest:
         builder.create_structure()
         
         # Verify directories created
-        phases_dir = Path(self.test_dir) / 'phases'
-        assert phases_dir.exists(), f"Expected phases directory at {phases_dir} but it doesn't exist"
+        sprints_dir = Path(self.test_dir) / 'sprints'
+        assert sprints_dir.exists(), f"Expected sprints directory at {sprints_dir} but it doesn't exist"
         
         claude_dir = Path(self.test_dir) / '.claude'
         assert claude_dir.exists(), f"Expected .claude directory at {claude_dir} but it doesn't exist"
@@ -103,9 +103,9 @@ class WorkflowIntegrationTest:
         docs_dir = Path(self.test_dir) / 'docs'
         assert docs_dir.exists(), f"Expected docs directory at {docs_dir} but it doesn't exist"
         
-        # Verify phase files created
-        planning_file = Path(self.test_dir) / 'phases' / '01-planning.md'
-        assert planning_file.exists(), f"Expected planning phase file at {planning_file} but it doesn't exist"
+        # Verify sprint files created
+        planning_file = Path(self.test_dir) / 'sprints' / '01-planning.md'
+        assert planning_file.exists(), f"Expected planning sprint file at {planning_file} but it doesn't exist"
         
         # Initialize state
         state_manager = StateManager(self.test_dir)
@@ -138,7 +138,7 @@ class WorkflowIntegrationTest:
             'workflow_step': 'planning'
         })
         
-        # Test 1: Planning phase blocks Write
+        # Test 1: Planning sprint blocks Write
         event = {
             "cwd": self.test_dir,
             "tool": "Write",
@@ -146,24 +146,24 @@ class WorkflowIntegrationTest:
         }
         response = self.run_hook('pre_tool_use', event)
         assert response.get('decision') == 'block', \
-            f"Planning phase should block Write tool but got decision='{response.get('decision')}'"
-        print("  ✓ Planning phase blocks Write tool")
+            f"Planning sprint should block Write tool but got decision='{response.get('decision')}'"
+        print("  ✓ Planning sprint blocks Write tool")
         
-        # Test 2: Planning phase allows Read
+        # Test 2: Planning sprint allows Read
         event['tool'] = 'Read'
         event['input'] = {"file_path": "README.md"}
         response = self.run_hook('pre_tool_use', event)
         assert response.get('decision') == 'allow', \
-            f"Planning phase should allow Read tool but got decision='{response.get('decision')}'"
-        print("  ✓ Planning phase allows Read tool")
+            f"Planning sprint should allow Read tool but got decision='{response.get('decision')}'"
+        print("  ✓ Planning sprint allows Read tool")
         
-        # Test 3: Implementation phase allows Write
+        # Test 3: Implementation sprint allows Write
         state_manager.update({'workflow_step': 'implementation'})
         event['tool'] = 'Write'
         response = self.run_hook('pre_tool_use', event)
         assert response.get('decision') == 'allow', \
-            f"Implementation phase should allow Write tool but got decision='{response.get('decision')}'"
-        print("  ✓ Implementation phase allows Write tool")
+            f"Implementation sprint should allow Write tool but got decision='{response.get('decision')}'"
+        print("  ✓ Implementation sprint allows Write tool")
         
         print("✅ Workflow enforcement working correctly")
         self.passed += 1
@@ -354,7 +354,7 @@ class WorkflowIntegrationTest:
         print("✅ Emergency override working correctly")
         self.passed += 1
         
-    def test_quality_gates(self):
+    def test_acceptance_criteria(self):
         """Test quality gate enforcement."""
         print("\n🧪 Testing quality gates...")
         
@@ -381,7 +381,7 @@ class WorkflowIntegrationTest:
         
         # Check quality gate passed
         state = state_manager.read()
-        gates = state.get('quality_gates_passed', [])
+        gates = state.get('acceptance_criteria_passed', [])
         assert 'existing_tests' in gates, "Test gate should be marked"
         print("  ✓ Test quality gate tracked")
         
@@ -390,7 +390,7 @@ class WorkflowIntegrationTest:
         self.run_hook('post_tool_use', event)
         
         state = state_manager.read()
-        gates = state.get('quality_gates_passed', [])
+        gates = state.get('acceptance_criteria_passed', [])
         assert 'compilation' in gates, "Build gate should be marked"
         print("  ✓ Build quality gate tracked")
         
@@ -437,7 +437,7 @@ class WorkflowIntegrationTest:
             self.test_workflow_advancement,
             self.test_pause_resume,
             self.test_emergency_override,
-            self.test_quality_gates,
+            self.test_acceptance_criteria,
             self.test_error_recovery
         ]
         
