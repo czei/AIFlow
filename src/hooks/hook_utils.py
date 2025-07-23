@@ -125,17 +125,17 @@ class ResponseBuilder:
     @staticmethod
     def allow(message: Optional[str] = None) -> str:
         """Build an allow response."""
-        response = {"allow": True}
+        response = {"decision": "allow"}
         if message:
             response["message"] = message
         return json.dumps(response)
     
     @staticmethod
-    def deny(message: str, suggestions: Optional[list] = None) -> str:
-        """Build a deny response."""
+    def deny(reason: str, suggestions: Optional[list] = None) -> str:
+        """Build a deny/block response."""
         response = {
-            "allow": False,
-            "message": message
+            "decision": "block",
+            "reason": reason
         }
         if suggestions:
             response["suggestions"] = suggestions
@@ -145,8 +145,8 @@ class ResponseBuilder:
     def error(error_message: str) -> str:
         """Build an error response (allows operation but logs warning)."""
         return json.dumps({
-            "allow": True,
-            "warning": error_message
+            "decision": "allow",
+            "message": error_message
         })
 
 

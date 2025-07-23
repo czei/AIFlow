@@ -41,8 +41,17 @@ def main():
         except FileNotFoundError:
             # No state file = nothing to update
             return
-        except Exception:
-            # Other errors - just log and continue
+        except json.JSONDecodeError as e:
+            # State file is corrupt
+            print(f"PostToolUse hook error: Corrupt state file - {e}", file=sys.stderr)
+            return
+        except PermissionError as e:
+            # No permission to read state file
+            print(f"PostToolUse hook error: Permission denied - {e}", file=sys.stderr)
+            return
+        except Exception as e:
+            # Other unexpected errors
+            print(f"PostToolUse hook error: Unexpected error reading state - {e}", file=sys.stderr)
             return
             
         # Check if automation is active
@@ -74,12 +83,15 @@ def main():
                 progress = updates['workflow_progress']
                 print(f"📊 Workflow progress: {progress.get('message', 'Step advancing')}")
                 
-    except json.JSONDecodeError:
-        # Invalid JSON input
-        pass
+    except json.JSONDecodeError as e:
+        # Invalid JSON input from Claude Code
+        print(f"PostToolUse hook error: Invalid JSON input - {e}", file=sys.stderr)
+    except KeyError as e:
+        # Missing expected fields in event data
+        print(f"PostToolUse hook error: Missing required field - {e}", file=sys.stderr)
     except Exception as e:
-        # Log error but don't fail
-        print(f"PostToolUse hook error: {str(e)}", file=sys.stderr)
+        # Log unexpected errors but don't fail
+        print(f"PostToolUse hook error: Unexpected error - {type(e).__name__}: {e}", file=sys.stderr)
 
 
 def process_tool_execution(state: dict, tool: str, event: dict, workflow_step: str) -> dict:
@@ -194,46 +206,8 @@ def check_step_completion(state: dict, workflow_step: str, updates: dict) -> dic
     progress = updates.get('workflow_progress', state.get('workflow_progress', {}))
     step_progress = progress.get(workflow_step, {})
     
-    # Check completion based on workflow step
-    is_complete = False
-    completion_message = ""
-    
-    if workflow_step == 'planning':
-        # Planning is complete when todo list is created
-        if step_progress.get('planning_complete'):
-            is_complete = True
-            completion_message = "Planning complete - todo list created"
-            
-    elif workflow_step == 'implementation':
-        # Implementation complete when code is written
-        if len(step_progress.get('files_modified', [])) > 0:
-            is_complete = True
-            completion_message = f"Implementation complete - {len(step_progress['files_modified'])} files modified"
-            
-    elif workflow_step == 'validation':
-        # Validation complete when tests are run
-        if step_progress.get('tests_run'):
-            is_complete = True
-            completion_message = "Validation complete - tests executed"
-            
-    elif workflow_step == 'review':
-        # Review complete when code review is done
-        if step_progress.get('review_complete'):
-            is_complete = True
-            completion_message = "Review complete - code reviewed"
-            
-    elif workflow_step == 'refinement':
-        # Refinement complete when files are edited after review
-        if 'Edit' in step_progress.get('tools_used', []):
-            is_complete = True
-            completion_message = "Refinement complete - changes applied"
-            
-    elif workflow_step == 'integration':
-        # Integration complete when git operations are used
-        git_tools_used = [t for t in step_progress.get('tools_used', []) if 'Git' in t]
-        if git_tools_used:
-            is_complete = True
-            completion_message = "Integration complete - changes committed"
+    # Use consolidated logic from WorkflowRules
+    is_complete, completion_message = WorkflowRules.is_step_complete(workflow_step, step_progress)
     
     if is_complete:
         completion_updates['workflow_progress'] = {

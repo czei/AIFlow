@@ -50,10 +50,19 @@ def main():
         try:
             state = state_manager.read()
         except FileNotFoundError:
-            # No state file = nothing to do
+            # No state file = nothing to do. This is expected for non-project directories
             return
-        except Exception:
-            # Other errors - just log and continue
+        except json.JSONDecodeError as e:
+            # State file is corrupt
+            print(f"Stop hook error: Corrupt state file - {e}", file=sys.stderr)
+            return
+        except PermissionError as e:
+            # No permission to read state file
+            print(f"Stop hook error: Permission denied - {e}", file=sys.stderr)
+            return
+        except Exception as e:
+            # Other unexpected errors
+            print(f"Stop hook error: Unexpected error reading state - {e}", file=sys.stderr)
             return
             
         # Check if automation is active
@@ -103,12 +112,15 @@ def main():
                         print(f"   • {suggestion}")
                     print()
                 
-    except json.JSONDecodeError:
-        # Invalid JSON input
-        pass
+    except json.JSONDecodeError as e:
+        # Invalid JSON input from Claude Code
+        print(f"Stop hook error: Invalid JSON input - {e}", file=sys.stderr)
+    except KeyError as e:
+        # Missing expected fields in event data
+        print(f"Stop hook error: Missing required field - {e}", file=sys.stderr)
     except Exception as e:
-        # Log error but don't fail
-        print(f"Stop hook error: {str(e)}", file=sys.stderr)
+        # Log unexpected errors but don't fail
+        print(f"Stop hook error: Unexpected error - {type(e).__name__}: {e}", file=sys.stderr)
 
 
 def should_advance_workflow(state: dict, workflow_step: str, step_progress: dict) -> bool:
@@ -121,40 +133,9 @@ def should_advance_workflow(state: dict, workflow_step: str, step_progress: dict
     if isinstance(last_progress, dict) and last_progress.get('complete'):
         return True
     
-    # Otherwise use step-specific logic
-    if workflow_step == 'planning':
-        # Advance if planning is marked complete (todo list created)
-        return step_progress.get('planning_complete', False)
-        
-    elif workflow_step == 'implementation':
-        # Advance if files have been modified
-        return len(step_progress.get('files_modified', [])) > 0
-        
-    elif workflow_step == 'validation':
-        # Advance if tests have been run
-        return step_progress.get('tests_run', False)
-        
-    elif workflow_step == 'review':
-        # Advance if review is complete
-        return step_progress.get('review_complete', False)
-        
-    elif workflow_step == 'refinement':
-        # Advance if edits were made after review
-        return 'Edit' in step_progress.get('tools_used', [])
-        
-    elif workflow_step == 'integration':
-        # Complete if git operations were performed
-        git_tools = [t for t in step_progress.get('tools_used', []) if 'Git' in t or 'git' in t]
-        bash_git = False
-        
-        # Also check for git commands in Bash
-        if 'Bash' in step_progress.get('tools_used', []):
-            # This is a simple heuristic - in production would analyze actual commands
-            bash_git = True
-            
-        return len(git_tools) > 0 or bash_git
-        
-    return False
+    # Use consolidated logic from WorkflowRules
+    is_complete, _ = WorkflowRules.is_step_complete(workflow_step, step_progress)
+    return is_complete
 
 
 def get_step_guidance(step: str) -> str:

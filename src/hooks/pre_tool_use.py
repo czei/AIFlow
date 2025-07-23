@@ -17,19 +17,22 @@ sys.path.append(str(Path(__file__).parent.parent))
 try:
     from state_manager import StateManager
     from hooks.workflow_rules import WorkflowRules
+    from hooks.hook_utils import EventParser, ResponseBuilder, HookLogger
 except ImportError as e:
-    # If no StateManager or WorkflowRules, allow all operations
-    print(json.dumps({"allow": True, "warning": f"Import error: {str(e)}"}))
+    # If imports fail, allow all operations
+    print(json.dumps({"decision": "allow", "message": f"Import error: {str(e)}"}))
     sys.exit(0)
 
 
 def main():
     """Main hook entry point."""
+    # Parse event from stdin
+    event, error = EventParser.parse_stdin()
+    if error:
+        print(ResponseBuilder.error(error))
+        return
+    
     try:
-        # Read event data from stdin
-        event_data = sys.stdin.read()
-        event = json.loads(event_data)
-        
         # Get current working directory
         cwd = event.get('cwd', '.')
         
@@ -41,17 +44,18 @@ def main():
             state = state_manager.read()
         except FileNotFoundError:
             # No state file = allow all operations
-            print(json.dumps({"allow": True}))
+            print(ResponseBuilder.allow())
             return
         except Exception as e:
             # Other errors - log but allow
-            print(json.dumps({"allow": True, "warning": f"State read error: {str(e)}"}))
+            HookLogger.error(f"State read error: {str(e)}")
+            print(ResponseBuilder.allow(f"State read error: {str(e)}"))
             return
             
         # Check if automation is active
         if not state.get('automation_active', False):
             # Automation not active = allow all operations
-            print(json.dumps({"allow": True}))
+            print(ResponseBuilder.allow())
             return
             
         # Get current workflow step and tool
@@ -80,28 +84,16 @@ def main():
         except Exception:
             pass  # Don't fail the hook on metrics update
         
-        # Build response
-        result = {"allow": allow}
-        if not allow:
-            if message:
-                result["message"] = message
-            if suggestions:
-                result["suggestions"] = suggestions
+        # Build and send response
+        if allow:
+            print(ResponseBuilder.allow())
+        else:
+            print(ResponseBuilder.deny(message, suggestions))
                 
-        print(json.dumps(result))
-        
-    except json.JSONDecodeError:
-        # Invalid JSON input
-        print(json.dumps({
-            "allow": True,
-            "warning": "Invalid JSON input to hook"
-        }))
     except Exception as e:
         # On error, allow operation but log
-        print(json.dumps({
-            "allow": True,
-            "warning": f"Hook error: {str(e)}"
-        }))
+        HookLogger.error(f"Hook error: {str(e)}")
+        print(ResponseBuilder.error(f"Hook error: {str(e)}"))
 
 
 if __name__ == '__main__':

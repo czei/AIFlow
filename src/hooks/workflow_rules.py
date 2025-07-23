@@ -251,3 +251,50 @@ class WorkflowRules:
         
         # Ensure score is between 0 and 100
         return max(0, min(100, compliance))
+    
+    @classmethod
+    def is_step_complete(cls, workflow_step: str, step_progress: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Determine if a workflow step is complete based on progress indicators.
+        
+        Args:
+            workflow_step: Current workflow step name
+            step_progress: Progress tracking dictionary for the step
+            
+        Returns:
+            Tuple of (is_complete, completion_message)
+        """
+        if workflow_step == 'planning':
+            # Planning is complete when todo list is created
+            if step_progress.get('planning_complete', False):
+                return True, "Planning complete - todo list created"
+                
+        elif workflow_step == 'implementation':
+            # Implementation complete when code is written
+            files_modified = step_progress.get('files_modified', [])
+            if len(files_modified) > 0:
+                return True, f"Implementation complete - {len(files_modified)} files modified"
+                
+        elif workflow_step == 'validation':
+            # Validation complete when tests are run
+            if step_progress.get('tests_run', False):
+                return True, "Validation complete - tests executed"
+                
+        elif workflow_step == 'review':
+            # Review complete when code review is done
+            if step_progress.get('review_complete', False):
+                return True, "Review complete - code reviewed"
+                
+        elif workflow_step == 'refinement':
+            # Refinement complete when files are edited after review
+            if 'Edit' in step_progress.get('tools_used', []) or 'MultiEdit' in step_progress.get('tools_used', []):
+                return True, "Refinement complete - changes applied"
+                
+        elif workflow_step == 'integration':
+            # Integration complete when git operations are used
+            tools_used = step_progress.get('tools_used', [])
+            git_tools = [t for t in tools_used if 'Git' in t or 'git' in t]
+            if git_tools or ('Bash' in tools_used and step_progress.get('git_commands_run', False)):
+                return True, "Integration complete - changes committed"
+        
+        return False, ""
