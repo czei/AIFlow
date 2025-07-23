@@ -54,7 +54,8 @@ class CompleteWorkflowTest:
         update_project_state(self.test_dir, {
             'status': 'active',
             'automation_active': True,
-            'workflow_step': 'planning'
+            'workflow_step': 'planning',
+            'current_phase': '01'  # Ensure current_phase is set
         })
         
         print(f"✅ Test environment created at: {self.test_dir}")
@@ -130,7 +131,19 @@ class CompleteWorkflowTest:
         # Actually create the file for testing
         calc_file = self.test_dir / 'src' / 'calculator.py'
         calc_file.parent.mkdir(parents=True, exist_ok=True)
-        calc_file.write_text(response['input']['content'])
+        # Use the content we defined above, not from response
+        calc_content = '''class Calculator:
+    """Simple calculator implementation."""
+    
+    def add(self, a: float, b: float) -> float:
+        """Add two numbers."""
+        return a + b
+        
+    def subtract(self, a: float, b: float) -> float:
+        """Subtract b from a."""
+        return a - b
+'''
+        calc_file.write_text(calc_content)
         print("  ✓ Created Calculator class")
         
         # Create tests
@@ -155,7 +168,22 @@ def test_subtract():
         # Create test file
         test_file = self.test_dir / 'tests' / 'test_calculator.py'
         test_file.parent.mkdir(parents=True, exist_ok=True)
-        test_file.write_text(response['input']['content'])
+        # Use the content we defined above, not from response
+        test_content = '''import sys
+sys.path.append('../src')
+from calculator import Calculator
+
+def test_add():
+    calc = Calculator()
+    assert calc.add(2, 3) == 5
+    assert calc.add(-1, 1) == 0
+
+def test_subtract():
+    calc = Calculator()
+    assert calc.subtract(5, 3) == 2
+    assert calc.subtract(0, 5) == -5
+'''
+        test_file.write_text(test_content)
         print("  ✓ Created unit tests")
         
         # Track progress
@@ -320,7 +348,8 @@ def test_subtract():
                 'integration': {
                     'final_tests_run': True,
                     'tools_used': ['Bash'],
-                    'ready_to_commit': True
+                    'ready_to_commit': True,
+                    'git_commands_run': True  # This triggers integration completion
                 }
             },
             'quality_gates_passed': [
@@ -394,13 +423,22 @@ def test_subtract():
         })
         
         # Track some tool usage
-        self.executor.simulate_tool_use('Write', {'file_path': 'test.py'})  # Blocked
-        self.executor.simulate_tool_use('Read', {'file_path': 'README.md'})  # Allowed
-        self.executor.simulate_tool_use('Bash', {'command': 'EMERGENCY: fix'})  # Override
+        response1 = self.executor.simulate_tool_use('Write', {
+            'file_path': 'test.py',
+            'content': 'print("test")'
+        })  # Should be blocked in planning phase
+        print(f"  Write response: {response1}")
+        
+        response2 = self.executor.simulate_tool_use('Read', {'file_path': 'README.md'})  # Allowed
+        print(f"  Read response: {response2}")
+        
+        response3 = self.executor.simulate_tool_use('Bash', {'command': 'EMERGENCY: fix'})  # Override
+        print(f"  Bash response: {response3}")
         
         # Check metrics updated
         state = read_project_state(self.test_dir)
         metrics = state.get('metrics', {})
+        print(f"  Current metrics: {metrics}")
         
         assert metrics.get('tools_blocked', 0) > 0, "Should track blocked tools"
         assert metrics.get('tools_allowed', 0) > 0, "Should track allowed tools"

@@ -1,25 +1,7 @@
 {
   "hooks": {
-    "PreToolUse": {
-      "command": "python3 __HOOKS_PATH__/pre_tool_use.py",
-      "timeout": 5000,
-      "description": "Enforces workflow rules based on current state"
-    },
-    "PostToolUse": {
-      "command": "python3 __HOOKS_PATH__/post_tool_use.py",
-      "timeout": 3000,
-      "description": "Updates state after tool execution"
-    },
-    "Stop": {
-      "command": "python3 __HOOKS_PATH__/stop.py",
-      "timeout": 3000,
-      "description": "Advances workflow steps automatically"
-    }
-  },
-  "workflow": {
-    "enabled": true,
-    "strict_mode": true,
-    "steps": ["planning", "implementation", "validation", "review", "refinement", "integration"],
-    "quality_gates": ["compilation", "existing_tests", "new_tests", "review", "integration", "documentation", "performance"]
+    "pre_tool_use": "__HOOKS_PATH__/pre_tool_use.py",
+    "post_tool_use": "__HOOKS_PATH__/post_tool_use.py",
+    "stop": "__HOOKS_PATH__/stop.py"
   }
 }

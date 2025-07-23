@@ -46,33 +46,27 @@ class CommandExecutionTest:
         """Test project setup command."""
         print("\n🧪 Testing setup command...")
         
-        # First need to run the setup.py directly since it's not a markdown command
-        setup_script = Path(__file__).parent.parent.parent / 'src' / 'commands' / 'setup.py'
+        # The setup command creates a worktree in the parent directory
+        # For testing, we'll use the command executor which handles path adjustments
+        exit_code, stdout, stderr = self.executor.run_user_command("setup", ["test-subproject"])
         
-        if setup_script.exists():
-            # Run setup.py with project name
-            import subprocess
-            result = subprocess.run(
-                [sys.executable, str(setup_script), 'test-project'],
-                cwd=self.test_dir,
-                capture_output=True,
-                text=True
-            )
+        if exit_code == 0:
+            # Check if worktree was created (in parent directory)
+            worktree_path = self.test_dir.parent / "test-subproject"
+            assert worktree_path.exists(), f"Worktree not created at {worktree_path}"
             
-            assert result.returncode == 0, f"Setup failed: {result.stderr}"
-            
-            # Verify project structure
-            structure = verify_project_structure(self.test_dir)
+            # Verify project structure in the worktree
+            structure = verify_project_structure(worktree_path)
             assert structure['phases'], "phases directory not created"
             assert structure['.claude'], ".claude directory not created"
             assert structure['logs'], "logs directory not created"
             assert structure['docs'], "docs directory not created"
             assert structure['phase_files'], "phase files not created"
             
-            # Verify state file
-            state = read_project_state(self.test_dir)
+            # Verify state file in the worktree
+            state = read_project_state(worktree_path)
             assert state is not None, "State file not created"
-            assert state['project_name'] == 'test-project', "Wrong project name"
+            assert state['project_name'] == 'test-subproject', "Wrong project name"
             assert state['status'] == 'setup', "Wrong initial status"
             
             print("  ✓ Project structure created correctly")

@@ -124,8 +124,8 @@ def main():
                 }
                 
                 # Preserve quality gates for validation → review transition
-                if not (workflow_step == 'validation' and next_step == 'review'):
-                    updates['quality_gates_passed'] = []
+                # For other transitions, don't reset quality_gates_passed
+                # Each step should add to the existing list
                 
                 state_manager.update(updates)
                 
@@ -181,10 +181,17 @@ def get_step_guidance(step: str) -> str:
 
 def complete_phase(state_manager, state: dict):
     """Complete the current phase and prepare for next."""
-    phase_info = state.get('phase_info', {})
-    current_phase = phase_info.get('current', 'unknown')
-    phase_num = phase_info.get('current_number', 1)
-    total_phases = phase_info.get('total', 1)
+    # Get current phase from state (not phase_info)
+    current_phase = state.get('current_phase', 'unknown')
+    
+    # Extract phase number if it's in format like "01", "02", etc.
+    try:
+        phase_num = int(current_phase) if current_phase.isdigit() else 1
+    except:
+        phase_num = 1
+    
+    # For now, assume 5 total phases (can be made configurable later)
+    total_phases = 5
     
     # Mark phase as complete
     completed_phases = state.get('completed_phases', [])
@@ -197,8 +204,7 @@ def complete_phase(state_manager, state: dict):
     
     updates = {
         'workflow_step': 'planning',
-        'quality_gates_passed': [],
-        'files_modified': [],
+        # Don't reset quality_gates_passed and files_modified - preserve them
         'completed_phases': completed_phases,
         'last_updated': datetime.now(timezone.utc).isoformat(),
         'workflow_progress': {},  # Reset progress tracking

@@ -61,16 +61,31 @@ class CommandExecutor:
         combined_stdout = []
         combined_stderr = []
         
+        # Build up environment variables that persist across commands
+        env_vars = {}
+        
+        # Pre-set PROJECT_ROOT for all commands
+        project_root = str(self.src_path.parent)
+        env_vars['PROJECT_ROOT'] = project_root
+        
         for cmd in commands:
             # Replace arguments if provided
-            if args and '{1}' in cmd:
-                cmd = cmd.replace('{1}', args[0] if args else '')
+            if args and '$ARGUMENTS' in cmd:
+                cmd = cmd.replace('$ARGUMENTS', args[0] if args else '')
                 
-            # Fix Python path for test environment
+            # Replace git command with actual project root
             if 'git rev-parse --show-toplevel' in cmd:
-                # Replace git command with actual src path
-                project_root = str(self.src_path.parent)
                 cmd = cmd.replace("$(git rev-parse --show-toplevel)", project_root)
+                cmd = cmd.replace('$(git rev-parse --show-toplevel)', project_root)  # Handle both quote styles
+            
+            # Handle PROJECT_ROOT variable assignment
+            if 'PROJECT_ROOT=' in cmd:
+                # Skip this command since we've pre-set PROJECT_ROOT
+                continue
+                
+            # Replace $PROJECT_ROOT references with actual value
+            if '$PROJECT_ROOT' in cmd:
+                cmd = cmd.replace('$PROJECT_ROOT', project_root)
                 
             # Execute command
             try:

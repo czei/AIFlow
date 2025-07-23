@@ -4,6 +4,7 @@ ProjectBuilder - Creates project directory structure for phase-driven developmen
 
 import os
 import json
+import re
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -12,12 +13,41 @@ class ProjectBuilder:
     """Creates standardized project structure for phase-driven development."""
     
     def __init__(self, project_name: str, project_path: str = None):
-        self.project_name = project_name
+        self.project_name = self.validate_project_name(project_name)
         # Allow explicit path to be passed, default to cwd
         if project_path:
             self.project_path = Path(project_path).resolve()
         else:
             self.project_path = Path.cwd()
+    
+    @staticmethod
+    def validate_project_name(name: str) -> str:
+        """Validate and sanitize project name to prevent command injection.
+        
+        Args:
+            name: Project name to validate
+            
+        Returns:
+            Validated project name
+            
+        Raises:
+            ValueError: If project name contains invalid characters
+        """
+        if not name:
+            raise ValueError("Project name cannot be empty")
+            
+        # Allow only alphanumeric characters, hyphens, and underscores
+        if not re.match(r'^[a-zA-Z0-9_-]+$', name):
+            raise ValueError(
+                "Project name must contain only letters, numbers, hyphens, and underscores. "
+                f"Got: '{name}'"
+            )
+            
+        # Check length
+        if len(name) > 100:
+            raise ValueError("Project name must be 100 characters or less")
+            
+        return name
         
     def create_structure(self):
         """Create complete project directory structure."""
