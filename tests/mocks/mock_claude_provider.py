@@ -22,6 +22,7 @@ class MockClaudeProvider:
             response_mode: One of 'deterministic', 'random', 'failure'
         """
         self.response_mode = response_mode
+        self.debug = False  # Initialize debug attribute
         self.call_history: List[Dict[str, Any]] = []
         self.response_templates = self._load_response_templates()
         

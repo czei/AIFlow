@@ -14,10 +14,10 @@ import os
 from pathlib import Path
 from datetime import datetime, timezone
 
-# Add src to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from state_manager import StateManager, StateValidationError
+from src.state_manager import StateManager, StateValidationError
 
 
 class TestStateManager(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestStateManager(unittest.TestCase):
         self.assertEqual(state["status"], "setup")
         self.assertEqual(state["automation_active"], False)
         self.assertEqual(state["workflow_step"], "planning")
-        self.assertIsNone(state["current_user story"])
+        self.assertIsNone(state["current_user_story"])
         self.assertEqual(state["acceptance_criteria_passed"], [])
         self.assertEqual(state["completed_sprints"], [])
         self.assertEqual(state["automation_cycles"], 0)
@@ -167,7 +167,7 @@ class TestStateManager(unittest.TestCase):
         
         # Verify restoration
         self.assertEqual(restored_state["status"], original_state["status"])
-        self.assertEqual(restored_state["current_user story"], original_state["current_user story"])
+        self.assertEqual(restored_state["current_user_story"], original_state["current_user_story"])
         
     def test_atomic_write_on_failure(self):
         """Test that failed writes don't corrupt existing state."""

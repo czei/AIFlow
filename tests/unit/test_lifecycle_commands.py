@@ -15,11 +15,11 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timezone
 
-# Add src to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from commands.lifecycle import LifecycleCommand, LifecycleCommandError
-from state_manager import StateValidationError
+from src.commands.lifecycle import LifecycleCommand, LifecycleCommandError
+from src.state_manager import StateValidationError
 
 
 class TestLifecycleCommand(unittest.TestCase):
