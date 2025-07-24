@@ -15,9 +15,9 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 # Add src to path
-sys.path.append(str(Path(__file__).parent.parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from state_manager import StateManager, StateValidationError
+from src.state_manager import StateManager, StateValidationError
 
 
 def update_state_process(test_dir: str, process_id: int, updates_per_process: int):
@@ -257,7 +257,7 @@ class ConcurrentAccessTest:
         state_manager.create('timeout-test')
         
         # Verify FileLock has timeout configured
-        from state_manager import FileLock
+        from src.state_manager import FileLock
         lock = FileLock(state_manager.state_file, timeout=0.1)
         
         assert lock.timeout == 0.1, "Lock timeout should be configurable"

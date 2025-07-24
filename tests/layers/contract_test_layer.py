@@ -76,12 +76,15 @@ class ContractTestLayer(TestLayer):
         
         try:
             # Set up environment for contract tests
-            env = {
-                **os.environ.copy(),
+            env = os.environ.copy()
+            env.update({
                 'CONTRACT_TEST': '1',
-                'USE_REAL_AI': context.config.get('api_provider', 'mock') != 'mock' and '1' or '0',
-                'CACHE_AI_RESPONSES': context.config.get('cache_responses', True) and '1' or '0'
-            }
+                'USE_REAL_AI': context.config.get('api_provider', 'mock') != 'mock' and '1' or '0'
+            })
+            
+            # Only set CACHE_AI_RESPONSES if not already set in environment
+            if 'CACHE_AI_RESPONSES' not in env:
+                env['CACHE_AI_RESPONSES'] = context.config.get('cache_responses', True) and '1' or '0'
             
             # Add API keys if configured
             if context.config.get('api_key'):

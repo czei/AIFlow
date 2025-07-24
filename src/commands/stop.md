@@ -17,7 +17,7 @@ Stop project with comprehensive summary.
 !`echo ""`
 !`echo "Acceptance Criteria Passed:"`
 !`jq -r '.acceptance_criteria_passed | unique | "  ✅ " + join("\n  ✅ ")' .project-state.json`
-!`python3 -c "import sys; sys.path.append('$(git rev-parse --show-toplevel)/src'); from state_manager import StateManager; StateManager('.').update({'status': 'stopped', 'automation_active': False, 'stopped_at': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()})"`
+!`python3 -c "import sys; sys.path.insert(0, '$(git rev-parse --show-toplevel)'); from src.state_manager import StateManager; StateManager('.').update({'status': 'stopped', 'automation_active': False, 'stopped_at': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()})"`
 !`git add .project-state.json && git commit -m "Project stopped: Final state" 2>/dev/null || true`
 
 🏁 Project stopped. Thank you for using sprint-based development!

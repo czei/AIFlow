@@ -106,26 +106,88 @@ class MockClaudeProvider:
             print(f"DEBUG MockClaudeProvider: Processing prompt: {prompt[:100]}...")
             print(f"DEBUG MockClaudeProvider: Context: {context}")
         
-        # Project setup requests
-        if "setup" in prompt_lower or "set up" in prompt_lower or "create project" in prompt_lower:
+        # Project setup requests (check before general create patterns)
+        if ("setup" in prompt_lower or "set up" in prompt_lower or 
+            "create project" in prompt_lower or 
+            ("create" in prompt_lower and "project" in prompt_lower) or
+            ("new" in prompt_lower and "project" in prompt_lower) or
+            "initialize" in prompt_lower or "scaffold" in prompt_lower):
+            
             project_name = context.get("project_name", "test_project") if context else "test_project"
+            project_type = context.get("project_type", "python") if context else "python"
+            
+            # Base commands
+            commands = [
+                f"mkdir -p {project_name}/src",
+                f"mkdir -p {project_name}/tests",
+                f"mkdir -p {project_name}/docs",
+                f"touch {project_name}/README.md"
+            ]
+            
+            explanation = f"Setting up project structure for {project_name}"
+            
+            # Web project specific setup
+            if ("web" in prompt_lower or "javascript" in prompt_lower or "react" in prompt_lower or
+                "node" in prompt_lower or project_type == "web"):
+                commands.extend([
+                    f"npm init -y",
+                    f"mkdir -p {project_name}/public",
+                    f"mkdir -p {project_name}/components"
+                ])
+                explanation = f"Setting up web project structure for {project_name} with npm initialization"
+                
+            # Full-stack project
+            elif ("full-stack" in prompt_lower or "fullstack" in prompt_lower or "frontend" in prompt_lower):
+                commands.extend([
+                    f"mkdir -p {project_name}/frontend",
+                    f"mkdir -p {project_name}/backend",
+                    f"npm init -y"
+                ])
+                explanation = f"Setting up full-stack project structure for {project_name} with separate frontend and backend components"
+                
+            # Python project with dependencies
+            elif ("python" in prompt_lower or "dependencies" in prompt_lower or "requirements" in prompt_lower or
+                  "pandas" in prompt_lower or "numpy" in prompt_lower or "jupyter" in prompt_lower or
+                  "data science" in prompt_lower or (context and context.get("dependencies"))):
+                commands.extend([
+                    f"touch {project_name}/requirements.txt",
+                    f"pip install -r {project_name}/requirements.txt"
+                ])
+                explanation = f"Setting up Python project structure for {project_name} with dependency management"
+            
             return {
                 "type": "project_setup",
-                "commands": [
-                    f"mkdir -p {project_name}/src",
-                    f"mkdir -p {project_name}/tests",
-                    f"touch {project_name}/README.md",
-                    f"echo # {project_name} > {project_name}/README.md"
-                ],
-                "explanation": f"Setting up project structure for {project_name}"
+                "commands": commands,
+                "explanation": explanation
             }
             
         # Code review requests (check before implementation)
         elif "review" in prompt_lower or "check code" in prompt_lower:
+            # Basic issues from template
+            issues = self.response_templates["code_review"]["issues"].copy()
+            
+            # Check for security vulnerabilities if this is a security review
+            if context and context.get("review_type") == "security" or "security" in prompt_lower:
+                # Look for SQL injection patterns
+                if "select" in prompt_lower and "where" in prompt_lower and ("{" in prompt or "+" in prompt):
+                    issues.append({
+                        "severity": "critical",
+                        "message": "SQL injection vulnerability detected. Use parameterized queries instead of string formatting.",
+                        "category": "security"
+                    })
+                
+                # Look for other security patterns
+                if "password" in prompt_lower and ("=" in prompt or "store" in prompt_lower):
+                    issues.append({
+                        "severity": "high", 
+                        "message": "Potential password storage issue. Ensure passwords are properly hashed.",
+                        "category": "security"
+                    })
+            
             return {
                 "type": "code_review",
-                "issues": self.response_templates["code_review"]["issues"],
-                "summary": "Found 3 issues: 1 high, 1 medium, 1 low severity. The code needs improvement in error handling and documentation.",
+                "issues": issues,
+                "summary": f"Found {len(issues)} issues. The code needs improvement in error handling and documentation.",
                 "recommendation": "request_changes",
                 "positive_aspects": ["Code structure is clean", "Function names are descriptive"]
             }
@@ -208,15 +270,33 @@ class MockClaudeProvider:
                 "usage_example": usage_example
             }
             
-        # Error analysis requests
-        elif "error" in prompt_lower or "debug" in prompt_lower:
+        # Error analysis requests  
+        elif any(keyword in prompt_lower for keyword in ["error", "debug", "exception", "analyze", "troubleshoot", "fix", "bug", "failure"]):
+            # Determine error type from context or prompt content
+            error_type = "type"  # default
+            if context and "error_type" in context:
+                error_type = context["error_type"]
+                # Map performance to runtime since it's not a valid enum
+                if error_type == "performance":
+                    error_type = "runtime"
+            elif "syntax" in prompt_lower:
+                error_type = "syntax"
+            elif "runtime" in prompt_lower or "index" in prompt_lower or "null pointer" in prompt_lower or "division by zero" in prompt_lower or "memory" in prompt_lower:
+                error_type = "runtime"
+            elif "permission" in prompt_lower:
+                error_type = "permission"
+            elif "network" in prompt_lower:
+                error_type = "network"
+            elif "configuration" in prompt_lower or "config" in prompt_lower:
+                error_type = "configuration"
+            
             return {
                 "type": "error_analysis",
                 "diagnosis": "The error appears to be a type mismatch between the expected and actual data types",
                 "fix": "Convert the input to the expected type before processing",
                 "code_fix": "data = str(data)  # Ensure data is string type",
                 "explanation": "Type conversion will resolve the immediate issue by ensuring the data matches the expected format",
-                "error_type": "type",
+                "error_type": error_type,
                 "root_cause": "Function expects string input but received a different type",
                 "prevention": "Add type hints and input validation to catch type mismatches early",
                 "confidence": 0.85

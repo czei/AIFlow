@@ -16,10 +16,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 # Add src to path
-sys.path.append(str(Path(__file__).parent.parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from state_manager import StateManager
-from project_builder import ProjectBuilder
+from src.state_manager import StateManager
+from src.project_builder import ProjectBuilder
 
 
 class WorkflowIntegrationTest:

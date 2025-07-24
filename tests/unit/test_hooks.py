@@ -10,6 +10,8 @@ import subprocess
 import sys
 import tempfile
 import os
+import unittest
+import shutil
 from pathlib import Path
 
 # Add parent directories to path
@@ -18,17 +20,16 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from src.state_manager import StateManager
 
 
-class TestHooks:
+class TestHooks(unittest.TestCase):
     """Test suite for Claude Code hooks."""
     
-    def setup_method(self):
+    def setUp(self):
         """Create temporary directory and state for tests."""
         self.temp_dir = tempfile.mkdtemp()
         self.state_manager = StateManager(self.temp_dir)
         
-    def teardown_method(self):
+    def tearDown(self):
         """Clean up temporary directory."""
-        import shutil
         shutil.rmtree(self.temp_dir)
     
     def run_hook(self, hook_name: str, event_data: dict) -> dict:
@@ -62,7 +63,7 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow'
+        self.assertEqual(response.get('decision'), 'allow')
     
     def test_pre_tool_use_automation_inactive(self):
         """Test PreToolUse hook when automation is not active."""
@@ -76,7 +77,7 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow'
+        self.assertEqual(response.get('decision'), 'allow')
     
     def test_pre_tool_use_planning_blocks_write(self):
         """Test PreToolUse hook blocks Write tool during planning sprint."""
@@ -94,8 +95,8 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'block'
-        assert 'Planning sprint' in response.get('reason', '')
+        self.assertEqual(response.get('decision'), 'block')
+        self.assertIn('Planning sprint', response.get('reason', ''))
     
     def test_pre_tool_use_planning_allows_read(self):
         """Test PreToolUse hook allows Read tool during planning sprint."""
@@ -113,7 +114,7 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow'
+        self.assertEqual(response.get('decision'), 'allow')
     
     def test_pre_tool_use_implementation_allows_all(self):
         """Test PreToolUse hook allows all tools during implementation."""
@@ -131,7 +132,7 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow'
+        self.assertEqual(response.get('decision'), 'allow')
     
     def test_post_tool_use_tracks_progress(self):
         """Test PostToolUse hook tracks workflow progress."""
@@ -160,25 +161,25 @@ class TestHooks:
         )
         
         # PostToolUse should exit with 0
-        assert proc.returncode == 0
+        self.assertEqual(proc.returncode, 0)
         
         # Check state was updated
         state = self.state_manager.read()
         
         # The hook should track file modifications at the state level
-        assert 'test.py' in state.get('files_modified', [])
+        self.assertIn('test.py', state.get('files_modified', []))
         
         # And workflow_progress should indicate completion
         progress = state.get('workflow_progress', {})
         if progress.get('complete'):
             # Step was marked complete
-            assert progress.get('step') == 'implementation'
-            assert 'Implementation complete' in progress.get('message', '')
+            self.assertEqual(progress.get('step'), 'implementation')
+            self.assertIn('Implementation complete', progress.get('message', ''))
         else:
             # Or check nested structure if not complete
             impl_progress = progress.get('implementation', {})
-            assert 'test.py' in impl_progress.get('files_modified', [])
-            assert 'Write' in impl_progress.get('tools_used', [])
+            self.assertIn('test.py', impl_progress.get('files_modified', []))
+            self.assertIn('Write', impl_progress.get('tools_used', []))
     
     def test_pre_tool_use_validation_blocks_write(self):
         """Test PreToolUse hook blocks Write tool during validation sprint."""
@@ -196,8 +197,8 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'block'
-        assert 'Validation sprint' in response.get('reason', '')
+        self.assertEqual(response.get('decision'), 'block')
+        self.assertIn('Validation sprint', response.get('reason', ''))
     
     def test_pre_tool_use_emergency_override(self):
         """Test PreToolUse hook allows emergency overrides."""
@@ -215,7 +216,7 @@ class TestHooks:
         }
         
         response = self.run_hook('pre_tool_use', event)
-        assert response.get('decision') == 'allow'
+        self.assertEqual(response.get('decision'), 'allow')
     
     def test_stop_hook_workflow_advancement(self):
         """Test Stop hook advances workflow when step is complete."""
@@ -248,37 +249,12 @@ class TestHooks:
         )
         
         # Should succeed
-        assert proc.returncode == 0
+        self.assertEqual(proc.returncode, 0)
         
         # Check workflow advanced
         state = self.state_manager.read()
-        assert state.get('workflow_step') == 'validation'
-
-
-def run_tests():
-    """Run all tests and report results."""
-    test_suite = TestHooks()
-    test_methods = [m for m in dir(test_suite) if m.startswith('test_')]
-    
-    passed = 0
-    failed = 0
-    
-    for test_name in test_methods:
-        test_suite.setup_method()
-        try:
-            getattr(test_suite, test_name)()
-            print(f"✅ {test_name}")
-            passed += 1
-        except Exception as e:
-            print(f"❌ {test_name}: {e}")
-            failed += 1
-        finally:
-            test_suite.teardown_method()
-    
-    print(f"\nResults: {passed} passed, {failed} failed")
-    return failed == 0
+        self.assertEqual(state.get('workflow_step'), 'validation')
 
 
 if __name__ == '__main__':
-    success = run_tests()
-    sys.exit(0 if success else 1)
+    unittest.main()

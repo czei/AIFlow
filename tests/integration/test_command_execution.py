@@ -82,8 +82,8 @@ class CommandExecutionTest:
         print("\n🧪 Testing start command...")
         
         # Create project first
-        from project_builder import ProjectBuilder
-        from state_manager import StateManager
+        from src.project_builder import ProjectBuilder
+        from src.state_manager import StateManager
         
         builder = ProjectBuilder("test-project", str(self.test_dir))
         builder.create_structure()
