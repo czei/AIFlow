@@ -12,12 +12,12 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 # Add parent directory to path for imports (use append for safety)
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    from state_manager import StateManager
-    from hooks.workflow_rules import WorkflowRules
-    from hooks.event_validator import EventValidator
+    from src.state_manager import StateManager
+    from src.hooks.workflow_rules import WorkflowRules
+    from src.hooks.event_validator import EventValidator
 except ImportError:
     # If imports fail, just exit
     sys.exit(0)

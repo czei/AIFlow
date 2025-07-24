@@ -12,13 +12,13 @@ import os
 from pathlib import Path
 
 # Add parent directory to path for imports (use append for safety)
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    from state_manager import StateManager
-    from hooks.workflow_rules import WorkflowRules
-    from hooks.hook_utils import EventParser, ResponseBuilder, HookLogger
-    from hooks.event_validator import EventValidator
+    from src.state_manager import StateManager
+    from src.hooks.workflow_rules import WorkflowRules
+    from src.hooks.hook_utils import EventParser, ResponseBuilder, HookLogger
+    from src.hooks.event_validator import EventValidator
 except ImportError as e:
     # If imports fail, allow all operations
     print(json.dumps({"decision": "allow", "message": f"Import error: {str(e)}"}))

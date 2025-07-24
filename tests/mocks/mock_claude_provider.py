@@ -204,7 +204,7 @@ class MockClaudeProvider:
                     test_params="'test_data'",
                     expected_result="'processed_data'"
                 ),
-                "dependencies": ["typing"] if language == "python" else [],
+                "dependencies": self._get_dependencies(prompt_lower, language),
                 "usage_example": usage_example
             }
             
@@ -287,6 +287,34 @@ class MockClaudeProvider:
             raise ValueError(f"Invalid mode: {mode}")
         self.response_mode = mode
         
+    def _get_dependencies(self, prompt_lower: str, language: str) -> List[str]:
+        """Determine dependencies based on prompt content."""
+        dependencies = []
+        
+        if language == "python":
+            # Basic typing support
+            dependencies.append("typing")
+            
+            # Check for specific libraries mentioned
+            if "http" in prompt_lower or "requests" in prompt_lower:
+                dependencies.append("requests")
+            if "json" in prompt_lower:
+                dependencies.append("json")
+            if "async" in prompt_lower:
+                dependencies.append("asyncio")
+            if "data" in prompt_lower and "frame" in prompt_lower:
+                dependencies.append("pandas")
+            if "numpy" in prompt_lower or "array" in prompt_lower:
+                dependencies.append("numpy")
+                
+        elif language == "javascript":
+            if "http" in prompt_lower or "fetch" in prompt_lower:
+                dependencies.append("axios")
+            if "react" in prompt_lower:
+                dependencies.append("react")
+                
+        return dependencies
+    
     def inject_response(self, pattern: str, response: Dict[str, Any]):
         """Inject custom response for specific prompt pattern"""
         # This allows tests to define specific responses

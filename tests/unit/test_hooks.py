@@ -12,10 +12,10 @@ import tempfile
 import os
 from pathlib import Path
 
-# Add src to path
-sys.path.append(str(Path(__file__).parent.parent.parent / 'src'))
+# Add parent directories to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from state_manager import StateManager
+from src.state_manager import StateManager
 
 
 class TestHooks:

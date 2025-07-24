@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
-from config import state as state_config, messages, workflow as workflow_config
+from .config import state as state_config, messages, workflow as workflow_config
 
 
 class StateValidationError(Exception):
