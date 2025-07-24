@@ -107,7 +107,7 @@ class MockClaudeProvider:
             print(f"DEBUG MockClaudeProvider: Context: {context}")
         
         # Project setup requests
-        if "setup" in prompt_lower or "create project" in prompt_lower:
+        if "setup" in prompt_lower or "set up" in prompt_lower or "create project" in prompt_lower:
             project_name = context.get("project_name", "test_project") if context else "test_project"
             return {
                 "type": "project_setup",
@@ -115,7 +115,7 @@ class MockClaudeProvider:
                     f"mkdir -p {project_name}/src",
                     f"mkdir -p {project_name}/tests",
                     f"touch {project_name}/README.md",
-                    f"echo '# {project_name}' > {project_name}/README.md"
+                    f"echo # {project_name} > {project_name}/README.md"
                 ],
                 "explanation": f"Setting up project structure for {project_name}"
             }
@@ -131,16 +131,26 @@ class MockClaudeProvider:
             }
             
         # Code implementation requests
-        elif any(keyword in prompt_lower for keyword in ["implement", "create function", "generate", "write"]):
-            # Extract function name from prompt
+        elif any(keyword in prompt_lower for keyword in ["implement", "create", "generate", "write"]) or "class" in prompt_lower or "function" in prompt_lower:
+            # Extract function/class name from prompt
             func_match = re.search(r"function\s+(\w+)", prompt)
-            func_name = func_match.group(1) if func_match else "process_data"
+            class_match = re.search(r"class\s+(?:for\s+)?(?:a\s+)?(\w+)", prompt)
+            
+            if class_match:
+                name = class_match.group(1)
+                is_class = True
+            elif func_match:
+                name = func_match.group(1)
+                is_class = False
+            else:
+                name = "process_data"
+                is_class = False
             
             # For contract tests, return appropriate type based on prompt
-            if "function" in prompt_lower:
-                response_type = "function"
-            elif "class" in prompt_lower:
+            if "class" in prompt_lower:
                 response_type = "class"
+            elif "function" in prompt_lower:
+                response_type = "function"
             else:
                 response_type = "code_implementation"
                 
@@ -154,22 +164,48 @@ class MockClaudeProvider:
                 "code_implementation": "code_implementation"
             }
             
-            return {
-                "type": type_mapping.get(response_type, "code_generation"),
-                "code": self.response_templates["code_implementation"]["function"].format(
-                    function_name=func_name,
+            # Generate appropriate code based on type
+            if is_class:
+                code = f"""class {name}:
+    \"\"\"Mock implementation of {name}\"\"\"
+    
+    def __init__(self):
+        self.balance = 0
+    
+    def deposit(self, amount):
+        \"\"\"Add money to account\"\"\"
+        self.balance += amount
+        return self.balance
+    
+    def withdraw(self, amount):
+        \"\"\"Remove money from account\"\"\"
+        if amount <= self.balance:
+            self.balance -= amount
+            return self.balance
+        raise ValueError("Insufficient funds")"""
+                explanation = f"Implemented {name} class with basic structure including deposit and withdraw methods."
+                usage_example = f"account = {name}()\naccount.deposit(100)\naccount.withdraw(50)"
+            else:
+                code = self.response_templates["code_implementation"]["function"].format(
+                    function_name=name,
                     params="data",
                     return_value="processed_data"
-                ),
+                )
+                explanation = f"Implemented {name} with basic structure. This function takes data as input and returns processed_data."
+                usage_example = f"{name}('sample_data')  # Returns: 'processed_data'"
+            
+            return {
+                "type": type_mapping.get(response_type, "code_generation"),
+                "code": code,
                 "language": language,
-                "explanation": f"Implemented {func_name} with basic structure. This function takes data as input and returns processed_data.",
+                "explanation": explanation,
                 "test_code": self.response_templates["code_implementation"]["test"].format(
-                    function_name=func_name,
+                    function_name=name,
                     test_params="'test_data'",
                     expected_result="'processed_data'"
                 ),
                 "dependencies": ["typing"] if language == "python" else [],
-                "usage_example": f"{func_name}('sample_data')  # Returns: 'processed_data'"
+                "usage_example": usage_example
             }
             
         # Error analysis requests
@@ -184,6 +220,15 @@ class MockClaudeProvider:
                 "root_cause": "Function expects string input but received a different type",
                 "prevention": "Add type hints and input validation to catch type mismatches early",
                 "confidence": 0.85
+            }
+            
+        # Minimal code generation (e.g., "x = 1")
+        elif "=" in prompt and len(prompt) < 50:
+            return {
+                "type": "code_generation",
+                "code": prompt.strip(),
+                "language": "python",
+                "explanation": "This is a simple variable assignment or expression."
             }
             
         # Default response
