@@ -63,12 +63,21 @@ class UnitTestLayer(TestLayer):
         module_name = str(module_path).replace('/', '.').replace('\\', '.')[:-3]  # Remove .py
         
         try:
-            # Run unittest with JSON output for better parsing
-            cmd = [
-                sys.executable, '-m', 'unittest',
-                module_name,
-                '-v'  # Verbose output
-            ]
+            # Check if this is a pytest-based test (hook tests and some others use pytest)
+            if any(keyword in test_path for keyword in ['hook', 'subprocess', 'focused', 'workflow_rules', 'event_validator']):
+                # Run with pytest for hook tests
+                cmd = [
+                    sys.executable, '-m', 'pytest',
+                    str(test_file),
+                    '-v'  # Verbose output
+                ]
+            else:
+                # Run unittest for standard tests
+                cmd = [
+                    sys.executable, '-m', 'unittest',
+                    module_name,
+                    '-v'  # Verbose output
+                ]
             
             result = subprocess.run(
                 cmd,
@@ -81,7 +90,7 @@ class UnitTestLayer(TestLayer):
             
             duration = time.time() - start_time
             
-            # Parse unittest output
+            # Parse output based on test runner
             success = result.returncode == 0
             output = result.stdout + ("\n" + result.stderr if result.stderr else "")
             
@@ -90,20 +99,39 @@ class UnitTestLayer(TestLayer):
             failures = 0
             errors = 0
             
-            for line in output.splitlines():
-                if line.startswith("Ran "):
-                    # "Ran X tests in Y.YYYs"
-                    parts = line.split()
-                    if len(parts) >= 2:
-                        test_count = int(parts[1])
-                elif "FAILED" in line:
-                    # "FAILED (failures=X, errors=Y)"
-                    failures_match = re.search(r'failures=(\d+)', line)
-                    errors_match = re.search(r'errors=(\d+)', line)
-                    if failures_match:
-                        failures = int(failures_match.group(1))
-                    if errors_match:
-                        errors = int(errors_match.group(1))
+            if 'pytest' in cmd[2]:
+                # Parse pytest output
+                for line in output.splitlines():
+                    # Look for pytest summary line like "====== 16 passed in 1.38s ======"
+                    if 'passed' in line and '=' in line:
+                        match = re.search(r'(\d+)\s+passed', line)
+                        if match:
+                            test_count = int(match.group(1))
+                    elif 'failed' in line and '=' in line:
+                        match = re.search(r'(\d+)\s+failed', line)
+                        if match:
+                            failures = int(match.group(1))
+                    elif line.startswith('collected'):
+                        # "collected 16 items"
+                        match = re.search(r'collected\s+(\d+)', line)
+                        if match:
+                            test_count = int(match.group(1))
+            else:
+                # Parse unittest output
+                for line in output.splitlines():
+                    if line.startswith("Ran "):
+                        # "Ran X tests in Y.YYYs"
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            test_count = int(parts[1])
+                    elif "FAILED" in line:
+                        # "FAILED (failures=X, errors=Y)"
+                        failures_match = re.search(r'failures=(\d+)', line)
+                        errors_match = re.search(r'errors=(\d+)', line)
+                        if failures_match:
+                            failures = int(failures_match.group(1))
+                        if errors_match:
+                            errors = int(errors_match.group(1))
                         
             metadata = {
                 'exit_code': result.returncode,
