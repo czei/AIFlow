@@ -8,6 +8,8 @@ import unittest
 import json
 import sys
 import os
+import tempfile
+import shutil
 from pathlib import Path
 from unittest.mock import patch, MagicMock, mock_open
 
@@ -25,6 +27,8 @@ class TestMockClaudeProviderBasic(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.provider = MockClaudeProvider()
+        # Ensure clean state for each test
+        self.provider.reset()
         
     def test_deterministic_project_setup(self):
         """Test deterministic responses for project setup"""
@@ -119,6 +123,8 @@ class TestMockClaudeProviderWithState(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.provider = MockClaudeProviderWithState()
+        # Ensure clean state for each test
+        self.provider.reset()
         
     def test_initial_state(self):
         """Test initial state values"""
@@ -189,14 +195,19 @@ class TestMockClaudeProviderWithState(unittest.TestCase):
 class TestMockClaudeWithLoggedShell(unittest.TestCase):
     """Integration tests with LoggedSecureShell"""
     
-    @patch('scripts.logged_secure_shell.Path.mkdir')
-    @patch('builtins.open', new_callable=mock_open)
-    def setUp(self, mock_file, mock_mkdir):
+    def setUp(self):
         """Set up test fixtures"""
         self.provider = MockClaudeProvider()
-        self.shell = LoggedSecureShell("/test/project")
+        # Create a temporary directory for testing
+        self.temp_dir = tempfile.mkdtemp()
+        self.shell = LoggedSecureShell(self.temp_dir)
         # Access the logger created by LoggedSecureShell
         self.logger = self.shell.logger
+        
+    def tearDown(self):
+        """Clean up test fixtures"""
+        # Clean up temp directory
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
         
     def test_ai_guided_command_validation(self):
         """Test command validation with AI guidance"""
@@ -205,8 +216,8 @@ class TestMockClaudeWithLoggedShell(unittest.TestCase):
         
         # In a real integration, the AI response would influence command validation
         # For now, we test the flow
-        self.shell.current_sprint = "implementation"
-        is_valid = self.shell.validate_command_sprint("ls -la", "implementation")
+        self.shell.current_phase = "implementation"
+        is_valid = self.shell.validate_command_phase("ls", ["-la"], "implementation")
         
         self.assertTrue(is_valid)
         # Verify AI was consulted
@@ -237,18 +248,22 @@ class TestMockClaudeWithLoggedShell(unittest.TestCase):
     def test_ai_guided_workflow(self, mock_run):
         """Test complete workflow with AI guidance"""
         # Sprint 1: Planning
-        self.shell.current_sprint = "planning"
+        self.shell.current_phase = "planning"
         plan_response = self.provider.query("Create a plan for building a calculator")
         
         # Sprint 2: Implementation based on AI plan
-        self.shell.current_sprint = "implementation"
+        self.shell.current_phase = "implementation"
         impl_response = self.provider.query("Implement the calculator based on the plan")
         
         # Simulate executing AI-suggested commands
         if "commands" in impl_response:
             for cmd in impl_response.get("commands", []):
                 # In real integration, these would be validated and executed
-                is_valid = self.shell.validate_command_sprint(cmd, "implementation")
+                # Split command into command and args
+                cmd_parts = cmd.split()
+                command = cmd_parts[0] if cmd_parts else ""
+                args = cmd_parts[1:] if len(cmd_parts) > 1 else []
+                is_valid = self.shell.validate_command_phase(command, args, "implementation")
                 self.assertTrue(is_valid)
         
         # Verify AI interaction history
@@ -263,6 +278,8 @@ class TestMockProviderEdgeCases(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.provider = MockClaudeProvider()
+        # Ensure clean state for each test
+        self.provider.reset()
         
     def test_empty_prompt(self):
         """Test handling of empty prompt"""

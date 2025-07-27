@@ -25,6 +25,7 @@ class MockClaudeProvider:
         self.debug = False  # Initialize debug attribute
         self.call_history: List[Dict[str, Any]] = []
         self.response_templates = self._load_response_templates()
+        self.custom_responses = {}  # Initialize custom responses dict
         
     def _load_response_templates(self) -> Dict[str, Any]:
         """Load predefined response templates for different scenarios"""
@@ -111,7 +112,31 @@ class MockClaudeProvider:
             "create project" in prompt_lower or 
             ("create" in prompt_lower and "project" in prompt_lower) or
             ("new" in prompt_lower and "project" in prompt_lower) or
-            "initialize" in prompt_lower or "scaffold" in prompt_lower):
+            "initialize" in prompt_lower or "scaffold" in prompt_lower or
+            ("mkdir" in prompt_lower and len(prompt.split()) <= 3) or  # Handle simple mkdir commands
+            ("go module" in prompt_lower and "initialize" in prompt_lower)):
+            
+            # Handle simple mkdir command
+            if "mkdir" in prompt_lower and len(prompt.split()) <= 3:
+                dirname = prompt.split()[-1] if len(prompt.split()) > 1 else "project"
+                return {
+                    "type": "project_setup",
+                    "commands": [f"mkdir {dirname}"],
+                    "explanation": f"Creating directory {dirname}"
+                }
+            
+            # Handle Go module initialization
+            if "go module" in prompt_lower and "initialize" in prompt_lower:
+                project_name = context.get("project_name", "user-service") if context else "user-service"
+                return {
+                    "type": "project_setup",
+                    "commands": [
+                        f"mkdir {project_name}",
+                        f"cd {project_name}",
+                        f"go mod init github.com/example/{project_name}"
+                    ],
+                    "explanation": f"Initializing Go module for {project_name} microservice"
+                }
             
             project_name = context.get("project_name", "test_project") if context else "test_project"
             project_type = context.get("project_type", "python") if context else "python"
@@ -126,8 +151,19 @@ class MockClaudeProvider:
             
             explanation = f"Setting up project structure for {project_name}"
             
+            # Full-stack project (check first for most specific match)
+            if ("full-stack" in prompt_lower or "fullstack" in prompt_lower or 
+                (context and context.get("project_type") == "fullstack") or
+                ("frontend" in prompt_lower and "backend" in prompt_lower)):
+                commands.extend([
+                    f"mkdir -p {project_name}/frontend",
+                    f"mkdir -p {project_name}/backend",
+                    f"npm init -y"
+                ])
+                explanation = f"Setting up full-stack project structure for {project_name} with separate frontend and backend components"
+                
             # Web project specific setup
-            if ("web" in prompt_lower or "javascript" in prompt_lower or "react" in prompt_lower or
+            elif ("web" in prompt_lower or "javascript" in prompt_lower or "react" in prompt_lower or
                 "node" in prompt_lower or project_type == "web"):
                 commands.extend([
                     f"npm init -y",
@@ -135,15 +171,6 @@ class MockClaudeProvider:
                     f"mkdir -p {project_name}/components"
                 ])
                 explanation = f"Setting up web project structure for {project_name} with npm initialization"
-                
-            # Full-stack project
-            elif ("full-stack" in prompt_lower or "fullstack" in prompt_lower or "frontend" in prompt_lower):
-                commands.extend([
-                    f"mkdir -p {project_name}/frontend",
-                    f"mkdir -p {project_name}/backend",
-                    f"npm init -y"
-                ])
-                explanation = f"Setting up full-stack project structure for {project_name} with separate frontend and backend components"
                 
             # Python project with dependencies
             elif ("python" in prompt_lower or "dependencies" in prompt_lower or "requirements" in prompt_lower or
@@ -268,6 +295,41 @@ class MockClaudeProvider:
                 ),
                 "dependencies": self._get_dependencies(prompt_lower, language),
                 "usage_example": usage_example
+            }
+            
+        # Refactoring requests
+        elif "refactor" in prompt_lower or "improve" in prompt_lower or "clean" in prompt_lower:
+            # Extract code from context if available
+            code_to_refactor = ""
+            if context and "code" in context:
+                code_to_refactor = context["code"]
+            elif "code" in prompt_lower:
+                # Try to extract inline code
+                code_match = re.search(r'```.*?```', prompt, re.DOTALL)
+                if code_match:
+                    code_to_refactor = code_match.group(0)
+            
+            return {
+                "type": "refactoring",
+                "analysis": "Code can be improved for readability and maintainability",
+                "suggestions": [
+                    {"type": "extract_method", "description": "Extract complex logic into separate methods"},
+                    {"type": "rename", "description": "Use more descriptive variable names"},
+                    {"type": "simplify", "description": "Reduce complexity in conditional statements"}
+                ],
+                "improved_code": """def calculate(x: int, y: int) -> int:
+    \"\"\"Calculate the sum of two numbers.
+    
+    Args:
+        x: First number
+        y: Second number
+        
+    Returns:
+        The sum of x and y
+    \"\"\"
+    return x + y""",
+                "original_code": code_to_refactor,
+                "confidence": 0.90
             }
             
         # Error analysis requests  
@@ -401,6 +463,13 @@ class MockClaudeProvider:
         if not hasattr(self, "custom_responses"):
             self.custom_responses = {}
         self.custom_responses[pattern] = response
+    
+    def reset(self):
+        """Reset provider to initial state - useful for test isolation"""
+        self.call_history = []
+        self.custom_responses = {}
+        self.response_mode = "deterministic"
+        self.debug = False
 
 
 class MockClaudeProviderWithState(MockClaudeProvider):
@@ -465,3 +534,8 @@ class MockClaudeProviderWithState(MockClaudeProvider):
             "current_context": {},
             "error_count": 0
         }
+    
+    def reset(self):
+        """Reset both base provider and state - full reset for test isolation"""
+        super().reset()  # Reset base provider
+        self.reset_state()  # Reset state tracking

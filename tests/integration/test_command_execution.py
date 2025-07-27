@@ -126,6 +126,11 @@ class CommandExecutionTest:
         # Test pause
         exit_code, stdout, stderr = self.executor.run_user_command("pause")
         
+        # Debug output
+        print(f"  Debug - Exit code: {exit_code}")
+        print(f"  Debug - Stdout: {stdout}")
+        print(f"  Debug - Stderr: {stderr}")
+        
         if exit_code == 0:
             state = read_project_state(self.test_dir)
             assert state['status'] == 'paused', \
@@ -153,6 +158,11 @@ class CommandExecutionTest:
         
         # Test resume
         exit_code, stdout, stderr = self.executor.run_user_command("resume")
+        
+        # Debug output
+        print(f"  Debug - Exit code: {exit_code}")
+        print(f"  Debug - Stdout: {stdout}")
+        print(f"  Debug - Stderr: {stderr}")
         
         if exit_code == 0:
             state = read_project_state(self.test_dir)

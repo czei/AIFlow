@@ -43,7 +43,7 @@ else
 fi
 
 # Run command flow test
-if run_test "Command Flow Test" "python3 test_command_flow.py < /dev/null"; then
+if run_test "Command Flow Test" "python3 ../scripts/command_flow_simulation.py < /dev/null"; then
     ((tests_passed++))
 else
     ((tests_failed++))

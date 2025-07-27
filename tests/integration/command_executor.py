@@ -62,11 +62,15 @@ class CommandExecutor:
         combined_stderr = []
         
         # Build up environment variables that persist across commands
-        env_vars = {}
+        env_vars = os.environ.copy()
         
         # Pre-set PROJECT_ROOT for all commands
         project_root = str(self.src_path.parent)
         env_vars['PROJECT_ROOT'] = project_root
+        
+        # Set PYTHONPATH to include both project root and src directory
+        # This allows imports like "from src.state_manager import StateManager"
+        env_vars['PYTHONPATH'] = f"{project_root}:{str(self.src_path)}"
         
         for cmd in commands:
             # Replace arguments if provided
@@ -87,14 +91,30 @@ class CommandExecutor:
             if '$PROJECT_ROOT' in cmd:
                 cmd = cmd.replace('$PROJECT_ROOT', project_root)
                 
+            # Replace ${ARGUMENTS:-default} pattern
+            if '${ARGUMENTS' in cmd:
+                if args and args[0]:
+                    # Replace ${ARGUMENTS:-default} with actual argument
+                    cmd = re.sub(r'\$\{ARGUMENTS:-[^}]*\}', args[0], cmd)
+                else:
+                    # Replace ${ARGUMENTS:-default} with default value
+                    cmd = re.sub(r'\$\{ARGUMENTS:-([^}]*)\}', r'\1', cmd)
+                
             # Execute command
             try:
+                # Debug: print the command being executed
+                if 'pause_project.py' in cmd or 'resume_project.py' in cmd:
+                    print(f"Debug: Executing command: {cmd}")
+                    print(f"Debug: Working dir: {self.working_dir}")
+                    print(f"Debug: PYTHONPATH: {env_vars.get('PYTHONPATH')}")
+                    
                 result = subprocess.run(
                     cmd,
                     shell=True,
                     cwd=self.working_dir,
                     capture_output=True,
-                    text=True
+                    text=True,
+                    env=env_vars
                 )
                 
                 if result.stdout:

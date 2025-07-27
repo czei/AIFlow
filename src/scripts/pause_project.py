@@ -11,13 +11,23 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 # Add parent directory to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
+script_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(script_dir))
+
+# Also try to add the src directory if we're in a different structure
+src_dir = script_dir / 'src'
+if src_dir.exists():
+    sys.path.insert(0, str(src_dir))
 
 try:
     from state_manager import StateManager
 except ImportError:
-    print("❌ Error: Unable to import StateManager. Check project structure.")
-    sys.exit(1)
+    # Try alternative import path
+    try:
+        from src.state_manager import StateManager
+    except ImportError:
+        print("❌ Error: Unable to import StateManager. Check project structure.")
+        sys.exit(1)
 
 
 def main():
