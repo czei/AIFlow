@@ -35,63 +35,126 @@ The proof-of-concept uses git worktree isolation as the primary safety mechanism
 - No fine-grained command validation
 - Relies on git worktree boundaries and careful automation design
 
-## Quick Start (Proof of Concept)
+## Prerequisites
 
-### 1. Install the Commands
+Before starting:
+1. **Git Repository**: Must be in a git repository directory
+2. **Claude Code**: Install Claude Code CLI tool
+3. **Python 3.7+**: Required for scripts and hooks
+4. **Directory Permissions**: Write access to parent directory for git worktrees
+5. **Project Source**: Clone or have access to ai-software-project-management repository
+
+## Installation Guide
+
+### 1. Install Commands and Scripts
 ```bash
-# Install to Claude Code commands directory
+# Clone the project (if not already available)
+git clone https://github.com/your-org/ai-software-project-management.git
+cd ai-software-project-management
+
+# Install commands to Claude Code directory
 mkdir -p ~/.claude/commands/project
-cp -r /Users/czei/claude-project-commands/project/* ~/.claude/commands/project/
+cp -r src/commands/* ~/.claude/commands/project/
+
+# Install supporting scripts
+cp scripts/logged_secure_shell.py ~/.claude/commands/
+cp scripts/analyze_logs.sh ~/.claude/commands/
+
+# Make scripts executable
+chmod +x ~/.claude/commands/logged_secure_shell.py
+chmod +x ~/.claude/commands/analyze_logs.sh
+
+# Install Python dependencies (if any)
+pip install -r requirements.txt
 ```
 
-### 2. Test Basic Setup
+### 2. Verify Installation
 ```bash
 # Start Claude Code with permissions
 cd your-existing-git-repo
 claude-code --dangerously-skip-permissions
 
 # Test command availability
-/user:project:setup test-project
+/user:project:setup --help
+# Should show command help
+
+# List available commands
+ls ~/.claude/commands/project/
+# Should show: setup.md, start.md, status.md, etc.
 ```
 
-### 3. Validate Installation
-```bash
-# Check that setup created proper structure
-ls ../test-project/
-# Should show: sprints/, .project-state.json, CLAUDE.md, etc.
+## Creating Your First Project
 
-# Validate with doctor command
-cd ../test-project
+### 1. Initialize Project Structure
+```bash
+# Create a new project (replace "my-webapp" with your project name)
+/user:project:setup my-webapp
+
+# This creates:
+# - Git worktree at ../my-webapp/
+# - Sprint templates in sprints/
+# - CLAUDE.md for project context
+# - State management files
+# - Logging infrastructure
+```
+
+### 2. Navigate to Project
+```bash
+cd ../my-webapp
+
+# Verify structure
+ls -la
+# Should show: sprints/, .claude/, docs/, logs/, CLAUDE.md, etc.
+```
+
+### 3. Customize Project Specifications
+
+#### Edit Sprint Files
+Navigate to `sprints/` and customize each file:
+
+```bash
+# Example: Edit planning sprint
+vim sprints/01-planning.md
+
+# Replace template objectives with your specific tasks
+# See SPRINT_CREATION_INSTRUCTIONS.md for detailed guidance
+```
+
+#### Update CLAUDE.md
+Add your project context:
+
+```bash
+vim CLAUDE.md
+
+# Add:
+# - Project description and goals
+# - Technology stack
+# - Development standards
+# - Special instructions
+```
+
+### 4. Validate Setup
+```bash
+# Run doctor command
 /user:project:doctor
+
+# All items should show green checkmarks
+# Fix any issues before proceeding
 ```
 
-### 4. Set Up Logging Infrastructure (Essential for Debugging)
+### 5. Start Automation
 ```bash
-# Copy the logging infrastructure
-cp /Users/czei/claude-project-commands/logged_secure_shell.py ~/.claude/commands/
-cp /Users/czei/claude-project-commands/analyze_logs.sh ~/.claude/commands/
-
-# Make scripts executable
-chmod +x ~/.claude/commands/logged_secure_shell.py
-chmod +x ~/.claude/commands/analyze_logs.sh
-```
-
-### 5. Run First Automation Test
-```bash
-# After customizing sprint files per doctor recommendations:
+# Begin automated development
 /user:project:start
 
-# Monitor progress:
+# Monitor progress
 /user:project:status
 
-# Monitor logs in real-time (open in separate terminal):
-tail -f .logs/automation.log | jq .
-tail -f .logs/errors.log | jq .
+# Monitor logs in real-time (separate terminal)
+tail -f logs/automation.log | jq .
+tail -f logs/workflow.log | jq .
 
-# Analyze logs:
-~/.claude/commands/analyze_logs.sh
-
-# Control automation:
+# Control automation
 /user:project:pause  # Stop for manual work
 /user:project:resume # Continue automation
 ```
