@@ -13,6 +13,7 @@ from datetime import datetime
 import sys
 import os
 import subprocess
+from io import StringIO
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -318,7 +319,8 @@ class TestTestRunner(unittest.TestCase):
         self.assertIn('shell', config['test_layers'])
         self.assertTrue(config['test_layers']['shell']['enabled'])
         
-    def test_run_layer_disabled(self):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_run_layer_disabled(self, mock_stdout):
         """Test running disabled layer"""
         layer = ShellTestLayer()
         self.runner.registry.register("test", layer)
@@ -336,7 +338,8 @@ class TestTestRunner(unittest.TestCase):
         
     @patch('tests.runners.test_runner_v2.ShellTestLayer.discover_tests')
     @patch('tests.runners.test_runner_v2.ShellTestLayer.run_test')
-    def test_run_layer_success(self, mock_run_test, mock_discover):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_run_layer_success(self, mock_stdout, mock_run_test, mock_discover):
         """Test running enabled layer"""
         # Set up mocks
         mock_discover.return_value = ["test1.sh", "test2.sh"]
@@ -352,9 +355,10 @@ class TestTestRunner(unittest.TestCase):
         self.assertTrue(results[0].success)
         self.assertFalse(results[1].success)
         
+    @patch('sys.stdout', new_callable=StringIO)
     @patch('builtins.open', new_callable=mock_open)
     @patch('tests.runners.test_runner_v2.datetime')
-    def test_save_results(self, mock_datetime, mock_file):
+    def test_save_results(self, mock_datetime, mock_file, mock_stdout):
         """Test saving results to JSON"""
         # Mock datetime.now instead of utcnow
         mock_now = MagicMock()
@@ -388,7 +392,8 @@ class TestTestRunner(unittest.TestCase):
         self.assertEqual(report['summary']['success_rate'], "50.0%")
         self.assertEqual(len(report['results']), 2)
         
-    def test_calculate_summary(self):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_calculate_summary(self, mock_stdout):
         """Test summary calculation from results"""
         results = [
             TestResult("test1.sh", True, "1.5s", "", {"layer": "shell"}),
