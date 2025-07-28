@@ -175,6 +175,31 @@ See **docs/IMPLEMENTATION_PLAN.md** for complete details.
 - Security vulnerabilities identified and fixed proactively
 - Test isolation framework prevents state pollution and ensures reliability
 
+## Development Guidelines
+
+**Testing Requirements:**
+- All new code must have unit tests
+- Integration tests for major components
+- Use existing 4-layer test framework
+- Run tests with: `python tests/runners/test_runner_v2.py`
+
+**Test Project Creation:**
+- When testing ProjectBuilder or setup commands, create projects in temporary directories
+- Use Python's `tempfile.mkdtemp()` or similar for test projects
+- Never commit test project artifacts to the repository
+- The .gitignore now excludes common test project patterns (test-*/, *-test/)
+
+**Architecture Principles:**
+- Incremental implementation with working systems at each sprint
+- Maintain backward compatibility with existing test framework  
+- Atomic operations for state management
+- Comprehensive error handling and logging
+
+**Git Workflow:**
+- Feature branches for each major component
+- Clean commits with descriptive messages
+- Regular integration with main branch
+
 ## Contact and Context
 
 This project transforms Claude Code into a disciplined development partner through automated sprint-based workflows. The vision is ambitious but achievable through systematic implementation of the missing components.
