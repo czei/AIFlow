@@ -1,8 +1,8 @@
 #!/bin/bash
-# Run all tests for the Sprint-Driven Development System
+# Run all tests for the AI Software Project Management System
 
-echo "🧪 Sprint-Driven Development System - Full Test Suite"
-echo "==================================================="
+echo "🧪 AI Software Project Management System - Full Test Suite"
+echo "=========================================================="
 echo
 
 # Colors for output
@@ -14,60 +14,47 @@ NC='\033[0m' # No Color
 # Change to tests directory
 cd "$(dirname "$0")" || exit 1
 
-# Function to run a test
-run_test() {
-    local test_name=$1
-    local test_command=$2
-    
-    echo -e "\n${YELLOW}Running: $test_name${NC}"
-    echo "----------------------------------------"
-    
-    if eval "$test_command"; then
-        echo -e "${GREEN}✅ $test_name passed${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ $test_name failed${NC}"
-        return 1
-    fi
-}
-
 # Track test results
 tests_passed=0
 tests_failed=0
 
+# Function to run a test script
+run_test_script() {
+    local test_name=$1
+    local test_script=$2
+    
+    echo -e "\n${YELLOW}Running: $test_name${NC}"
+    echo "----------------------------------------"
+    
+    if bash "$test_script"; then
+        echo -e "${GREEN}✅ $test_name passed${NC}"
+        ((tests_passed++))
+        return 0
+    else
+        echo -e "${RED}❌ $test_name failed${NC}"
+        ((tests_failed++))
+        return 1
+    fi
+}
+
 # Run unit tests
-if run_test "Unit Tests" "python3 test_sprints.py"; then
-    ((tests_passed++))
-else
-    ((tests_failed++))
-fi
+run_test_script "Unit Tests" "./run_unit_tests.sh"
 
-# Run command flow test
-if run_test "Command Flow Test" "python3 ../scripts/command_flow_simulation.py < /dev/null"; then
-    ((tests_passed++))
-else
-    ((tests_failed++))
-fi
-
-# Run integration test (non-interactive mode)
-if run_test "Integration Test" "bash integration_test.sh < /dev/null"; then
-    ((tests_passed++))
-else
-    ((tests_failed++))
-fi
+# Run integration tests (includes Phase 3 tests)
+run_test_script "Integration Tests" "./run_integration_tests.sh"
 
 # Summary
 echo
-echo "==================================================="
+echo "=========================================================="
 echo "Test Summary:"
-echo -e "  ${GREEN}Passed: $tests_passed${NC}"
-echo -e "  ${RED}Failed: $tests_failed${NC}"
+echo -e "  ${GREEN}Test Suites Passed: $tests_passed${NC}"
+echo -e "  ${RED}Test Suites Failed: $tests_failed${NC}"
 echo
 
 if [ $tests_failed -eq 0 ]; then
-    echo -e "${GREEN}✅ All tests passed!${NC}"
+    echo -e "${GREEN}✅ All test suites passed!${NC}"
     exit 0
 else
-    echo -e "${RED}❌ Some tests failed${NC}"
+    echo -e "${RED}❌ Some test suites failed${NC}"
     exit 1
 fi

@@ -15,21 +15,32 @@ Layer 4: Chaos Tests (Real AI, Edge Cases) ✅
 
 ## Running Tests
 
-### Run All Tests
+### Run All Tests (Recommended Methods)
+
+#### Method 1: Using Test Runner v2 (Most Comprehensive)
 ```bash
 python tests/runners/test_runner_v2.py
 ```
 
-### Run Specific Layer
+#### Method 2: Using Shell Scripts
 ```bash
+# Run all tests
+tests/run_all_tests.sh
+
 # Run only unit tests
+tests/run_unit_tests.sh
+
+# Run only integration tests (includes Phase 3 tests)
+tests/run_integration_tests.sh
+```
+
+### Run Specific Test Files
+```bash
+# Run specific test file
+python -m unittest tests.unit.test_state_manager
+
+# Run with pattern matching
 python -m unittest discover -s tests/unit -p "test_*.py"
-
-# Run only integration tests
-python -m unittest discover -s tests/integration -p "test_*.py"
-
-# Run Phase 3 end-to-end tests
-python tests/integration/test_phase3_runner.py
 ```
 
 ### Run Individual Test Files
