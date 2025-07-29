@@ -1,8 +1,19 @@
 #!/bin/bash
 # Log analysis tools for sprint-driven development debugging
+set -euo pipefail
 
 PROJECT_DIR=${1:-.}
 LOGS_DIR="$PROJECT_DIR/.logs"
+
+# Signal handler
+handle_signal() {
+    echo ""
+    echo "Analysis interrupted by signal"
+    exit 130
+}
+
+# Set up signal traps
+trap 'handle_signal' INT TERM HUP
 
 # Check if logs directory exists
 if [ ! -d "$LOGS_DIR" ]; then
@@ -67,7 +78,12 @@ if [ -f "$LOGS_DIR/commands.log" ]; then
     total_commands=$(wc -l < "$LOGS_DIR/commands.log" 2>/dev/null || echo "0")
     failed_commands=$(safe_jq 'select(.details.exit_code != 0)' "$LOGS_DIR/commands.log" 2>/dev/null | wc -l)
     if [ "$total_commands" -gt 0 ]; then
-        success_rate=$(echo "scale=1; ($total_commands - $failed_commands) * 100 / $total_commands" | bc -l 2>/dev/null || echo "N/A")
+        # Calculate success rate using bash arithmetic (integer only)
+        if [ "$total_commands" -gt 0 ]; then
+            success_rate=$(( (total_commands - failed_commands) * 100 / total_commands ))
+        else
+            success_rate="N/A"
+        fi
         echo "Total commands: $total_commands"
         echo "Failed commands: $failed_commands" 
         echo "Success rate: $success_rate%"
@@ -123,7 +139,8 @@ if [ -f "$LOGS_DIR/quality-gates.log" ]; then
     total_gates=$(wc -l < "$LOGS_DIR/quality-gates.log" 2>/dev/null || echo "0")
     passed_gates=$(safe_jq 'select(.details.validation_result == "ALLOWED")' "$LOGS_DIR/quality-gates.log" 2>/dev/null | wc -l)
     if [ "$total_gates" -gt 0 ]; then
-        gate_success_rate=$(echo "scale=1; $passed_gates * 100 / $total_gates" | bc -l 2>/dev/null || echo "N/A")
+        # Calculate gate success rate using bash arithmetic
+        gate_success_rate=$(( passed_gates * 100 / total_gates ))
         echo "Total evaluations: $total_gates"
         echo "Passed: $passed_gates"
         echo "Success rate: $gate_success_rate%"

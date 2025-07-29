@@ -46,7 +46,30 @@ Before starting:
 
 ## Installation Guide
 
-### 1. Install Commands and Scripts
+### Quick Installation (Recommended)
+
+Use the automated installation script for the easiest setup:
+
+```bash
+# Clone the project
+git clone https://github.com/your-org/ai-software-project-management.git
+cd ai-software-project-management
+
+# Run the installer
+./install.sh
+```
+
+The installer will:
+- Check prerequisites (Python 3.7+, Git, Claude Code CLI)
+- Install commands and scripts to `~/.claude/commands/project/`
+- Set up hook configurations
+- Validate the installation
+- Provide helpful next steps
+
+### Manual Installation (Alternative)
+
+If the automated installer fails or you prefer manual control:
+
 ```bash
 # Clone the project (if not already available)
 git clone https://github.com/your-org/ai-software-project-management.git
@@ -55,6 +78,14 @@ cd ai-software-project-management
 # Install commands to Claude Code directory
 mkdir -p ~/.claude/commands/project
 cp -r src/commands/* ~/.claude/commands/project/
+
+# Install Python modules (excluding tests)
+mkdir -p ~/.claude/commands/project/lib
+cp -r src ~/.claude/commands/project/lib/
+
+# Install hook scripts
+mkdir -p ~/.claude/commands/project/hooks
+cp src/hooks/*.py ~/.claude/commands/project/hooks/
 
 # Install supporting scripts
 cp scripts/logged_secure_shell.py ~/.claude/commands/
@@ -67,6 +98,32 @@ chmod +x ~/.claude/commands/analyze_logs.sh
 # Install Python dependencies (if any)
 pip install -r requirements.txt
 ```
+
+### Uninstallation
+
+To remove the installation:
+
+```bash
+# Run the uninstaller
+./uninstall.sh
+```
+
+The uninstaller will:
+- Check for active projects
+- Optionally create a backup
+- Remove all installed files
+- Preserve your project worktrees
+
+### Testing the Installation
+
+To validate the installation works correctly:
+
+```bash
+# Run the test script
+./test_install.sh
+```
+
+This will test the installation in a temporary environment without affecting your system.
 
 ### 2. Verify Installation
 ```bash
