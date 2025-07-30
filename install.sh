@@ -147,10 +147,14 @@ check_prerequisites() {
     fi
     
     # Check Python
-    PYTHON_CMD=$(check_python_version)
+    # Capture output separately from function return
+    local python_output
+    python_output=$(check_python_version)
     if [[ $? -ne 0 ]]; then
         return 1
     fi
+    # Extract just the python command from the last line of output
+    PYTHON_CMD=$(echo "$python_output" | tail -1)
     
     # Check Claude Code CLI
     if command_exists claude; then
@@ -353,19 +357,37 @@ validate_installation() {
     # Test Python imports safely
     # Create a temporary test script to avoid passing complex arguments
     local test_script=$(secure_temp_file "py-test")
+    if [[ -z "$test_script" ]] || [[ ! -f "$test_script" ]]; then
+        print_status "warning" "Could not create temp file for Python test, skipping import validation"
+        # Don't count this as an error since the installation itself was successful
+        return $validation_errors
+    fi
+    
     cat > "$test_script" << EOF
 import sys
 sys.path.insert(0, "$INSTALL_DIR/lib")
 try:
     from src.state_manager import StateManager
     sys.exit(0)
-except ImportError:
+except ImportError as e:
+    print(f"Import error: {e}", file=sys.stderr)
     sys.exit(1)
 EOF
     
-    if ! "$PYTHON_CMD" "$test_script" 2>/dev/null; then
+    # Run the test and capture output for debugging
+    local test_output
+    local test_exit_code
+    test_output=$("$PYTHON_CMD" "$test_script" 2>&1)
+    test_exit_code=$?
+    
+    if [[ $test_exit_code -ne 0 ]]; then
         print_status "error" "Python module import test failed"
+        if [[ -n "$test_output" ]]; then
+            print_status "info" "Debug output: $test_output"
+        fi
         ((validation_errors++))
+    else
+        print_status "success" "Python module import test passed"
     fi
     rm -f "$test_script"
     
