@@ -21,16 +21,40 @@ This guide demonstrates how to use Claude Code's automated sprint-based developm
 
 ### 1. Set Up the Project with Workflow Hooks
 ```bash
-# Navigate to the sample project
-cd /path/to/ai-software-project-management/sample-project
+# First, ensure you've run the installation script from the parent directory
+cd /path/to/ai-software-project-management
+./install.sh
 
-# Copy the workflow hooks into this project
-cp -r ../.claude_code_hooks .
+# Navigate to the sample project
+cd sample-project
+
+# Create a .claude directory for project settings
+mkdir -p .claude
+
+# Create settings.json to enable the workflow hooks
+cat > .claude/settings.json << 'EOF'
+{
+  "hooks": {
+    "PreToolUse": {
+      "command": "python3 ${HOME}/.claude/commands/project/hooks/pre_tool_use.py",
+      "timeout": 5000
+    },
+    "PostToolUse": {
+      "command": "python3 ${HOME}/.claude/commands/project/hooks/post_tool_use.py",
+      "timeout": 3000
+    },
+    "Stop": {
+      "command": "python3 ${HOME}/.claude/commands/project/hooks/stop.py",
+      "timeout": 3000
+    }
+  }
+}
+EOF
 
 # Initialize git repository
 git init
 git add .
-git commit -m "Initial commit with workflow hooks"
+git commit -m "Initial commit with workflow hook configuration"
 ```
 
 ### 2. Start Claude Code in Your Project
@@ -63,29 +87,46 @@ Claude will:
 1. **Understanding the Setup**:
    - `ai-software-project-management/` is the FRAMEWORK that provides workflow tools
    - `sample-project/` is YOUR PROJECT where you'll build the Disney app
-   - Hooks must be copied into your project for the workflow to work
+   - Hooks are installed globally to `~/.claude/commands/project/hooks/`
+   - Each project references these hooks via `.claude/settings.json`
 
-2. **Development Tools** (Claude will verify these):
+2. **Installation Required**:
+   ```bash
+   # Run this first from the framework directory
+   cd /path/to/ai-software-project-management
+   ./install.sh
+   ```
+   This installs:
+   - Commands to `~/.claude/commands/project/`
+   - Hooks to `~/.claude/commands/project/hooks/`
+   - Python modules to `~/.claude/commands/project/lib/`
+
+3. **Development Tools** (Claude will verify these):
    - Python 3.8+ with pip
    - Node.js 16+ with npm  
    - Git (required for workflow commits)
    - Claude Code CLI installed
 
-3. **Project Structure**:
+4. **Project Structure After Setup**:
    ```
-   ai-software-project-management/     <-- Framework (provides hooks)
-   ├── .claude_code_hooks/            <-- Workflow enforcement hooks
-   ├── src/                           <-- Hook implementation
-   ├── scripts/                       <-- Project management commands
+   ai-software-project-management/     <-- Framework source
+   ├── src/                           <-- Source code
+   ├── scripts/                       <-- Installation scripts
    └── sample-project/                <-- YOUR PROJECT
        ├── sprints/                   <-- Sprint definitions
-       └── .claude_code_hooks/        <-- Hooks copied here (step 1)
+       └── .claude/                   <-- Project settings (created in step 1)
+           └── settings.json          <-- Hook configuration
+   
+   ~/.claude/commands/project/         <-- Installed framework
+   ├── *.md                           <-- Command files
+   ├── hooks/                         <-- Hook scripts
+   └── lib/                           <-- Python modules
    ```
 
-4. **Key Understanding**:
+5. **Key Understanding**:
    - Start Claude in `sample-project/` (where you're developing)
-   - The hooks enforce the sprint workflow automatically
-   - The parent directory contains tools you can reference
+   - The hooks are referenced from their installed location
+   - Each project needs its own `.claude/settings.json` to enable hooks
 
 ## Working with Claude Code - Command Reference
 
