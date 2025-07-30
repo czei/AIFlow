@@ -167,6 +167,31 @@ class TestConfig:
     READS_PER_PROCESS: int = 20
 
 
+class NotificationConfig:
+    """Sound notification configuration."""
+    
+    # Notification settings
+    SOUND_ENABLED: bool = True  # Master switch for all sound notifications
+    USE_CHIME: bool = False  # Use chime library if available
+    CHIME_THEME: str = 'material'  # Theme for chime sounds
+    
+    # Notification triggers
+    NOTIFY_ON_BLOCKED: bool = True  # When operations are blocked
+    NOTIFY_ON_HUMAN_INPUT: bool = True  # When human input required
+    NOTIFY_ON_EMERGENCY: bool = True  # Emergency overrides
+    NOTIFY_ON_WORKFLOW_PAUSE: bool = True  # When workflow pauses
+    NOTIFY_ON_ERROR: bool = False  # On errors (can be noisy)
+    
+    # Notification messages
+    NOTIFICATION_MESSAGES: Dict[str, str] = {
+        'blocked': "Operation blocked - human input required",
+        'emergency': "Emergency override requested",
+        'workflow_pause': "Workflow paused - review required",
+        'input_needed': "User input required to continue",
+        'error': "Error occurred - intervention may be needed"
+    }
+
+
 # Singleton instances
 workflow = WorkflowConfig()
 state = StateConfig()
@@ -174,3 +199,4 @@ project = ProjectConfig()
 hooks = HookConfig()
 messages = MessagesConfig()
 tests = TestConfig()
+notifications = NotificationConfig()

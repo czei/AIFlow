@@ -85,6 +85,9 @@ def main():
         # Check for emergency override
         if allow and WorkflowRules._check_emergency_override({'event': event}):
             metrics['emergency_overrides'] = metrics.get('emergency_overrides', 0) + 1
+            # Notify about emergency override
+            from src.hooks.hook_utils import notify_emergency_override
+            notify_emergency_override()
         
         # Update state with metrics
         try:

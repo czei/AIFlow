@@ -13,6 +13,16 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Tuple
 
+# Add parent directory to path for imports (use append for safety)
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
+try:
+    from src.sound_notifier import SoundNotifier, NotificationType
+    from src.config import notifications as notification_config
+    SOUND_AVAILABLE = True
+except ImportError:
+    SOUND_AVAILABLE = False
+
 
 class HookConfig:
     """Configuration loader for hooks."""
@@ -122,6 +132,23 @@ class EventParser:
 class ResponseBuilder:
     """Build standardized hook responses."""
     
+    _notifier = None
+    
+    @classmethod
+    def _get_notifier(cls) -> Optional[SoundNotifier]:
+        """Get or create the notifier instance."""
+        if cls._notifier is None and SOUND_AVAILABLE:
+            try:
+                cls._notifier = SoundNotifier(
+                    enabled=notification_config.SOUND_ENABLED,
+                    use_chime=notification_config.USE_CHIME,
+                    config={'chime_theme': notification_config.CHIME_THEME}
+                )
+            except Exception:
+                # If sound setup fails, continue without it
+                pass
+        return cls._notifier
+    
     @staticmethod
     def allow(message: Optional[str] = None) -> str:
         """Build an allow response."""
@@ -131,8 +158,25 @@ class ResponseBuilder:
         return json.dumps(response)
     
     @staticmethod
-    def deny(reason: str, suggestions: Optional[list] = None) -> str:
-        """Build a deny/block response."""
+    def deny(reason: str, suggestions: Optional[list] = None, 
+             notify: bool = True) -> str:
+        """
+        Build a deny/block response.
+        
+        Args:
+            reason: Reason for blocking
+            suggestions: Optional list of suggestions
+            notify: Whether to play notification sound
+        """
+        # Play notification sound if enabled
+        if notify and SOUND_AVAILABLE:
+            notifier = ResponseBuilder._get_notifier()
+            if notifier and notification_config.NOTIFY_ON_BLOCKED:
+                notifier.notify(
+                    NotificationType.BLOCKED,
+                    notification_config.NOTIFICATION_MESSAGES.get('blocked', reason)
+                )
+        
         response = {
             "decision": "block",
             "reason": reason
@@ -144,6 +188,15 @@ class ResponseBuilder:
     @staticmethod
     def error(error_message: str) -> str:
         """Build an error response (allows operation but logs warning)."""
+        # Optionally notify on errors
+        if SOUND_AVAILABLE and notification_config.NOTIFY_ON_ERROR:
+            notifier = ResponseBuilder._get_notifier()
+            if notifier:
+                notifier.notify(
+                    NotificationType.WARNING,
+                    notification_config.NOTIFICATION_MESSAGES.get('error', error_message)
+                )
+        
         return json.dumps({
             "decision": "allow",
             "message": error_message
@@ -176,3 +229,36 @@ def safe_state_update(state_manager, updates: Dict[str, Any]) -> bool:
     except Exception as e:
         HookLogger.error(f"Failed to update state: {str(e)}")
         return False
+
+
+def notify_emergency_override(message: Optional[str] = None) -> None:
+    """Play notification sound for emergency overrides."""
+    if SOUND_AVAILABLE and notification_config.NOTIFY_ON_EMERGENCY:
+        notifier = ResponseBuilder._get_notifier()
+        if notifier:
+            notifier.notify(
+                NotificationType.CRITICAL,
+                message or notification_config.NOTIFICATION_MESSAGES.get('emergency')
+            )
+
+
+def notify_workflow_pause(message: Optional[str] = None) -> None:
+    """Play notification sound when workflow is paused."""
+    if SOUND_AVAILABLE and notification_config.NOTIFY_ON_WORKFLOW_PAUSE:
+        notifier = ResponseBuilder._get_notifier()
+        if notifier:
+            notifier.notify(
+                NotificationType.WARNING,
+                message or notification_config.NOTIFICATION_MESSAGES.get('workflow_pause')
+            )
+
+
+def notify_input_needed(message: Optional[str] = None) -> None:
+    """Play notification sound when human input is needed."""
+    if SOUND_AVAILABLE and notification_config.NOTIFY_ON_HUMAN_INPUT:
+        notifier = ResponseBuilder._get_notifier()
+        if notifier:
+            notifier.notify(
+                NotificationType.INFO,
+                message or notification_config.NOTIFICATION_MESSAGES.get('input_needed')
+            )
