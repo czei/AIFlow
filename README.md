@@ -149,15 +149,26 @@ Each sprint includes detailed workflow guidance:
 All documentation has been organized in the `docs/` directory:
 
 - **docs/POC_SETUP_GUIDE.md** - Quick start guide for proof-of-concept testing
+- **docs/SAMPLE_PROJECT_GUIDE.md** - Learn with the Disney Wait Times example project
 - **docs/PROJECT_DOCUMENTATION.md** - Comprehensive system overview and design
 - **docs/WORKFLOW_SPECIFICATIONS.md** - Detailed 6-step methodology and sprint variations
-- **docs/PHASE_CREATION_INSTRUCTIONS.md** - AI instructions for creating effective sprint files
+- **docs/SPRINT_CREATION_INSTRUCTIONS.md** - How to create effective sprint files
 - **docs/SECURITY_ARCHITECTURE.md** - Future OPA-based security implementation
 - **docs/LOGGING_ARCHITECTURE.md** - Comprehensive logging and debugging infrastructure
 - **docs/TESTING.md** - Comprehensive testing framework documentation
-- **docs/SECURITY_FIXES_SUMMARY.md** - Summary of security improvements
 - **docs/example-detailed-sprint.md** - Template showing workflow integration in sprint files
 - **docs/sprint-template-with-state.md** - State tracking and progress management examples
+
+## Sample Project
+
+A complete example project (Disney Wait Times app) is maintained separately at:
+`/Users/czei/ai-software-project-management-sample`
+
+The sample includes:
+- **main branch**: Fully integrated project with hooks configured
+- **tutorial/start branch**: Starting point for learning integration
+- Complete sprint definitions for a real project
+- Best practices for AI-driven development
 
 ## Prerequisites
 

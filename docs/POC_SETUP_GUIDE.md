@@ -142,7 +142,10 @@ ls ~/.claude/commands/project/
 
 ## Creating Your First Project
 
-### 1. Initialize Project Structure
+There are two ways to get started:
+
+### Option 1: Create a New Project (Recommended for New Development)
+
 ```bash
 # Create a new project (replace "my-webapp" with your project name)
 /user:project:setup my-webapp
@@ -152,8 +155,15 @@ ls ~/.claude/commands/project/
 # - Sprint templates in sprints/
 # - CLAUDE.md for project context
 # - State management files
-# - Logging infrastructure
+# - Hook configuration in .claude/settings.json
 ```
+
+### Option 2: Learn with the Sample Project
+
+See the [Sample Project Guide](SAMPLE_PROJECT_GUIDE.md) for:
+- How to add the framework to existing projects
+- A complete working example with the Disney Wait Times app
+- Step-by-step integration tutorial
 
 ### 2. Navigate to Project
 ```bash
