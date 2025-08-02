@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# AI Software Project Management System - Uninstall Script
+# AIFlow - Uninstall Script
 # This script safely removes the installed command system
 
 # Get the absolute path to the project root

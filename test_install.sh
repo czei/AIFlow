@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# AI Software Project Management System - Installation Test Script
+# AIFlow - Installation Test Script
 # This script validates the installation in a temporary environment
 
 # Get the absolute path to the project root

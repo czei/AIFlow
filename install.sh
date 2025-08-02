@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# AI Software Project Management System - Installation Script
+# AIFlow - Installation Script
 # This script safely installs the command system with prerequisite checking and error handling
 
 # Get the absolute path to the project root

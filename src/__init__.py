@@ -1,3 +1,3 @@
 """
-Source code for the AI Software Project Management System.
+Source code for AIFlow.
 """

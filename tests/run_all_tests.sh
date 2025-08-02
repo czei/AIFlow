@@ -1,7 +1,7 @@
 #!/bin/bash
-# Run all tests for the AI Software Project Management System
+# Run all tests for AIFlow
 
-echo "🧪 AI Software Project Management System - Full Test Suite"
+echo "🧪 AIFlow - Full Test Suite"
 echo "=========================================================="
 echo
 

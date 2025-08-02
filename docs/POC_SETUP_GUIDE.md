@@ -42,7 +42,7 @@ Before starting:
 2. **Claude Code**: Install Claude Code CLI tool
 3. **Python 3.7+**: Required for scripts and hooks
 4. **Directory Permissions**: Write access to parent directory for git worktrees
-5. **Project Source**: Clone or have access to ai-software-project-management repository
+5. **Project Source**: Clone or have access to AIFlow repository
 
 ## Installation Guide
 
@@ -52,8 +52,8 @@ Use the automated installation script for the easiest setup:
 
 ```bash
 # Clone the project
-git clone https://github.com/your-org/ai-software-project-management.git
-cd ai-software-project-management
+git clone https://github.com/your-org/AIFlow.git
+cd AIFlow
 
 # Run the installer
 ./install.sh
@@ -72,8 +72,8 @@ If the automated installer fails or you prefer manual control:
 
 ```bash
 # Clone the project (if not already available)
-git clone https://github.com/your-org/ai-software-project-management.git
-cd ai-software-project-management
+git clone https://github.com/your-org/AIFlow.git
+cd AIFlow
 
 # Install commands to Claude Code directory
 mkdir -p ~/.claude/commands/project

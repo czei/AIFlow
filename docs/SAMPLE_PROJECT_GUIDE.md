@@ -1,6 +1,6 @@
 # Sample Project Guide
 
-This guide explains how to use the Disney Wait Times sample project to learn the AI Software Project Management framework.
+This guide explains how to use the Disney Wait Times sample project to learn the AIFlow framework.
 
 ## Overview
 
@@ -10,7 +10,7 @@ The sample project is maintained in a separate repository to provide a clean lea
 
 ## Sample Repository Location
 
-The sample project is available at: `/Users/czei/ai-software-project-management-sample`
+The sample project is available at: `/Users/czei/AIFlow-sample`
 (In production, this would be a GitHub URL)
 
 ## Two Learning Paths

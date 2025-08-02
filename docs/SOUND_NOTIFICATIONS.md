@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Software Project Management System includes cross-platform sound notifications to alert users when their input is required during automated workflows. This feature helps ensure prompt responses and prevents workflow delays.
+The AIFlow system includes cross-platform sound notifications to alert users when their input is required during automated workflows. This feature helps ensure prompt responses and prevents workflow delays.
 
 ## Features
 

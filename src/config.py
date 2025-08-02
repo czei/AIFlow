@@ -1,5 +1,5 @@
 """
-Configuration module for AI Software Project Management System.
+Configuration module for AIFlow.
 
 Central location for all configuration values to avoid hardcoded
 strings and improve maintainability.

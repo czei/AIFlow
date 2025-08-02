@@ -1,5 +1,5 @@
 #!/bin/bash
-# Common Security Library for AI Software Project Management System
+# Common Security Library for AIFlow
 # Provides secure functions for input validation, path handling, and command execution
 
 # Validate and sanitize a file path to prevent traversal attacks

@@ -1,6 +1,6 @@
 # Installation Guide
 
-This comprehensive guide covers installing, testing, and troubleshooting the AI Software Project Management System.
+This comprehensive guide covers installing, testing, and troubleshooting the AIFlow system.
 
 ## Table of Contents
 

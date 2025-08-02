@@ -1,4 +1,4 @@
-# AI Software Project Management System
+# AIFlow
 
 A comprehensive sprint-based development system with automated workflow enforcement, state management, and advanced testing framework. Currently achieving **100% test pass rate** with all core functionality operational.
 
@@ -162,7 +162,7 @@ All documentation has been organized in the `docs/` directory:
 ## Sample Project
 
 A complete example project (Disney Wait Times app) is maintained separately at:
-`/Users/czei/ai-software-project-management-sample`
+`/Users/czei/AIFlow-sample`
 
 The sample includes:
 - **main branch**: Fully integrated project with hooks configured
