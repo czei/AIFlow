@@ -11,8 +11,23 @@ import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
-# Add parent directory to path for imports (use append for safety)
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# Try to import the helper first (it might be in the same directory)
+try:
+    from hook_import_helper import setup_imports
+except ImportError:
+    # If not in same directory, add current directory to path
+    sys.path.insert(0, str(Path(__file__).parent))
+    try:
+        from hook_import_helper import setup_imports
+    except ImportError:
+        # Fallback to old behavior
+        sys.path.append(str(Path(__file__).parent.parent.parent))
+        setup_imports = None
+
+# Set up imports
+if setup_imports and not setup_imports():
+    # If setup fails, fall back to old method
+    sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
     from src.state_manager import StateManager

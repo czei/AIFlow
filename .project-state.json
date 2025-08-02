@@ -1,0 +1,40 @@
+{
+  "project_name": "AIFlow",
+  "current_sprint": 1,
+  "current_step": 1,
+  "status": "planning",
+  "sprints": {
+    "1": {
+      "name": "Sprint 1",
+      "status": "not_started",
+      "completed_steps": []
+    },
+    "2": {
+      "name": "Sprint 2", 
+      "status": "not_started",
+      "completed_steps": []
+    },
+    "3": {
+      "name": "Sprint 3",
+      "status": "not_started", 
+      "completed_steps": []
+    },
+    "4": {
+      "name": "Sprint 4",
+      "status": "not_started",
+      "completed_steps": []
+    },
+    "5": {
+      "name": "Sprint 5",
+      "status": "not_started",
+      "completed_steps": []
+    }
+  },
+  "git": {
+    "main_branch": "main",
+    "feature_branch": null,
+    "current_branch": "main"
+  },
+  "created_at": "2025-08-02T00:00:00Z",
+  "updated_at": "2025-08-02T00:00:00Z"
+}

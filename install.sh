@@ -27,7 +27,125 @@ INSTALL_LOG=$(secure_temp_file "claude-pm-install") || {
 }
 ERRORS_FOUND=0
 
-INSTALL_DIR="$HOME/.claude/commands/project"
+# Parse command line arguments
+GLOBAL_INSTALL=false
+PROJECT_DIR=""
+SHOW_HELP=false
+UNINSTALL=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --global|-g)
+            GLOBAL_INSTALL=true
+            shift
+            ;;
+        --project-dir|-p)
+            if [[ -z "${2:-}" ]]; then
+                echo "Error: --project-dir requires a directory path" >&2
+                SHOW_HELP=true
+                shift
+            else
+                PROJECT_DIR="$2"
+                shift 2
+            fi
+            ;;
+        --uninstall|-u)
+            UNINSTALL=true
+            shift
+            ;;
+        --help|-h)
+            SHOW_HELP=true
+            shift
+            ;;
+        *)
+            echo "Error: Unknown option $1" >&2
+            SHOW_HELP=true
+            shift
+            ;;
+    esac
+done
+
+# Show help if requested or on error
+if [[ "$SHOW_HELP" == "true" ]]; then
+    cat << EOF
+AIFlow Installation Script
+
+Usage: ./install.sh [OPTIONS]
+
+Options:
+  --project-dir, -p DIR   Install to specific project directory (default: current directory)
+  --global, -g           Install globally to ~/.claude/commands/project
+  --uninstall, -u        Uninstall AIFlow (use with --global for global uninstall)
+  --help, -h             Show this help message
+
+Examples:
+  # Install to current project
+  ./install.sh
+
+  # Install to specific project
+  ./install.sh --project-dir /path/to/my-project
+
+  # Install globally (affects all Claude Code sessions)
+  ./install.sh --global
+
+  # Uninstall from current project
+  ./install.sh --uninstall
+
+  # Uninstall globally
+  ./install.sh --uninstall --global
+
+By default, AIFlow installs to the current project directory, creating a .claude/
+subdirectory with hooks that only affect Claude Code sessions in that project.
+
+Global installation will affect ALL Claude Code sessions system-wide.
+EOF
+    exit 0
+fi
+
+# Determine installation directory
+if [[ "$GLOBAL_INSTALL" == "true" ]]; then
+    INSTALL_DIR="$HOME/.claude/commands/project"
+    HOOKS_DIR="$HOME/.claude/hooks"
+    INSTALL_TYPE="global"
+else
+    # Use project directory or current directory
+    if [[ -n "$PROJECT_DIR" ]]; then
+        # Validate that the project directory exists or can be created
+        if [[ -d "$PROJECT_DIR" ]]; then
+            PROJECT_TARGET="$(cd "$PROJECT_DIR" 2>/dev/null && pwd)" || {
+                echo "Error: Cannot access project directory: $PROJECT_DIR" >&2
+                exit 1
+            }
+        else
+            # Try to create the directory if it doesn't exist
+            mkdir -p "$PROJECT_DIR" 2>/dev/null || {
+                echo "Error: Cannot create project directory: $PROJECT_DIR" >&2
+                exit 1
+            }
+            PROJECT_TARGET="$(cd "$PROJECT_DIR" 2>/dev/null && pwd)" || {
+                echo "Error: Cannot access project directory: $PROJECT_DIR" >&2
+                exit 1
+            }
+        fi
+    else
+        PROJECT_TARGET="$(pwd)"
+    fi
+    
+    # Check if target is a git repository
+    if [[ ! -d "$PROJECT_TARGET/.git" ]]; then
+        echo "Warning: $PROJECT_TARGET is not a git repository" >&2
+        echo "AIFlow works best with git repositories. Continue anyway? (y/N)" >&2
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Installation cancelled." >&2
+            exit 1
+        fi
+    fi
+    
+    INSTALL_DIR="$PROJECT_TARGET/.claude/commands/project"
+    HOOKS_DIR="$PROJECT_TARGET/.claude/hooks"
+    INSTALL_TYPE="project"
+fi
 
 # Cleanup function
 cleanup() {
@@ -51,8 +169,12 @@ trap 'handle_signal INT' INT
 trap 'handle_signal TERM' TERM
 trap 'handle_signal HUP' HUP
 
-echo "🚀 AI Software Project Management System Installer" | tee "$INSTALL_LOG"
-echo "=================================================" | tee -a "$INSTALL_LOG"
+echo "🚀 AIFlow - AI Software Project Management System Installer" | tee "$INSTALL_LOG"
+echo "========================================================" | tee -a "$INSTALL_LOG"
+echo "Installation type: $INSTALL_TYPE" | tee -a "$INSTALL_LOG"
+if [[ "$INSTALL_TYPE" == "project" ]]; then
+    echo "Target directory: ${PROJECT_TARGET}" | tee -a "$INSTALL_LOG"
+fi
 echo "" | tee -a "$INSTALL_LOG"
 
 # Function to print colored output
@@ -189,10 +311,19 @@ create_directories() {
         return 1
     }
     
-    mkdir -p "$INSTALL_DIR/hooks" || {
-        print_status "error" "Failed to create $INSTALL_DIR/hooks"
-        return 1
-    }
+    # For project installs, create hooks directory at project level
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        mkdir -p "$HOOKS_DIR" || {
+            print_status "error" "Failed to create $HOOKS_DIR"
+            return 1
+        }
+    else
+        # For global installs, keep hooks with commands
+        mkdir -p "$INSTALL_DIR/hooks" || {
+            print_status "error" "Failed to create $INSTALL_DIR/hooks"
+            return 1
+        }
+    fi
     
     print_status "success" "Directory structure created"
     return 0
@@ -257,11 +388,19 @@ install_commands() {
 install_hooks() {
     print_status "info" "Installing hook scripts..."
     
+    # Determine target hooks directory
+    local target_hooks_dir
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        target_hooks_dir="$HOOKS_DIR"
+    else
+        target_hooks_dir="$INSTALL_DIR/hooks"
+    fi
+    
     # Copy hook Python files
     local hook_count=0
     for hook_file in "$PROJECT_ROOT/src/hooks"/*.py; do
         if [[ -f "$hook_file" ]]; then
-            cp "$hook_file" "$INSTALL_DIR/hooks/" || {
+            cp "$hook_file" "$target_hooks_dir/" || {
                 print_status "warning" "Failed to copy $(basename "$hook_file")"
                 continue
             }
@@ -269,10 +408,17 @@ install_hooks() {
         fi
     done
     
+    # Ensure hook_import_helper.py is copied
+    if [[ -f "$PROJECT_ROOT/src/hooks/hook_import_helper.py" ]]; then
+        cp "$PROJECT_ROOT/src/hooks/hook_import_helper.py" "$target_hooks_dir/" || {
+            print_status "warning" "Failed to copy hook_import_helper.py"
+        }
+    fi
+    
     # Copy hook configuration templates
     for config_file in "$PROJECT_ROOT/src/hooks"/*.json "$PROJECT_ROOT/src/hooks"/*.template; do
         if [[ -f "$config_file" ]]; then
-            cp "$config_file" "$INSTALL_DIR/hooks/" || {
+            cp "$config_file" "$target_hooks_dir/" || {
                 print_status "warning" "Failed to copy $(basename "$config_file")"
             }
         fi
@@ -283,15 +429,104 @@ install_hooks() {
     # Create hook configuration README
     create_hook_readme
     
+    # For project installations, optionally create settings.json
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        local settings_file="${PROJECT_TARGET}/.claude/settings.json"
+        if [[ ! -f "$settings_file" ]]; then
+            print_status "info" "Creating .claude/settings.json with hook configuration..."
+            
+            # Check if there's a template for project settings
+            if [[ -f "$PROJECT_ROOT/src/hooks/project_settings.json.template" ]]; then
+                cp "$PROJECT_ROOT/src/hooks/project_settings.json.template" "$settings_file" || {
+                    print_status "warning" "Failed to create settings.json"
+                }
+            else
+                # Create a basic settings.json
+                cat > "$settings_file" << 'EOF'
+{
+  "hooks": {
+    "PreToolUse": {
+      "command": "python3 .claude/hooks/pre_tool_use.py",
+      "timeout": 5000
+    },
+    "PostToolUse": {
+      "command": "python3 .claude/hooks/post_tool_use.py",
+      "timeout": 3000
+    },
+    "Stop": {
+      "command": "python3 .claude/hooks/stop.py",
+      "timeout": 3000
+    }
+  }
+}
+EOF
+            fi
+            
+            if [[ -f "$settings_file" ]]; then
+                print_status "success" "Created .claude/settings.json with hook configuration"
+                print_status "info" "Hooks are now active for this project"
+            fi
+        else
+            print_status "info" "Existing .claude/settings.json found - not overwriting"
+            print_status "warning" "Please manually add hook configuration if needed"
+        fi
+    fi
+    
     return 0
 }
 
 # Function to create hook configuration README
 create_hook_readme() {
-    cat > "$INSTALL_DIR/hooks/README.md" << 'EOF'
-# Claude Code Hooks Configuration
+    local readme_path
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        readme_path="$HOOKS_DIR/README.md"
+    else
+        readme_path="$INSTALL_DIR/hooks/README.md"
+    fi
+    
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        # Project-level installation
+        cat > "$readme_path" << 'EOF'
+# Claude Code Hooks Configuration (Project-Level)
 
-To enable automated workflow enforcement, add these hooks to your project's .claude/settings.json:
+These hooks are installed for this project only. To enable automated workflow enforcement, 
+create a .claude/settings.json file in this project:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": {
+      "command": "python3 .claude/hooks/pre_tool_use.py",
+      "timeout": 5000
+    },
+    "PostToolUse": {
+      "command": "python3 .claude/hooks/post_tool_use.py",
+      "timeout": 3000
+    },
+    "Stop": {
+      "command": "python3 .claude/hooks/stop.py",
+      "timeout": 3000
+    }
+  }
+}
+```
+
+The hooks enforce the 6-step workflow automatically:
+1. Planning - Research and requirements only
+2. Implementation - Code writing allowed
+3. Validation - Testing and verification
+4. Review - Code quality assessment
+5. Refinement - Apply review feedback
+6. Integration - Final commit and merge
+
+Note: These hooks only affect Claude Code sessions in this project directory.
+EOF
+    else
+        # Global installation
+        cat > "$readme_path" << 'EOF'
+# Claude Code Hooks Configuration (Global)
+
+To enable automated workflow enforcement globally, add these hooks to ~/.claude/settings.json:
 
 ```json
 {
@@ -319,7 +554,12 @@ The hooks enforce the 6-step workflow automatically:
 4. Review - Code quality assessment
 5. Refinement - Apply review feedback
 6. Integration - Final commit and merge
+
+WARNING: These hooks will affect ALL Claude Code sessions system-wide!
+To disable for specific projects, create a .claude/settings.json in that project
+with empty hooks configuration.
 EOF
+    fi
     
     print_status "success" "Created hook configuration guide"
 }
@@ -331,7 +571,16 @@ validate_installation() {
     local validation_errors=0
     
     # Check directories exist
-    for dir in "$INSTALL_DIR" "$INSTALL_DIR/lib" "$INSTALL_DIR/hooks"; do
+    local dirs_to_check=("$INSTALL_DIR" "$INSTALL_DIR/lib")
+    
+    # Add appropriate hooks directory
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        dirs_to_check+=("$HOOKS_DIR")
+    else
+        dirs_to_check+=("$INSTALL_DIR/hooks")
+    fi
+    
+    for dir in "${dirs_to_check[@]}"; do
         if [[ ! -d "$dir" ]]; then
             print_status "error" "Directory missing: $dir"
             ((validation_errors++))
@@ -344,8 +593,14 @@ validate_installation() {
         "$INSTALL_DIR/start.md"
         "$INSTALL_DIR/status.md"
         "$INSTALL_DIR/lib/src/state_manager.py"
-        "$INSTALL_DIR/hooks/pre_tool_use.py"
     )
+    
+    # Add hook file check based on installation type
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        key_files+=("$HOOKS_DIR/pre_tool_use.py")
+    else
+        key_files+=("$INSTALL_DIR/hooks/pre_tool_use.py")
+    fi
     
     for file in "${key_files[@]}"; do
         if [[ ! -f "$file" ]]; then
@@ -409,29 +664,56 @@ show_success_message() {
     echo ""
     echo "📦 Installed Components:"
     echo "  • Commands: $INSTALL_DIR/*.md"
-    echo "  • Hooks: $INSTALL_DIR/hooks/*.py"
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        echo "  • Hooks: $HOOKS_DIR/*.py"
+    else
+        echo "  • Hooks: $INSTALL_DIR/hooks/*.py"
+    fi
     echo "  • Python modules: $INSTALL_DIR/lib/src/"
     echo ""
-    echo "🎯 Available Commands:"
-    echo "  /user:project:setup <name>     - Create new project worktree"
-    echo "  /user:project:start            - Begin automated development"
-    echo "  /user:project:status           - Show project progress"
-    echo "  /user:project:pause [reason]   - Pause automation"
-    echo "  /user:project:resume           - Resume from pause"
-    echo "  /user:project:stop [reason]    - End project with summary"
-    echo "  /user:project:doctor           - Validate project setup"
-    echo ""
-    echo "🚀 Quick Start:"
-    echo "1. Start Claude Code with: claude --dangerously-skip-permissions"
-    echo "2. Navigate to a git repository"
-    echo "3. Run: /user:project:setup my-awesome-project"
-    echo "4. cd ../my-awesome-project"
-    echo "5. Customize sprint files in sprints/"
-    echo "6. Run: /user:project:start"
+    
+    if [[ "$INSTALL_TYPE" == "project" ]]; then
+        echo "🎯 Project-Level Installation:"
+        echo "  • Hooks installed to: $HOOKS_DIR"
+        echo "  • Settings file: ${PROJECT_TARGET}/.claude/settings.json"
+        echo "  • This installation only affects Claude Code sessions in:"
+        echo "    ${PROJECT_TARGET}"
+        echo ""
+        echo "🚀 Quick Start:"
+        echo "1. Create .claude/settings.json in this project (see $HOOKS_DIR/README.md)"
+        echo "2. Start Claude Code in this directory: claude"
+        echo "3. The sprint workflow will be active only in this project"
+        echo ""
+        echo "To uninstall from this project:"
+        echo "  rm -rf ${PROJECT_TARGET}/.claude"
+    else
+        echo "🎯 Global Installation:"
+        echo "  • Commands available in all Claude Code sessions"
+        echo "  • To enable hooks globally, update ~/.claude/settings.json"
+        echo "  • WARNING: This will affect ALL Claude Code sessions!"
+        echo ""
+        echo "Available Commands:"
+        echo "  /user:project:setup <name>     - Create new project worktree"
+        echo "  /user:project:start            - Begin automated development"
+        echo "  /user:project:status           - Show project progress"
+        echo "  /user:project:pause [reason]   - Pause automation"
+        echo "  /user:project:resume           - Resume from pause"
+        echo "  /user:project:stop [reason]    - End project with summary"
+        echo "  /user:project:doctor           - Validate project setup"
+        echo ""
+        echo "🚀 Quick Start:"
+        echo "1. Start Claude Code with: claude --dangerously-skip-permissions"
+        echo "2. Navigate to a git repository"
+        echo "3. Run: /user:project:setup my-awesome-project"
+        echo "4. cd ../my-awesome-project"
+        echo "5. Customize sprint files in sprints/"
+        echo "6. Run: /user:project:start"
+    fi
     echo ""
     echo "📚 Documentation:"
     echo "  • Setup Guide: $PROJECT_ROOT/docs/POC_SETUP_GUIDE.md"
     echo "  • Sprint Creation: $PROJECT_ROOT/docs/SPRINT_CREATION_INSTRUCTIONS.md"
+    echo "  • Hook Configuration: See README.md in hooks directory"
     echo ""
     echo "📝 Installation log saved to: $INSTALL_LOG"
 }
@@ -489,6 +771,50 @@ main() {
     # Show success message
     show_success_message
 }
+
+# Function to uninstall AIFlow
+uninstall_aiflow() {
+    print_status "info" "Uninstalling AIFlow..."
+    
+    if [[ "$INSTALL_TYPE" == "global" ]]; then
+        # Global uninstall
+        if [[ -d "$INSTALL_DIR" ]]; then
+            rm -rf "$INSTALL_DIR" || {
+                print_status "error" "Failed to remove $INSTALL_DIR"
+                return 1
+            }
+            print_status "success" "Removed global installation from $INSTALL_DIR"
+        else
+            print_status "warning" "No global installation found at $INSTALL_DIR"
+        fi
+        
+        # Check for global hooks in settings
+        if [[ -f "$HOME/.claude/settings.json" ]]; then
+            print_status "info" "Check ~/.claude/settings.json for any hook configurations to remove manually"
+        fi
+    else
+        # Project uninstall
+        local claude_dir="${PROJECT_TARGET}/.claude"
+        if [[ -d "$claude_dir" ]]; then
+            rm -rf "$claude_dir" || {
+                print_status "error" "Failed to remove $claude_dir"
+                return 1
+            }
+            print_status "success" "Removed project installation from $claude_dir"
+        else
+            print_status "warning" "No project installation found at $claude_dir"
+        fi
+    fi
+    
+    print_status "success" "Uninstallation complete!"
+    return 0
+}
+
+# Check if uninstalling
+if [[ "$UNINSTALL" == "true" ]]; then
+    uninstall_aiflow
+    exit $?
+fi
 
 # Run main installation
 main
