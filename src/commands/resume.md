@@ -7,9 +7,21 @@ description: Resume paused project automation
 
 Resume automation from exact pause point.
 
-!`[ -f ".project-state.json" ] || { echo "❌ No project found"; exit 1; }`
-!`jq -r '.status' .project-state.json | grep -q "paused" || { echo "❌ Project not paused"; exit 1; }`
-!`PROJECT_ROOT="$(git rev-parse --show-toplevel)"`
-!`python3 "$PROJECT_ROOT/src/scripts/resume_project.py" || { echo "❌ Resume failed"; exit 1; }`
+!`bash -c '
+# Get project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-▶️  Automation resumed! Continuing workflow.
+# Check project exists
+python3 "$PROJECT_ROOT/src/commands/utils/check_project.py" || exit 1
+
+# Check if project is paused
+if ! jq -r ".status" .project-state.json | grep -q "paused"; then
+    echo "❌ Error: Project not paused"
+    exit 1
+fi
+
+# Resume the project
+python3 "$PROJECT_ROOT/src/scripts/resume_project.py" || { echo "❌ Resume failed"; exit 1; }
+
+echo "▶️  Automation resumed! Continuing workflow."
+'`
