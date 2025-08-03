@@ -12,7 +12,15 @@ Stop project with comprehensive summary.
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
 # Check project exists
-python3 "$PROJECT_ROOT/src/commands/utils/check_project.py" || exit 1
+# For project-level installations, check multiple possible paths
+if [[ -f "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" ]]; then
+    python3 "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" || exit 1
+elif [[ -f "$PROJECT_ROOT/src/commands/utils/check_project.py" ]]; then
+    python3 "$PROJECT_ROOT/src/commands/utils/check_project.py" || exit 1
+else
+    echo "❌ Error: check_project.py not found in installation"
+    exit 1
+fi
 
 # Display summary
 echo "📊 PROJECT SUMMARY"

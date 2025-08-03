@@ -168,6 +168,12 @@ class TestCommandErrorHandling(unittest.TestCase):
             f'PROJECT_ROOT="{project_root}"'
         )
         
+        # Also handle the new multi-path check
+        bash_command = bash_command.replace(
+            '$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py',
+            f'{project_root}/src/commands/utils/check_project.py'
+        )
+        
         # Execute the command
         result = subprocess.run(
             ['bash', '-c', bash_command],
