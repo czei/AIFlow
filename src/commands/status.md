@@ -7,8 +7,7 @@ description: Show comprehensive project status
 
 Display detailed status and progress of the sprint-based project.
 
-!`PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"`
-!`if [[ -f "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py"; elif [[ -f "$PROJECT_ROOT/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/src/commands/utils/check_project.py"; else echo "❌ Error: check_project.py not found"; exit 1; fi || exit`
+!`PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; if [[ -f "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py"; elif [[ -f "$PROJECT_ROOT/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/src/commands/utils/check_project.py"; else echo "❌ Error: check_project.py not found"; exit 1; fi || exit`
 !`[ -f ".project-state.json" ] || exit`
 !`echo "📊 PROJECT STATUS"`
 !`echo "================"`
@@ -23,4 +22,4 @@ Display detailed status and progress of the sprint-based project.
 !`jq -r '.acceptance_criteria_passed | if length > 0 then "  ✅ " + join("\n  ✅ ") else "  None passed yet" end' .project-state.json`
 !`echo ""`
 !`git branch --show-current | xargs -I {} echo "Git Branch: {}"`
-!`PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)" && python3 -c "import sys; sys.path.insert(0, '$PROJECT_ROOT'); from src.state_manager import StateManager; sm = StateManager('.'); state = sm.read(); print(f\"\\nNext: {state.get('current_user_story', 'No user story set')}\")"`
+!`python3 -c "import sys, os; root = os.popen('git rev-parse --show-toplevel 2>/dev/null || pwd').read().strip(); sys.path.insert(0, root); from src.state_manager import StateManager; sm = StateManager('.'); state = sm.read(); print(f\"\\nNext: {state.get('current_user_story', 'No user story set')}\")"`

@@ -229,6 +229,37 @@ class TestCommandErrorHandling(unittest.TestCase):
         # Note: We can't directly test eval failure, but we've proven the issue
         # exists and our backtick solution avoids it
         
+    def test_combined_project_root_command(self):
+        """Test that PROJECT_ROOT and check work in same command."""
+        # Create a test directory with project state
+        test_dir = Path(tempfile.mkdtemp())
+        original_dir = os.getcwd()
+        os.chdir(test_dir)
+        
+        try:
+            # Initialize git and create project
+            subprocess.run(['git', 'init'], capture_output=True)
+            sm = StateManager('.')
+            sm.create('test-project')
+            
+            # Test combined command that sets and uses PROJECT_ROOT
+            project_root = str(Path(__file__).parent.parent.parent)
+            combined_cmd = f'PROJECT_ROOT="{project_root}"; if [[ -f "$PROJECT_ROOT/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/src/commands/utils/check_project.py"; else echo "❌ Error: check_project.py not found"; exit 1; fi'
+            
+            result = subprocess.run(
+                ['bash', '-c', combined_cmd],
+                capture_output=True,
+                text=True
+            )
+            
+            # Should succeed
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "")
+            
+        finally:
+            os.chdir(original_dir)
+            shutil.rmtree(test_dir)
+    
     def test_backtick_commands_with_exit_pattern(self):
         """Test that our || exit pattern works correctly."""
         # Create a test directory without project state
