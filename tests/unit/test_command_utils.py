@@ -175,6 +175,13 @@ class TestCommandErrorHandling(unittest.TestCase):
                 f'{project_root}/src/commands/utils/check_project.py'
             )
             
+            # Handle PYTHONPATH if it's used
+            if 'PYTHONPATH=' in cmd and '$(git rev-parse' in cmd:
+                cmd = cmd.replace(
+                    'PYTHONPATH="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"',
+                    f'PYTHONPATH="{project_root}"'
+                )
+            
             # Execute the command
             result = subprocess.run(
                 ['bash', '-c', cmd],
@@ -255,6 +262,37 @@ class TestCommandErrorHandling(unittest.TestCase):
             # Should succeed
             self.assertEqual(result.returncode, 0)
             self.assertEqual(result.stdout, "")
+            
+        finally:
+            os.chdir(original_dir)
+            shutil.rmtree(test_dir)
+    
+    def test_pythonpath_approach(self):
+        """Test that PYTHONPATH approach works for imports."""
+        # Create a test directory with project state
+        test_dir = Path(tempfile.mkdtemp())
+        original_dir = os.getcwd()
+        os.chdir(test_dir)
+        
+        try:
+            # Initialize git and create project
+            subprocess.run(['git', 'init'], capture_output=True)
+            sm = StateManager('.')
+            sm.create('test-project')
+            
+            # Test PYTHONPATH approach
+            project_root = str(Path(__file__).parent.parent.parent)
+            pythonpath_cmd = f'PYTHONPATH="{project_root}" python3 -c "from src.state_manager import StateManager; sm = StateManager(\\".\\"); state = sm.read(); print(state.get(\\"project_name\\", \\"NOT_FOUND\\"))"'
+            
+            result = subprocess.run(
+                ['bash', '-c', pythonpath_cmd],
+                capture_output=True,
+                text=True
+            )
+            
+            # Should succeed and output the project name
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("test-project", result.stdout)
             
         finally:
             os.chdir(original_dir)

@@ -22,4 +22,4 @@ Display detailed status and progress of the sprint-based project.
 !`jq -r '.acceptance_criteria_passed | if length > 0 then "  ✅ " + join("\n  ✅ ") else "  None passed yet" end' .project-state.json`
 !`echo ""`
 !`git branch --show-current | xargs -I {} echo "Git Branch: {}"`
-!`python3 -c "import sys, os; root = os.popen('git rev-parse --show-toplevel 2>/dev/null || pwd').read().strip(); sys.path.insert(0, root); from src.state_manager import StateManager; sm = StateManager('.'); state = sm.read(); print(f\"\\nNext: {state.get('current_user_story', 'No user story set')}\")"`
+!`PYTHONPATH="$(git rev-parse --show-toplevel 2>/dev/null || pwd)" python3 -c "from src.state_manager import StateManager; sm = StateManager('.'); state = sm.read(); print(f\"\\nNext: {state.get('current_user_story', 'No user story set')}\")"`
