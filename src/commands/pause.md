@@ -8,33 +8,13 @@ argument-hint: [reason]
 
 Pause active automation while preserving state.
 
-!`bash -c '
-# Get project root
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+!`PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"`
+!`if [[ -f "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py"; elif [[ -f "$PROJECT_ROOT/src/commands/utils/check_project.py" ]]; then python3 "$PROJECT_ROOT/src/commands/utils/check_project.py"; else echo "❌ Error: check_project.py not found"; exit 1; fi || exit`
+!`[ -f ".project-state.json" ] || exit`
+!`jq -r '.status' .project-state.json | grep -q "active" || { echo "❌ Error: Project not active"; exit 1; }`
+!`PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"`
+!`python3 "$PROJECT_ROOT/src/scripts/pause_project.py" "${ARGUMENTS:-Manual pause}" || { echo "❌ Pause failed"; exit 1; }`
+!`git add .project-state.json && git commit -m "Pause automation: ${ARGUMENTS:-Manual pause}" 2>/dev/null || true`
 
-# Check project exists
-# For project-level installations, check multiple possible paths
-if [[ -f "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" ]]; then
-    python3 "$PROJECT_ROOT/.claude/commands/project/lib/src/commands/utils/check_project.py" || exit 1
-elif [[ -f "$PROJECT_ROOT/src/commands/utils/check_project.py" ]]; then
-    python3 "$PROJECT_ROOT/src/commands/utils/check_project.py" || exit 1
-else
-    echo "❌ Error: check_project.py not found in installation"
-    exit 1
-fi
-
-# Check if project is active
-if ! jq -r ".status" .project-state.json | grep -q "active"; then
-    echo "❌ Error: Project not active"
-    exit 1
-fi
-
-# Pause the project
-python3 "$PROJECT_ROOT/src/scripts/pause_project.py" "${ARGUMENTS:-Manual pause}" || { echo "❌ Pause failed"; exit 1; }
-
-# Commit the state change
-git add .project-state.json && git commit -m "Pause automation: ${ARGUMENTS:-Manual pause}" 2>/dev/null || true
-
-echo "⏸️  Automation paused. State preserved."
-echo "Resume with /user:project:resume"
-'`
+⏸️  Automation paused. State preserved.
+Resume with `/user:project:resume`
