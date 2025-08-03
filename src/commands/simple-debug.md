@@ -17,4 +17,4 @@ Test basic path resolution.
 !`PYTHONPATH="$(pwd)" python3 -c "import sys; print(sys.path[0])"`
 !`echo ""`
 !`echo "Testing import from current dir:"`
-!`PYTHONPATH="$(pwd)" python3 -c "try: from src.state_manager import StateManager; print('Import successful'); except: print('Import failed')"`
+!`PYTHONPATH="$(pwd)" python3 -c "from src.state_manager import StateManager; print('Import successful')" 2>&1 || echo "Import failed"`
