@@ -14,4 +14,4 @@ Debug version to understand path resolution issues.
 !`python3 -c "import sys, os; print('Python sys.path:'); [print(f'  {p}') for p in sys.path]; print(); root = os.popen('git rev-parse --show-toplevel 2>/dev/null || pwd').read().strip(); print(f'os.popen result: [{root}]'); print(f'os.popen type: {type(root)}'); print(f'os.popen len: {len(root)}')"`
 !`echo ""`
 !`echo "=== Testing PYTHONPATH approach ==="`
-!`PYTHONPATH="$(git rev-parse --show-toplevel 2>/dev/null || pwd)" python3 -c "import sys; print('With PYTHONPATH:'); [print(f'  {p}') for p in sys.path]; print(); try: from src.state_manager import StateManager; print('SUCCESS: StateManager imported!'); except ImportError as e: print(f'FAILED: {e}')"`
+!`PYTHONPATH="$(git rev-parse --show-toplevel 2>/dev/null || pwd)" python3 -c "import sys; print('With PYTHONPATH:'); [print(f'  {p}') for p in sys.path]; print(); try: from src.state_manager import StateManager; print('SUCCESS: StateManager imported'); except ImportError as e: print(f'FAILED: {e}')"`
